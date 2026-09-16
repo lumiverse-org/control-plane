@@ -1,0 +1,4 @@
+today: '2026-06-01'
+expect_exit: 1
+expect_errors:
+- R-EXC-02
