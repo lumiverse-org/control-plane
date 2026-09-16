@@ -89,3 +89,14 @@ business:
   criticality: high
   active_customers: 1200
   revenue_importance: high
+operations:
+  support_model: business-hours
+  coverage_window: null
+  detection_expectation: next-business-morning
+  intake_channel: null
+  triager: null
+  weekend_exception_eligible: false
+  primary_responder: null
+  backup_responder: null
+  critical_incident_response: Page the on-call rotation via PagerDuty; Section 15.1
+    default.

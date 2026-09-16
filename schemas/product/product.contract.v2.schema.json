@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://control-plane.local/schemas/product/product.contract.v2.schema.json",
   "title": "Product Operating Contract (product.yaml) v2",
-  "description": "Section 15 (lines 1284-1606). Built incrementally across L1-301..L1-308, one block per task, all edits to this single file. This lane's cluster (L1-301, L1-302 [separate file], L1-303, L1-304) lands the envelope, identity, classification, code/verification/environments/deployment, and the infrastructure/dependencies/security/data/observability/ai/business blocks. Operations (L1-305), commitments (L1-306), recovery (L1-307) and the conformance-profile rules (L1-308) are later tasks in this same phase and are not yet reflected here.",
+  "description": "Section 15 (lines 1284-1606). Built incrementally across L1-301..L1-308, one block per task, all edits to this single file. This lane's cluster (L1-301, L1-302 [separate file], L1-303, L1-304, L1-305) lands the envelope, identity, classification, code/verification/environments/deployment, the infrastructure/dependencies/security/data/observability/ai/business blocks, and operations. Commitments (L1-306), recovery (L1-307) and the conformance-profile rules (L1-308) are later tasks in this same phase and are not yet reflected here.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -26,7 +26,8 @@
     "data",
     "observability",
     "automated_containment",
-    "business"
+    "business",
+    "operations"
   ],
   "properties": {
     "contract_version": { "const": 2 },
@@ -362,6 +363,61 @@
         "criticality": { "type": "string", "enum": ["high", "medium", "low"] },
         "active_customers": { "type": "integer", "minimum": 0 },
         "revenue_importance": { "type": "string", "enum": ["high", "medium", "low"] }
+      }
+    },
+    "operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "support_model",
+        "coverage_window",
+        "detection_expectation",
+        "intake_channel",
+        "triager",
+        "weekend_exception_eligible",
+        "primary_responder",
+        "backup_responder",
+        "critical_incident_response"
+      ],
+      "description": "Section 15.1 operations block (L1-305). detection_expectation is DERIVED from support_model -- R-PRD-05 (Section 42.2 mapping) fails a declared value differing from the derived one. primary_responder/backup_responder are DERIVED from incident_responder assignments -- R-PRD-15 (Section 15.1). Both rules live in validators/registry/rules/r_prd_05.py, not encoded in the schema itself.",
+      "properties": {
+        "support_model": { "type": "string", "enum": ["business-hours", "extended", "24x7"] },
+        "coverage_window": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["days", "hours", "timezone"],
+              "description": "Section 47.9: 'days, hours and timezone'. Presence is required by R-PRD-13 (Section 15.5) when support_model is extended or 24x7 -- not enforced here in the schema.",
+              "properties": {
+                "days": { "type": "array", "items": { "type": "string" } },
+                "hours": { "type": "string", "minLength": 1 },
+                "timezone": { "$ref": "https://control-plane.local/schemas/registry/common/defs.v1.schema.json#/$defs/ianaTimezone" }
+              }
+            }
+          ]
+        },
+        "detection_expectation": {
+          "type": "string",
+          "enum": ["next-business-morning", "rostered-window", "continuous"]
+        },
+        "intake_channel": { "type": ["string", "null"] },
+        "triager": { "type": ["string", "null"] },
+        "weekend_exception_eligible": { "type": "boolean" },
+        "primary_responder": {
+          "oneOf": [
+            { "$ref": "https://control-plane.local/schemas/registry/common/defs.v1.schema.json#/$defs/stableId" },
+            { "type": "null" }
+          ]
+        },
+        "backup_responder": {
+          "oneOf": [
+            { "$ref": "https://control-plane.local/schemas/registry/common/defs.v1.schema.json#/$defs/stableId" },
+            { "type": "null" }
+          ]
+        },
+        "critical_incident_response": { "type": "string", "minLength": 1 }
       }
     }
   }
