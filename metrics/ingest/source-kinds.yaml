@@ -1,0 +1,56 @@
+# Metric source discipline - the last clause of the subsystem I row, spec line 9196.
+#
+# Invariant 46, line 9513: "Derived data is computed, never hand-maintained. Metrics
+# derive from the canonical record stores of Section 97 (Records, Events and Data
+# Conventions), never from hand-maintained numbers."
+# Section 103 preamble, line 9776, restates it. Section 52.2 line 4522: "values are
+# derived, never hand-maintained". Line 395: "Derived metrics are never edited by hand."
+schema: metrics/ingest/source-kinds.v1
+rule_spec_lines: [395, 4522, 9513, 9776]
+
+# Closed pair. A third kind is a spec change, not a configuration change.
+kinds:
+  record_store:
+    definition: "a canonical Section 97.2 record store (table at lines 8845-8869)"
+    may_be_a_source_of_truth: true
+    path_shape: "records/** in control-plane-records, or a named control-plane register"
+  collector:
+    definition: "a read-side instrument that reads systems of record it does not own"
+    may_be_a_source_of_truth: false
+    path_shape: "declared under metrics/ingest/**; installed under ops-vm/** by L5"
+closed_set: true
+
+# One entry per collector declared in collectors.yaml. No collector is a record store.
+sources:
+  devlake:
+    kind: collector
+    is_source_of_truth: false
+    may_be_sole_source_of_a_metric: false
+    declaration_file: metrics/ingest/devlake.yaml
+    named_as_source_in_spec_at: [4533, 4536, 4537, 4569, 7048, 7052, 7053, 9782, 9787, 9794, 9811, 9954, 9963]
+    tension_note: "Sections 103.1 and 103.2 head that column 'Source (record store)' while naming DevLake. DevLake is typed here as a collector; the measures it feeds carry source_kind collector in the Phase 7 register."
+    backing_record_store: none-declared-in-spec
+  prometheus:
+    kind: collector
+    is_source_of_truth: false
+    may_be_sole_source_of_a_metric: false
+    declaration_file: metrics/ingest/prometheus.yaml
+    named_as_source_in_spec_at: []
+    backing_record_store: none-declared-in-spec
+    note: "The Section 103.2 digest row at line 9798 sources '/version versus approval record' - the approval record is the record store, the endpoint is the reading."
+  scorecard:
+    kind: collector
+    is_source_of_truth: false
+    may_be_sole_source_of_a_metric: false
+    declaration_file: metrics/ingest/scorecard.yaml
+    named_as_source_in_spec_at: []
+    backing_record_store: PENDING-D-L4-P5-01
+
+# Invariant 46 made mechanical. No file under metrics/ingest/** may carry a metric
+# value: a declaration that carries a number has become a hand-maintained number.
+# These keys are forbidden at any depth in any YAML file in this directory tree.
+forbidden_value_keys: [count, current_value, last_value, latest_value, median, p90, score]
+
+consumed_by:
+  - "metrics/register/** - Lane 4 Phase 7, L4-P7-01 and L4-P7-02"
+  - "subsystem H rendering - UNASSIGNED in PARTITION v1, see D-L4-P5-03"
