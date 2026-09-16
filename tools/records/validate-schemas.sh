@@ -143,15 +143,10 @@ except jsonschema.ValidationError:
     [ "$FAILED" -eq 0 ] && echo "NEGATIVE OK ${TOTAL}/${TOTAL}" || { echo "NEGATIVE FAIL ${FAILED}/${TOTAL}"; exit 1; }
     ;;
   --at105)
-    # DoD-11: AT-105 acceptance test — schema round-trip integrity
-    "$L4_PY" - << 'PYEOF'
-import json, jsonschema
-schema = json.load(open('contracts/records/record.envelope.v1.json'))
-# AT-105: every required field present, $schema and type fields valid
-assert '$schema' in schema, "Missing $schema"
-assert schema.get('type') == 'object', "Root type must be object"
-print("AT-105 OK")
-PYEOF
+    # DoD-11 / L4-P2-24: AT-105 conformance — a deletion-request record
+    # missing any one of the four timestamps, the executor, the checklist,
+    # or the carve-out statement is rejected. See tools/records/asserts/at105.py.
+    "$L4_PY" "$CP_ROOT/tools/records/asserts/at105.py" "$CP_ROOT"
     ;;
   --at046-secreview)
     # DoD-12: AT-046 security review — no PII fields, no secrets in schema
