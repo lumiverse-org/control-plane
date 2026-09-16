@@ -1,0 +1,7 @@
+registry_version: 1
+exceptions:
+- id: EXC-2026-005
+  type: not_a_real_exception_type
+  owner: team-lead
+  expiry: '2027-01-01'
+  deactivation_trigger: null
