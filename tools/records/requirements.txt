@@ -1,0 +1,13 @@
+# L4 Records, Events & Metrics — pinned third-party dependencies.
+# Master Spec Section 101 invariant 85 (third-party dependencies pinned).
+# Toolchain decision: D-L4-TL-1 (lanes/L4-06-tasks.md Section 1), closed as
+# REG-003 in lanes/L0-04-decisions-register.md — Option A: Python 3.12,
+# jsonschema, PyYAML, pinned by exact `==`, no lockfile generator.
+# Fixed versions transcribed from lanes/L4-02-record-schemas.md Section 3.2.
+#
+# Every entry below is pinned with `==`. Do not add a range, a caret, or an
+# unpinned line. A new dependency is added here with an exact version the
+# same day it is first imported by any file under tools/records/** or
+# metrics/**.
+jsonschema==4.23.0
+PyYAML==6.0.2
