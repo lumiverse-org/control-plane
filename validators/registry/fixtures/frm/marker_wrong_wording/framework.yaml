@@ -1,0 +1,33 @@
+framework_version: v1
+status: active
+effective_date: '2026-01-01'
+retirement_date: null
+affected_roles:
+- developer
+multi_framework_transition: false
+review_cadence: quarterly
+rating_scale:
+  verbatim: true
+  bands:
+  - label: '1'
+    definition: Well below expectation
+  - label: '5'
+    definition: Consistently exceeds expectation
+kras:
+- id: KRA-DELIVERY
+  title: Delivery
+  weight: 40
+  definition: Committed work reaches verified done
+kpis:
+- id: KPI-DCA
+  kra_id: KRA-DELIVERY
+  title: Delivery Commitment Achievement
+  weight: 25
+  definition: Share of committed items verified within the period
+  target: 80 percent
+  stretch_target: Not defined in framework v1.
+  evidence_sources:
+  - planning board
+  human_judgement_areas: []
+  time_window: one review period
+  known_limitations: counts items, not item size
