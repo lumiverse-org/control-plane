@@ -2071,3 +2071,133 @@ Publish the accepted set as `contracts/orphans/decisions.yaml`.
 - All local git remotes (control-plane, control-plane-records, all product repos) updated to `https://github.com/lumiverse-org/...`.
 
 **Deliberately NOT edited:** FD-069, FD-070, FD-051, `docs/decisions-summary.md`, and the `.planning/intel/*` / `.planning/codebase/INTEGRATIONS.md` snapshots — these are dated historical records of what was true at the time and are not rewritten to avoid falsifying history.
+
+## FD-114 — PFD-006 break-glass: single-owner for now, no named second owner yet
+
+**Date:** 2026-10-21
+
+**Decision:** No second break-glass GitHub Owner or escrow custodian is named at this time. `bendrohit-eng` remains sole Owner. This decision is deferred, not answered — revisit once real team GitHub accounts exist (see FD-117). No continuity drill is scheduled yet either.
+
+---
+
+## FD-115 — G-F4 V1 pilot products: highest 2 by criticality rank
+
+**Date:** 2026-10-21
+
+**Decision:** The two V1 pilot products (per FD-016's "two, by criticality rank") are **Assetssync.cloud** (rank 1) and **solvox.ai** (rank 2), per `facts.tsv`'s current criticality ordering.
+
+**Propagate to:** `contracts/v1-scope.yaml` needs a `pilot_products` entry naming these two (not yet written — this FD records the decision; the file edit is separate implementation work).
+
+---
+
+## FD-116 — Hermes background-agent CPU benchmark: parked
+
+**Date:** 2026-10-21
+
+**Decision:** The CPU benchmark gating subsystem J (Hermes background-machine layer) activation is not run now. Remains parked/deferred. Revisit once core V1 phases (2-6) are further along.
+
+---
+
+## FD-117 — Team GitHub accounts: still pending
+
+**Date:** 2026-10-21
+
+**Status note (not a decision):** Real GitHub usernames for the team (aarti, bhushan, harshal, mansi, nimesh, prathamesh, saumit, swati, unmesh) are still being collected by the founder. `registries/people/*.yaml`'s current `github_login` values remain known-fictional placeholders until replaced. CODEOWNERS and any multi-person review stays solo-founder until this lands.
+
+---
+
+## FD-118 — Role-id casing: stableId pattern widened to allow underscores
+
+**Date:** 2026-10-21
+
+**Decision:** `schemas/registry/common/defs.v1.schema.json`'s `stableId` pattern is widened to allow underscores (rather than renaming Section 8's canonical role ids to kebab-case). Role ids stay exactly as spec'd (`team_lead`, `acting_team_lead`, `mobile_developer`, `senior_developer`, `foundational_developer`), least rework against existing spec text.
+
+**Resolves:** the blocker found authoring `registries/roles.yaml` (L1-103) and `test_roles_schema.py`'s `xfail(strict=True)`.
+
+---
+
+## FD-119 — registries/people.yaml (flat-file design): retired
+
+**Date:** 2026-10-21
+
+**Decision:** The flat-file `registries/people.yaml` design (L1-104/L1-105, schema `people.registry.v1.schema.json`) is retired. The directory-based `registries/people/*.yaml` design (already populated, already wired into R01/R02/R08/R11) is the one and only people registry going forward. L1-104/L1-105's task text should be marked superseded rather than built.
+
+---
+
+## FD-120 — L1-003/L1-005/L1-904 "Option D" acceptance criteria: struck, not rebuilt
+
+**Date:** 2026-10-21
+
+**Decision:** Confirms FD-094 (2026-09-08) stands: the "Option D" validator design (`report.py`'s OK:/FAIL:/ERROR grammar, `harness.py`'s discover()/RULE_ID/APPLIES_TO module-discovery harness, and `lane_verify.sh`'s checks written against that design) is not built. L1-003, L1-005, and L1-904's task docs and acceptance criteria should be corrected to test the already-shipped "Option B" architecture (flat `cli.py` + `rules/registry.py`, R01-R18 dispatch) instead of being treated as missing work.
+
+---
+
+## FD-121 — Invariant-classification register: build it, canonical count is 29
+
+**Date:** 2026-10-21
+
+**Decision:** `registries/invariants.yaml` + `schemas/registry/invariants.v1.schema.json` (L1-902) should be built. The canonical control-plane artifact count is 29, resolving the Section 101 (27) vs Section 52.6 prose (29) vs Section 52.6 table (30) contradiction in favor of 29, matching most existing cross-references (including the already-shipped L1-505 `OWNERS.yaml`/`INVENTORY.yaml` inventory).
+
+---
+
+## FD-122 — Renovate scope: standard per-product manifest paths
+
+**Date:** 2026-10-21
+
+**Decision:** Renovate's dependency-manifest/lockfile scope is: each product's own `requirements.txt`, control-plane's own `requirements.txt`/`requirements-dev.txt`, plus GitHub Actions action-version pins repo-wide. This should be registered in `registries/policies.yaml` (extending `schemas/registry/policies.v1.schema.json` with a path-list field) per master spec D74's requirement that this exception be registered with an owner and review date.
+
+---
+
+## FD-123 — lane-guard.yml freeze contract: amended, not worked around
+
+**Date:** 2026-10-21
+
+**Decision:** `.github/workflows/lane-guard.yml`'s GUARD-CRITICAL freeze (per `lanes/L0-02-lane-guard.md`) is formally amended to permit L2-T109's two additional steps (lint_workflow, check_required_contexts), rather than moving those checks to a separate workflow. An L0-owned `contracts/ci/lane-guard.yml.frozen` should be authored/updated to match. Separately: the `check_required_contexts` wiring should scope the `renovate-path-guard` required-context to only fire once Renovate actually activates (Phase 2), not unconditionally — do not wire it as an unscoped blocking check today.
+
+---
+
+## FD-124 — Template placeholder vocabulary: expanded to the real ~13 tokens
+
+**Date:** 2026-10-21
+
+**Decision:** `templates/workflows/PLACEHOLDERS.yaml` (D-L2-08/REG-033) is ratified to the full set of tokens actually in use across the 7 existing templates (ORG, PRODUCT, PRODUCT_SLUG, TARGET_REPO, RUNNER_LABEL, SELF_HOSTED, IDENTITY_MODE, RECORDS_REPO, IMAGE_REPO, LOCKFILE_PATHS, BUILD_CONFIG_PATHS, SBOM_FILE, WORKFLOWS_TAG), not the original 5-token list in L2-T300. `templates/workflows/README.md`'s placeholder-syntax description (currently a third, different convention) must be corrected to match.
+
+---
+
+## FD-125 — deploy-production.yml: keep .template.yml filename
+
+**Date:** 2026-10-21
+
+**Decision:** The existing `templates/workflows/deploy-production.template.yml` (matching all sibling templates' naming convention) satisfies this requirement. No second, literally-named `deploy-production.yml` is created.
+
+---
+
+## FD-126 — deploy-production.yml: dispatch-only trigger confirmed
+
+**Date:** 2026-10-21
+
+**Decision:** Confirms the existing D87 rule stands: `deploy-production` stays `workflow_dispatch`-only. No push trigger is added. L2-T304's push-trigger text is superseded by D87.
+
+---
+
+## FD-127 — deploy-staging.yml: the already-built design is authoritative
+
+**Date:** 2026-10-21
+
+**Decision:** Between L2-T303's task-doc body and the already-committed `templates/workflows/deploy-staging.template.yml` (following the L2-03/production-gate-chain pattern), the already-built version is authoritative. L2-T303's task text is superseded; update it to match the live file rather than rewriting the live file to match stale text.
+
+---
+
+## FD-128 — restore-production.yml: build as a shared reusable engine
+
+**Date:** 2026-10-21
+
+**Decision:** The forensic-snapshot-first, named-verifier `restore-production` logic (previously retired under L2-P1-T10, never carried forward to a live L2-T* id per L2-99-review.md finding H3) is rebuilt as a shared reusable engine (`.github/workflows/restore-production.yml`), mirroring `rollback.yml`'s architecture, rather than inlined into the per-product template. Exceptional-authorization records use the same storage mechanism as `rollback.yml`'s `rollback-record` job (D-L2-10 stays otherwise open on exact storage location, but the architecture pattern is decided).
+
+---
+
+## FD-129 — Delegation-expiry warning (DR-L3-05-B): temporary/acting assignments only
+
+**Date:** 2026-10-21
+
+**Decision:** "Delegation-type" assignments, for the 14-day expiry-warning rule (L3-P0-DEL14), are temporary or acting assignments only (e.g. acting-team-lead, temporary coverage roles) — not every assignment that happens to carry an `end_date`. Permanent role assignments with a scheduled end are out of scope for this warning.
