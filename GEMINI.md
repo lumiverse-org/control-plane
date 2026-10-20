@@ -10,7 +10,7 @@ Under NO circumstances may an AI agent (Gemini, Claude, GPT, or any background r
 - "Phase X is finished"
 within 5 minutes, 1 hour, or any brief session without exhaustive, verifiable, multi-phase proof.
 
-The MultiProduct Operating System is an enterprise distributed platform designed to be engineered over 8 to 22 weeks across 5 parallel lanes, spanning 68 lane task specs, 740 cataloged architectural gaps (`_DRYRUN_GAPS.md`), 6 deliverable classes, and multi-tenant live environments.
+The MultiProduct Operating System is an enterprise distributed platform designed to be engineered over 8 to 22 weeks across 5 parallel lanes, spanning 68 lane task specs, 129 cataloged architectural gaps (corrected 2026-10-20; the file's own header, a heading count, and its JSON array length all independently confirm 129 -- not the 740 this constitution previously claimed) (`_DRYRUN_GAPS.md`), 6 deliverable classes, and multi-tenant live environments.
 Declaring the entire system "complete" simply because local unit test stubs or TSV regex checks pass is a critical failure of engineering discipline and model integrity ("Green Checkmark Generator" fallacy).
 
 ---
@@ -53,7 +53,7 @@ Every time an AI agent executes tasks, before it EVER makes any assertion of com
   - Lane 4: Ops VM, Observability, Telemetry & Dashboards (`L4`)
   - Lane 5: Assets, AI Toolchain, Background Machine & Cages (`L5`)
 - Track and report progress strictly using concrete Lane Task IDs (e.g., `L1-T01`, `L3-T14`, `L5-T27`).
-- Check status against `_DRYRUN_GAPS.md` (740 cataloged gaps).
+- Check status against `_DRYRUN_GAPS.md` (129 cataloged gaps).
 
 ### Step 7: Cross-Check the Code & Live Infrastructure
 - Check `git status`, diffs, branch protections, and commit logs across all active repositories (`control-plane`, `Product-1`..`Product-8`, `product-template`).
