@@ -1,0 +1,17 @@
+people
+roles
+topology
+platform
+os-health
+policies
+exceptions
+patterns
+economics
+platform-roadmap
+tools
+ai-toolchain
+change-manifest
+scenario
+product-contract
+verification-contract
+shared-service
