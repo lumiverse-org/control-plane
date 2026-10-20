@@ -4,4 +4,4 @@ __pycache__/
 .pytest_cache/
 *.swp
 *.swo
-.DS_Store
+.DS_Store_gravity-handoff/
