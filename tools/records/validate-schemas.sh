@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # validate-schemas.sh - the Phase-2 schema gate.
 # Master Spec v4.0 Section 97.2 lines 8845-8875; Section 97.1 line 8839; D88 line 10181.
-# Modes: --coverage | --lint | --fields | --time | --all
+# Modes: --coverage | --lint | --fields | --time | --negative | --at105 |
+#        --at046-secreview | --selftest | --all
 # Fail-closed: anything unreadable is a failure, never a skip (Section 40.1 line 3671).
 set -eu
 CP_ROOT="${CP_ROOT:?CP_ROOT must be set}"
@@ -165,6 +166,29 @@ if found:
 print("SECREVIEW OK")
 PYEOF
     ;;
+  --selftest)
+    # L4-P2-02 (lanes/L4-06-tasks.md Section 3): the loader in
+    # tools/records/lib/schemaload.py must accept a real schema and reject a
+    # syntactically invalid one. Negative fixture:
+    # tools/records/fixtures/invalid/schemas/malformed.schema.json (a
+    # trailing-comma JSON parse error). It lives under its own schemas/
+    # subdirectory, never directly in fixtures/invalid/, so the --negative
+    # mode's *.json glob above (record-instance fixtures only) never picks
+    # up a fixture that is itself a broken schema rather than a record.
+    LOADER="$CP_ROOT/tools/records/lib/schemaload.py"
+    GOOD="$CP_ROOT/schemas/records/record.base.schema.json"
+    BAD="$CP_ROOT/tools/records/fixtures/invalid/schemas/malformed.schema.json"
+    [ -f "$LOADER" ] || { echo "SELFTEST FAIL: missing $LOADER"; exit 1; }
+    [ -f "$GOOD" ] || { echo "SELFTEST FAIL: missing fixture $GOOD"; exit 1; }
+    [ -f "$BAD" ] || { echo "SELFTEST FAIL: missing negative fixture $BAD"; exit 1; }
+    if ! "$L4_PY" "$LOADER" "$GOOD" >/dev/null 2>&1; then
+      echo "SELFTEST FAIL: loader rejected a valid schema ($GOOD)"; exit 1
+    fi
+    if "$L4_PY" "$LOADER" "$BAD" >/dev/null 2>&1; then
+      echo "SELFTEST FAIL: loader accepted a syntactically invalid schema ($BAD)"; exit 1
+    fi
+    echo "SELFTEST OK"
+    ;;
   --all)
     run_py --coverage
     run_py --lint
@@ -173,5 +197,5 @@ PYEOF
     CP_ROOT="$CP_ROOT" L4_PY="$L4_PY" bash "$CP_ROOT/tools/records/validate-taxonomy.sh"
     echo "SCHEMAS GATE PASS"
     ;;
-  *) echo "usage: validate-schemas.sh --coverage|--lint|--fields|--time|--negative|--at105|--at046-secreview|--all"; exit 1 ;;
+  *) echo "usage: validate-schemas.sh --coverage|--lint|--fields|--time|--negative|--at105|--at046-secreview|--selftest|--all"; exit 1 ;;
 esac
