@@ -1,0 +1,4 @@
+# Pinned exactly. Invariant 85: pinning discipline. No ranges, no unpinned versions.
+jsonschema==4.23.0
+PyYAML==6.0.2
+pytest==8.3.3
