@@ -37,7 +37,7 @@ def enum_types():
         return None
     with open(PLATFORM, "r", encoding="utf-8") as handle:
         doc = yaml.safe_load(handle) or {}
-    for key in ("event_types", "event_type_enum"):
+    for key in ("event_type", "event_types", "event_type_enum"):
         value = doc.get(key)
         if isinstance(value, list):
             return set(str(v) for v in value)
