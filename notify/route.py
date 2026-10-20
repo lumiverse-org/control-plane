@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Notification router (Spec Sections 92.11, 92.1; D79; AT-106).
+"""Notification router (Spec Sections 92.11, 92.1; D79; AT-106; §90.2).
 
 Resolves an event type against the closed push list and prints exactly one
 decision line. It never sends anything, never invents a destination, and
@@ -12,12 +12,20 @@ Decisions:
   ROUTE: AMBIGUOUS (<n> routes for <event_type>: a, b)
   ROUTE: BLOCKED (<reason>)
 
+An optional --payload is checked by the Layer-B content guard
+(notify/tools/layerb_guard.py, Section 90.2) before any destination is
+resolved: a guarded refusal is reported as ROUTE: BLOCKED and wins over an
+otherwise-resolvable event, on or off the push list.
+
 Exit codes: 0 push or digest, 2 ambiguous or blocked, 3 refused.
 
 Usage: route.py --list
        route.py --event-type <id> [--route <route-id>] [--clock yes|no]
+                [--payload <json>]
 """
 import argparse
+import importlib.util
+import json
 import os
 import sys
 
@@ -25,6 +33,19 @@ import yaml
 
 ROUTING = os.path.join("notify", "routing")
 CHANNELS = os.path.join("notify", "channels")
+LAYERB_GUARD_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "tools", "layerb_guard.py")
+
+
+def load_layerb_guard():
+    """Loads notify/tools/layerb_guard.py by file path, so this router calls
+    the real Layer-B content guard regardless of cwd or how route.py itself
+    was invoked (script or module)."""
+    spec = importlib.util.spec_from_file_location(
+        "layerb_guard", LAYERB_GUARD_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def load_routes():
@@ -59,6 +80,9 @@ def main():
     parser.add_argument("--route", dest="route_id", default=None)
     parser.add_argument("--clock", dest="clock", choices=["yes", "no"],
                         default=None)
+    parser.add_argument("--payload", dest="payload", default=None,
+                        help="JSON event content, checked by the Layer-B "
+                             "content guard before a destination resolves")
     args = parser.parse_args()
 
     routes = load_routes()
@@ -93,6 +117,26 @@ def main():
 
     route_id = matches[0]
     doc = routes[route_id]
+
+    if args.payload is not None:
+        layerb_guard = load_layerb_guard()
+        try:
+            payload = json.loads(args.payload)
+        except (TypeError, json.JSONDecodeError):
+            print("ROUTE: BLOCKED (--payload is not valid JSON)")
+            return 2
+        try:
+            violation = layerb_guard.check_payload(payload)
+        except layerb_guard.GuardFailClosed as exc:
+            print("ROUTE: BLOCKED (Layer B content guard fail-closed: %s)"
+                  % exc)
+            return 2
+        if violation is not None:
+            field, category = violation
+            print("ROUTE: BLOCKED (Layer B content guard refused: payload "
+                  "field %s matches data category %s)" % (field, category))
+            return 2
+
     if args.clock is None:
         clock = bool(doc.get("carries_clock"))
     else:
