@@ -1,0 +1,45 @@
+BLOCKER L4-T310: armed event_type identifiers absent from the Section 97.3 taxonomy
+title:                  "[L4-BLOCKER] L4-T310 armed event_type absent from the Section 97.3 taxonomy"
+lane:                   L4
+phase:                  3
+task_id:                L4-T310
+plan_file:               lanes/L4-03-write-paths.md (L4-T310)
+blocked_by:              "3 armed event_type identifiers in tools/records/dispatch/board-events.yaml do not exist as `id:` values in metrics/taxonomy/event-types.yaml"
+command_run:             CP_ROOT=<worktree> tools/records/validate-board-events.sh
+observed_output: |
+  TAXONOMY-CONFORMANCE FAIL absent-from-taxonomy assigned
+  TAXONOMY-CONFORMANCE FAIL absent-from-taxonomy moved_to_ready
+  TAXONOMY-CONFORMANCE FAIL absent-from-taxonomy re_plan_triggered
+  TAXONOMY-CONFORMANCE FAIL 3/9 absent
+  RESULT=TAXONOMY-CONFORMANCE FAIL 3/9 absent
+  TAXUNCHANGED=unchanged
+  NOWRITE=0
+expected_output:         "RESULT=TAXONOMY-CONFORMANCE OK 9/9 / TAXUNCHANGED=unchanged / NOWRITE=0"
+details: |
+  tools/records/dispatch/board-events.yaml (task L4-T308, already merged to origin/integration)
+  declares three armed transitions with event_type: moved_to_ready, assigned, re_plan_triggered.
+  metrics/taxonomy/event-types.yaml (task L4-T203/L4-02, already merged to origin/integration)
+  carries the corresponding entries under different stable ids:
+    n:2  id: work_item_moved_to_ready   entry: "moved to Ready"
+    n:3  id: work_item_assigned         entry: "assigned"
+    n:12 id: replan_triggered           entry: "re-plan triggered"
+  This is not a defect in validate-board-events.sh (already implemented on origin/integration;
+  confirmed executable, confirmed it never writes metrics/taxonomy/event-types.yaml -
+  hash-object before/after the run is identical - and confirmed its OK/FAIL output format
+  matches the acceptance table exactly). Re-running the SELF-VERIFY block byte-for-byte as
+  written in lanes/L4-03-write-paths.md (L4-T310) reproduces this same 3/9-absent result.
+  The literal COMMANDS heredoc script (the plain bash `for t in $TYPES` variant given in the
+  task file) was also tried in this environment and produces a WORSE, spurious 8/9-absent
+  result on every identifier except the alphabetically-last one - a native-Windows-python3
+  text-mode CRLF artifact in the bash command-substitution/for-loop round trip, not a real
+  taxonomy gap. The single-python-process version already committed on origin/integration
+  avoids that bash round trip entirely and is the correct implementation to keep; it is left
+  unmodified by this task.
+  This exact mismatch is independently pre-documented in lanes/L4-98-DEEP-REVIEW.md as
+  finding #8 and blocker B9 ("L4-03's board-event ids are absent from the L4-02 taxonomy"),
+  and grouped into repair item #7 ("Rename the three ids to the L4-02 taxonomy ... ") which
+  is listed there as not yet applied. lanes/L0-04-decisions-register.md has no entry closing
+  B9 as of this run.
+action_taken:            "Neither metrics/taxonomy/event-types.yaml nor tools/records/dispatch/board-events.yaml was edited. No identifier was invented or renamed."
+spec_ref:                "Master Spec v4.0 Section 97.3 line 8947 ('a new event type is a governed addition to the enum'); L4-00-charter.md section 3.1 (registries are not L4's to write); lanes/L4-98-DEEP-REVIEW.md finding #8 / blocker B9 / repair item #7"
+requires_decision_from:  "L0 integrator - either extend metrics/taxonomy/event-types.yaml with governed additions for `moved_to_ready`/`assigned`/`re_plan_triggered`, or direct L4-T308's board-events.yaml to be renamed to the existing taxonomy ids (work_item_moved_to_ready / work_item_assigned / replan_triggered). Both edits are out of L4-T310's scope and are explicitly forbidden to the L4-T310 executor by the task's own STOP rule."
