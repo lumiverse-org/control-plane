@@ -2057,3 +2057,17 @@ Publish the accepted set as `contracts/orphans/decisions.yaml`.
 - `contracts/v1-scope.yaml` gains a deferral entry for DevLake with reference to FD-112
 - L5 reverts any DevLake service definition from `ops-vm/stack/compose.shared.yml`
 - SIG-04, SIG-07, SIG-08, SIG-40 entries in the signal register updated: `status: deferred`, `trigger_date: TBD (L0 decision)`
+
+## FD-113 — GitHub organisation renamed: pareshp-org → lumiverse-org
+
+**Date:** 2026-10-20
+
+**Decision:** The GitHub organisation was renamed from `pareshp-org` to `lumiverse-org` (same org, same id 326452117 — confirmed via `gh api orgs/lumiverse-org` returning the identical org id post-rename). `pareshp-org` was a placeholder based on the founder's own name, used during initial bootstrap; `lumiverse-org` reflects the actual company/brand name. This is an addition, not a correction to FD-069/FD-070 — those entries correctly record what was true in September 2026 and are left unedited; this is the record of the later rename.
+
+**Propagated to (2026-10-20):**
+- `contracts/project-config.sh` (`ORG=`) — the designated single source of truth per FD-068.
+- Every live `.github/workflows/*.yml`, `templates/workflows/*.template.yml`, `registries/platform/*.yaml`, `contracts/access/access-inputs.yaml`, `scripts/provision/provision.sh`, and `assets/inventory/founder-account-github.yaml` reference.
+- `docs/architecture.md`, `docs/bootstrap-runbook.md`, `lanes/L4-01-records-repo.md`, `PENDING_FOUNDER_DECISIONS.md`.
+- All local git remotes (control-plane, control-plane-records, all product repos) updated to `https://github.com/lumiverse-org/...`.
+
+**Deliberately NOT edited:** FD-069, FD-070, FD-051, `docs/decisions-summary.md`, and the `.planning/intel/*` / `.planning/codebase/INTEGRATIONS.md` snapshots — these are dated historical records of what was true at the time and are not rewritten to avoid falsifying history.

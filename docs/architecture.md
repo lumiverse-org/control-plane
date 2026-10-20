@@ -65,5 +65,5 @@ implementation/
 
 ## Phase 0 Status
 - run-phase-0.sh: READY
-- Repos: pareshp-org/control-plane, pareshp-org/control-plane-records (public)
+- Repos: lumiverse-org/control-plane, lumiverse-org/control-plane-records (public)
 - See PHASE-0-EXECUTION.md

@@ -241,7 +241,7 @@ PFD-009 unblocks CODEOWNERS finalization.
 > **RESOLVED 2026-09-08** — FD-083: Lane reviewers = all 5 = bendrohit-eng (bootstrap)
 
 **Blocks:** CODEOWNERS finalization, branch protection reviewer assignment, PR review routing  
-**Context:** `CODEOWNERS` has `@LANEn_REVIEWER` placeholders (n=1..5). These are the people who will review PRs touching each lane's paths. They must be members of `pareshp-org`.
+**Context:** `CODEOWNERS` has `@LANEn_REVIEWER` placeholders (n=1..5). These are the people who will review PRs touching each lane's paths. They must be members of `lumiverse-org`.
 
 **What L0 must supply:**
 - L1 reviewer GitHub login: `_________________`
@@ -250,7 +250,7 @@ PFD-009 unblocks CODEOWNERS finalization.
 - L4 reviewer GitHub login: `_________________`
 - L5 reviewer GitHub login: `_________________`
 
-**Note:** Each reviewer must already have a GitHub account and must be invited to `pareshp-org`. L0 can assign themselves (`bendrohit-eng`) to all 5 initially — that is a valid bootstrap option.  
+**Note:** Each reviewer must already have a GitHub account and must be invited to `lumiverse-org`. L0 can assign themselves (`bendrohit-eng`) to all 5 initially — that is a valid bootstrap option.  
 **To decide:** Add to next L0 session, say "FD-083: Lane reviewers = ..." or "all lanes: bendrohit-eng for bootstrap"
 
 ---
@@ -320,7 +320,7 @@ All three definitions produce different observable behaviour at gate-check time.
 
 **Blocks:** L3-04 executability; L3 Phase 0 dispatch  
 **Context:** A direct contradiction exists between two L3 documents:
-- L3-04 requires live GitHub org API calls to function (it provisions repos, teams, and webhooks in `pareshp-org`).
+- L3-04 requires live GitHub org API calls to function (it provisions repos, teams, and webhooks in `lumiverse-org`).
 - L3-06 §0.4 explicitly states "no live org calls during bootstrap phase."
 
 Running L3-04 as written violates L3-06's bootstrap constraint. Deferring L3-04 blocks the org-provisioning tasks that several later L3 tasks depend on.

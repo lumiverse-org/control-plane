@@ -41,8 +41,8 @@ bash run-phase-0.sh
 ```
 
 Creates:
-- `pareshp-org/control-plane` (public)
-- `pareshp-org/control-plane-records` (public)
+- `lumiverse-org/control-plane` (public)
+- `lumiverse-org/control-plane-records` (public)
 - Branch protection on main
 - CODEOWNERS pushed
 
@@ -60,7 +60,7 @@ After Phase 0 completes:
 1. **Push implementation to GitHub:**
 ```bash
 cd Code/implementation
-git remote add origin https://github.com/pareshp-org/control-plane.git
+git remote add origin https://github.com/lumiverse-org/control-plane.git
 git push -u origin master
 ```
 
@@ -75,7 +75,7 @@ make check
 ```
 
 4. **Upgrade to Team plan (recommended):**
-   - Go to https://github.com/organizations/pareshp-org/billing
+   - Go to https://github.com/organizations/lumiverse-org/billing
    - Change REPO_VISIBILITY to "private" in contracts/project-config.sh
    - Make repos private
 
@@ -131,7 +131,7 @@ Steps:
 ## Upgrade Path: Free → Team Plan
 Currently on GitHub Free plan with public repos.
 When ready to go private:
-1. Purchase Team plan ($4/user/month) at github.com/organizations/pareshp-org/billing
+1. Purchase Team plan ($4/user/month) at github.com/organizations/lumiverse-org/billing
 2. Update `REPO_VISIBILITY="private"` in `contracts/project-config.sh`
-3. Run: `gh repo edit pareshp-org/control-plane --visibility private`
-4. Run: `gh repo edit pareshp-org/control-plane-records --visibility private`
+3. Run: `gh repo edit lumiverse-org/control-plane --visibility private`
+4. Run: `gh repo edit lumiverse-org/control-plane-records --visibility private`

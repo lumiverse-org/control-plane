@@ -95,7 +95,7 @@ jobs:
           REGISTRY_REF: ${{ inputs.registry_ref }}
         run: |
           set -euo pipefail
-          if ! gh api "repos/pareshp-org/control-plane/contents/people.yaml?ref=${REGISTRY_REF}" \
+          if ! gh api "repos/lumiverse-org/control-plane/contents/people.yaml?ref=${REGISTRY_REF}" \
                  -H "Accept: application/vnd.github.raw" > people.yaml 2>fetch.err; then
             cat fetch.err >&2
             echo "IDENTITY_GATE_REGISTRY_UNREADABLE"; exit 1
@@ -109,7 +109,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RECORDS_READ_TOKEN }}
           APPROVAL_GLOB: 'records/deployments/*'
-          RECORDS_SLUG: 'pareshp-org/control-plane-records'
+          RECORDS_SLUG: 'lumiverse-org/control-plane-records'
         run: |
           set -euo pipefail
           APPROVAL_DIR="$(dirname "${APPROVAL_GLOB}")"
@@ -261,7 +261,7 @@ jobs:
           PRODUCT: ${{ inputs.product }}
           VERIFICATION_BLOCK_STORE: 'records/verification-blocks/'
           GH_TOKEN: ${{ secrets.RECORDS_READ_TOKEN }}
-          RECORDS_SLUG: 'pareshp-org/control-plane-records'
+          RECORDS_SLUG: 'lumiverse-org/control-plane-records'
         run: |
           set -euo pipefail
           # REG-020 resolved by FD-053 (2026-09-06): records/verification-blocks/

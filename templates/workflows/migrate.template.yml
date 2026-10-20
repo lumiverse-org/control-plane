@@ -34,7 +34,7 @@ jobs:
   # >>> PRODUCTION-GATE-CHAIN v1
   production-gate-chain:
     name: production-gate-chain
-    uses: pareshp-org/control-plane/.github/workflows/production-gate-chain.yml@workflows/v1
+    uses: lumiverse-org/control-plane/.github/workflows/production-gate-chain.yml@workflows/v1
     with:
       product: '{{PRODUCT_SLUG}}'
       digest: ${{ inputs.migration_id }}

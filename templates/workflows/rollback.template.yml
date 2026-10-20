@@ -40,7 +40,7 @@ jobs:
   # >>> PRODUCTION-GATE-CHAIN v1
   rollback:
     name: rollback
-    uses: pareshp-org/control-plane/.github/workflows/rollback.yml@workflows/v1
+    uses: lumiverse-org/control-plane/.github/workflows/rollback.yml@workflows/v1
     with:
       product: '{{PRODUCT_SLUG}}'
       current_digest: ${{ inputs.current_digest }}

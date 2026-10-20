@@ -82,7 +82,7 @@ jobs:
           REGISTRY_REF: ${{ inputs.registry_ref }}
         run: |
           set -euo pipefail
-          if ! gh api "repos/pareshp-org/control-plane/contents/people.yaml?ref=${REGISTRY_REF}" \
+          if ! gh api "repos/lumiverse-org/control-plane/contents/people.yaml?ref=${REGISTRY_REF}" \
                  -H "Accept: application/vnd.github.raw" > people.yaml 2>fetch.err; then
             cat fetch.err >&2
             echo "ACTOR_GATE_REGISTRY_UNREADABLE"; exit 1

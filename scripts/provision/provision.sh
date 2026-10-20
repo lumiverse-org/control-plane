@@ -82,9 +82,9 @@ EOF
     # This is L3-04-13 LIVE task — do not run during bootstrap without explicit --mode apply
     if [[ "$MODE" == "apply" ]]; then
       echo "WARNING: Creating live GitHub repo requires GITHUB_TOKEN"
-      run_live "gh repo create ${ORG:-pareshp-org}/${REPO_NAME:-$PRODUCT_ID} --public --description '$PRODUCT_NAME product repo'"
+      run_live "gh repo create ${ORG:-lumiverse-org}/${REPO_NAME:-$PRODUCT_ID} --public --description '$PRODUCT_NAME product repo'"
     else
-      echo "[DRY-RUN] Would create GitHub repo: ${ORG:-pareshp-org}/${REPO_NAME:-$PRODUCT_ID}"
+      echo "[DRY-RUN] Would create GitHub repo: ${ORG:-lumiverse-org}/${REPO_NAME:-$PRODUCT_ID}"
     fi
 
     echo "Done: create-product $PRODUCT_ID (mode=$MODE)"

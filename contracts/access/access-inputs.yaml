@@ -66,7 +66,7 @@ checks:
     shell_profile_paths:
       - "/etc/profile"
       - "/home/cp-creds/.profile"
-layer_b_admin_group: "pareshp-org/layer-b-admins"
+layer_b_admin_group: "lumiverse-org/layer-b-admins"
 layer_b:
   session:
     max_lifetime_duration: "720h"

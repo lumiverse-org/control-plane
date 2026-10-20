@@ -122,7 +122,7 @@ After filing: stop work on this lane. Do not start the next task.
 
 ### ~~DECISION REQUIRED~~ D-L4-01 — The GitHub organisation login
 
-> **Status: Closed (FD-065, 2026-09-06 — event-type enum question; FD-069, 2026-09-08 — org login).** The org login is `pareshp-org`, recorded in `contracts/project-config.sh` (FD-068/FD-069). The `check_org` guard at §0.1 prevents execution when `ORG` is unset. The charter's D-L4-01 event-type enum question is separately resolved by FD-065: L4 source identifiers are internal aliases that map to existing L1 event types via `metrics/signals/sig-source-map.yaml`.
+> **Status: Closed (FD-065, 2026-09-06 — event-type enum question; FD-069, 2026-09-08 — org login).** The org login is `lumiverse-org`, recorded in `contracts/project-config.sh` (FD-068/FD-069). The `check_org` guard at §0.1 prevents execution when `ORG` is unset. The charter's D-L4-01 event-type enum question is separately resolved by FD-065: L4 source identifiers are internal aliases that map to existing L1 event types via `metrics/signals/sig-source-map.yaml`.
 
 **Why this is not decidable here.** MasterSpec §98.2 Phase 1 requires *"Consolidate all products into one company-owned GitHub organisation"* but never names it, and PARTITION.md names repositories without an owner. The executor cannot invent an org login: a wrong value creates a repository in the wrong account and the ruleset and App scoping in T05–T10 attach to the wrong object.
 

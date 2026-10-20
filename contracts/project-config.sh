@@ -4,7 +4,7 @@
 # Run `source "$(git rev-parse --show-toplevel)/contracts/project-config.sh"` at top of every script.
 
 # ── Org ──────────────────────────────────────────────────────────────────────
-export ORG="pareshp-org"                  # GitHub org login (FD-069, 2026-09-08); https://github.com/pareshp-org — upgrade to Team ($4/mo) to enable Phase 0
+export ORG="lumiverse-org"                # GitHub org login (FD-069 2026-09-08, renamed FD-113 2026-10-20); https://github.com/lumiverse-org — upgrade to Team ($4/mo) to enable Phase 0
 export CP="control-plane"                 # Primary repo name
 export CPR="control-plane-records"        # Records repo name
 
