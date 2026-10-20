@@ -15,6 +15,27 @@ if [ "${1:-}" = "--provenance" ]; then
   if [ "$n" = "3" ]; then echo "PROVENANCE OK"; exit 0; else echo "PROVENANCE FAIL labelled=$n expected=3"; exit 1; fi
 fi
 
+# L4-P6-12 - five-minute collection-cost cap assertion (Section 67.3 line 5605 /
+# Section 97.4 line 8980). collection_cost.py holds no threshold literal; it reads
+# the cap through lib/config.py's load_calibration(), same as every other module here.
+if [ "${1:-}" = "--cost-cap" ]; then
+  ok=0; total=0
+  CC="$CP/metrics/attention/collection_cost.py"
+  # 1: a five-minute design is at the cap and must be accepted.
+  total=$((total+1))
+  python3 "$CC" --minutes 5 >/dev/null 2>&1 && ok=$((ok+1))
+  # 2: a six-minute design exceeds the cap and must be rejected, not accepted.
+  total=$((total+1))
+  python3 "$CC" --minutes 6 >/dev/null 2>&1 || ok=$((ok+1))
+  # 3: the ledger's own declared cap must itself be at or under five minutes.
+  total=$((total+1))
+  python3 "$CC" >/dev/null 2>&1 && ok=$((ok+1))
+  if [ "$ok" -eq "$total" ]; then
+    echo "COST-CAP OK $ok/$total"; exit 0
+  fi
+  echo "COST-CAP FAIL $ok/$total"; exit 1
+fi
+
 for c in 1 2 3 4 5 6 7 8; do
   id="DC-$c"
   got="$(python3 "$CP/metrics/attention/derive.py" --input "$IN/dc-$c.yaml" --json 2>/dev/null \
