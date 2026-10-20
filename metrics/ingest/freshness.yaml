@@ -1,0 +1,42 @@
+# Ingest freshness and the frozen arming vocabulary.
+# Section 51.2 line 4459 is the only collector freshness SLO stated anywhere in the
+# specification. L4 declares no bound the spec does not state.
+schema: metrics/ingest/freshness.v1
+
+collectors:
+  devlake:
+    freshness_slo: "Ingest completes at least daily"
+    measured_by: "Age of the newest ingested row"
+    breach_class: Amber
+    stale_rendering: "armed — source stale"
+    spec_section: "51.2"
+    spec_line: 4459
+  prometheus:
+    freshness_slo: none-declared-in-spec
+    l4_declares_no_slo: true
+    note: "38.4 line 3476 refers to 'a scrape interval' and names no value; no freshness SLO for Prometheus exists in the specification."
+  scorecard:
+    freshness_slo: none-declared-in-spec
+    l4_declares_no_slo: true
+    note: "94.2 line 8406 and 84.4 line 8561 give the scan cadence, not a freshness bound."
+
+# The only three strings that may appear as an arming value anywhere under
+# metrics/ingest/**. See L4-05-pipeline-and-boards.md section 7.10.
+arming_vocabulary:
+  - value: "unarmed — not yet instrumented"
+    meaning: "the declared source is not live"
+    spec_line: 4524
+  - value: "unarmed — insufficient history"
+    meaning: "the source is live but does not yet hold the full lookback window"
+    spec_line: 4524
+  - value: "armed — source stale"
+    meaning: "the source is live and holds the window, but its ingest is past its freshness bound"
+    spec_line: 4459
+closed_vocabulary: true
+
+# Invariant 47, line 9514: retention classes are declared in the control plane and
+# owned by the Founder. The class file is L4-P3-07's. Nothing here declares a class.
+retention_class_declared_here: false
+retention_declaration_file: metrics/retention/retention-classes.yaml
+retention_owner: Founder
+retention_invariant_spec_line: 9514
