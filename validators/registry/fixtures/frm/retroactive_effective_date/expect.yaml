@@ -1,0 +1,4 @@
+today: "2026-08-27"
+expect_exit: 1
+expect_errors:
+  - rule: R-FRM-02
