@@ -78,6 +78,14 @@
     "decisionRecordId": {
       "type": "string",
       "pattern": "^DEC-\\d{4}-\\d{3,}$"
+    },
+    "exceptionType": {
+      "type": "string",
+      "enum": [
+        "break_glass", "weekend_work", "platform_rollback", "founder_intervention",
+        "support_extension", "temporary_access", "platform_compatibility", "emergency_production",
+        "policy_waiver", "bootstrap", "founder_standing_delegation_activation"
+      ]
     }
   }
 }

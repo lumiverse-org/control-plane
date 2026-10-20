@@ -1,0 +1,6 @@
+registry_version: 1
+exceptions:
+- id: EXC-2026-003
+  type: bootstrap
+  owner: team-lead
+  expiry: '2027-01-01'

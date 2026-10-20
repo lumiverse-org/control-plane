@@ -1,0 +1,6 @@
+registry_version: 1
+exceptions:
+- id: EXC-2026-001
+  type: bootstrap
+  owner: team-lead
+  deactivation_trigger: null

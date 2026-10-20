@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://control-plane.local/schemas/registry/exceptions.v1.minimal.schema.json",
+  "title": "Exceptions Registry, week-one minimal schema (registries/exceptions.yaml)",
+  "description": "Section 54.5 Phase-1 completion check: 'expiry, owner, deactivation trigger present'. Section 54.5 requires the week-one minimal validator and the full Phase G2 validator (schemas/registry/exceptions.registry.v1.schema.json, L1-601) to read one schema and not two, so this schema is written as a strict subset -- every property this schema requires is also required by the full schema -- that L1-601's schema extends, never replaces. additionalProperties is left open at both levels so the full schema is free to close it without this one becoming a second, competing schema.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["registry_version", "exceptions"],
+  "properties": {
+    "registry_version": { "const": 1 },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "type", "owner", "expiry", "deactivation_trigger"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^EXC-\\d{4}-\\d{3}$" },
+          "type": { "$ref": "common/defs.v1.schema.json#/$defs/exceptionType" },
+          "owner": { "$ref": "common/defs.v1.schema.json#/$defs/stableId" },
+          "expiry": { "$ref": "common/defs.v1.schema.json#/$defs/isoDate" },
+          "deactivation_trigger": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}
