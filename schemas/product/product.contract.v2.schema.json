@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://control-plane.local/schemas/product/product.contract.v2.schema.json",
   "title": "Product Operating Contract (product.yaml) v2",
-  "description": "Section 15 (lines 1284-1606). Built incrementally across L1-301..L1-308, one block per task, all edits to this single file. This lane's cluster (L1-301, L1-302 [separate file], L1-303, L1-304, L1-305, L1-306) lands the envelope, identity, classification, code/verification/environments/deployment, the infrastructure/dependencies/security/data/observability/ai/business blocks, operations, and commitments. Recovery (L1-307) and the conformance-profile rules (L1-308) are later tasks in this same phase and are not yet reflected here.",
+  "description": "Section 15 (lines 1284-1606). Built incrementally across L1-301..L1-308, one block per task, all edits to this single file. This lane's cluster (L1-301, L1-302 [separate file], L1-303, L1-304, L1-305, L1-306, L1-307) lands the envelope, identity, classification, code/verification/environments/deployment, the infrastructure/dependencies/security/data/observability/ai/business blocks, operations, commitments, and recovery. The conformance-profile rules (L1-308) are later tasks in this same phase and are not yet reflected here.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -28,7 +28,8 @@
     "automated_containment",
     "business",
     "operations",
-    "commitments"
+    "commitments",
+    "recovery"
   ],
   "properties": {
     "contract_version": { "const": 2 },
@@ -481,6 +482,40 @@
           "conflict_check": { "type": "string", "enum": ["passed", "waived-with-decision"] }
         }
       }
+    },
+    "recovery": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "backup_frequency",
+            "backup_retention_days",
+            "encrypted",
+            "storage_location",
+            "restore_procedure",
+            "restore_environment",
+            "integrity_check",
+            "restore_tested",
+            "rpo_minutes",
+            "rto_minutes"
+          ],
+          "description": "Section 15.1 recovery block (L1-307). null is schema-legal for any conformance_profile; Section 15.7 permits it specifically for static-site -- enforcing that it is ONLY legal there is R-PRD-08/L1-308's job, not this schema. restore_tested cadence against classification.reliability_criticality is enforced by R-PRD-07 in validators/registry/rules/r_prd_07.py, not encoded here.",
+          "properties": {
+            "backup_frequency": { "type": "string", "minLength": 1 },
+            "backup_retention_days": { "type": "integer", "minimum": 1 },
+            "encrypted": { "type": "boolean" },
+            "storage_location": { "type": "string", "minLength": 1 },
+            "restore_procedure": { "type": "string", "minLength": 1 },
+            "restore_environment": { "type": "string", "minLength": 1 },
+            "integrity_check": { "type": "string", "minLength": 1 },
+            "restore_tested": { "$ref": "https://control-plane.local/schemas/registry/common/defs.v1.schema.json#/$defs/isoDate" },
+            "rpo_minutes": { "type": "integer", "minimum": 0 },
+            "rto_minutes": { "type": "integer", "minimum": 0 }
+          }
+        }
+      ]
     }
   }
 }
