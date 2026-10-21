@@ -1,0 +1,13 @@
+registry_version: 1
+people:
+  - id: int-1
+    display_name: "Intern One"
+    github_login: int-1
+    role: developer
+    employment_type: intern
+    capabilities: [code-review]
+    ai_runtime: null
+    availability: active
+    access_status: provisioned
+    start_date: "2025-06-01"
+    end_date: null

@@ -1,0 +1,13 @@
+registry_version: 1
+people:
+  - id: con-0
+    display_name: "Contractor Zero"
+    github_login: con-0
+    role: developer
+    employment_type: contractor
+    capabilities: [code-review]
+    ai_runtime: null
+    availability: active
+    access_status: provisioned
+    start_date: "2025-06-01"
+    end_date: "2026-12-31"

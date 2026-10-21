@@ -125,7 +125,16 @@ def test_at008_contractor_scoped_dated_capability_limited():
     temporary_contributor assignment validates; end_date: null fails
     R-PPL-01 (Section 7.1)."""
     from validators.registry.rules import r_ppl_01  # L1-203
-    raise NotImplementedError("L1-203 (r_ppl_01) not yet built -- see impl spec HARD PREREQUISITES")
+
+    case = os.path.join(FIXTURES_DIR, "at008_contractor")
+    valid_doc = yaml.safe_load(open(os.path.join(case, "valid", "people.yaml"), encoding="utf-8"))
+    findings = r_ppl_01.check(valid_doc, as_of="2026-08-27")
+    assert findings == []
+
+    invalid_doc = yaml.safe_load(open(os.path.join(case, "end_date_null", "people.yaml"), encoding="utf-8"))
+    findings = r_ppl_01.check(invalid_doc, as_of="2026-08-27")
+    assert any(f.startswith("R-PPL-01") for f in findings)
+
 
 
 def test_at009_conformance_profile_equivalent_evidence():

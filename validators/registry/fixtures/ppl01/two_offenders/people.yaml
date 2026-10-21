@@ -1,0 +1,24 @@
+registry_version: 1
+people:
+  - id: con-3
+    display_name: "Contractor Three"
+    github_login: con-3
+    role: developer
+    employment_type: contractor
+    capabilities: [code-review]
+    ai_runtime: null
+    availability: active
+    access_status: provisioned
+    start_date: "2025-06-01"
+    end_date: null
+  - id: int-2
+    display_name: "Intern Two"
+    github_login: int-2
+    role: developer
+    employment_type: intern
+    capabilities: [code-review]
+    ai_runtime: null
+    availability: active
+    access_status: provisioned
+    start_date: "2025-06-01"
+    end_date: null
