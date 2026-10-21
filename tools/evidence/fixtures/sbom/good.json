@@ -1,0 +1,24 @@
+[
+  {
+    "digest": "sha256:aaa1",
+    "step_id": "build-and-push",
+    "storage_prefix": "s3://artifacts/builds",
+    "sbom": {
+      "step_id": "build-and-push",
+      "storage_prefix": "s3://artifacts/builds",
+      "immutable": true,
+      "path": "s3://artifacts/builds/aaa1.sbom.json"
+    }
+  },
+  {
+    "digest": "sha256:bbb2",
+    "step_id": "build-and-push",
+    "storage_prefix": "s3://artifacts/builds",
+    "sbom": {
+      "step_id": "build-and-push",
+      "storage_prefix": "s3://artifacts/builds",
+      "immutable": true,
+      "path": "s3://artifacts/builds/bbb2.sbom.json"
+    }
+  }
+]
