@@ -1,0 +1,24 @@
+registry_version: 1
+drift_class_tolerances:
+  amber_per_product: 2
+  red_portfolio_flat: 3
+  green: unlimited
+  blocking: no-budget
+signals:
+- id: SIG-05
+  name: Orphan risk
+  priority: P0
+  states:
+  - state: breach
+    class: Blocking
+  activation_dependency: Registry populated with at least one product assignment
+  lookback_window: rolling 30 days
+  definition: A product or shared service has no active primary_owner assignment
+  source: webcam
+  time_window: rolling 30 days
+  baseline: null
+  expected_interpretation: Zero is the only acceptable count
+  known_limitations: none-known
+  owner: founder
+  action_on_breach: Raise SIG-05 Blocking; halt changes to affected product until
+    assignment is made
