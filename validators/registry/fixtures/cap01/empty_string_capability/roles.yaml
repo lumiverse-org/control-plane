@@ -1,0 +1,4 @@
+registry_version: 1
+roles:
+  - id: test-role
+    default_capabilities: [""]

@@ -1,0 +1,4 @@
+registry_version: 1
+people:
+  - id: test-person
+    capabilities: ["backend", "wizardry"]
