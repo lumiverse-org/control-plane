@@ -1,0 +1,5 @@
+registry_version: 1
+exceptions:
+- id: EXC-BOOTSTRAP-001
+  type: bootstrap
+  status: approved

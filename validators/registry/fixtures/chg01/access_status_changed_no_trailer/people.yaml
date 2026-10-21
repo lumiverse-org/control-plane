@@ -1,0 +1,14 @@
+registry_version: 1
+people:
+- id: dev-a
+  display_name: Developer A
+  github_login: exampledev-a
+  role: developer
+  employment_type: employee
+  capabilities:
+  - code-review
+  ai_runtime: null
+  availability: active
+  access_status: revoked
+  start_date: '2026-01-05'
+  end_date: null

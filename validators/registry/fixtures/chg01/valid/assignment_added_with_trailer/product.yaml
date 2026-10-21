@@ -1,0 +1,8 @@
+contract_version: 2
+identity:
+  id: checkout-svc
+assignments:
+- person: dev-b
+  type: cross_reviewer
+  start_date: '2026-01-01'
+  end_date: null

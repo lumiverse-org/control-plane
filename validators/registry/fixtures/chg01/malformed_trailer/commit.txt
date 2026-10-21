@@ -1,0 +1,3 @@
+L1-504: add capability
+
+Decision Record: DEC-2026-001
