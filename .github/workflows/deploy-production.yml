@@ -1,0 +1,157 @@
+# L2-T131 — deploy-production.yml
+# The workflow all six rules of §0.6 converge on.
+# §37.3: actor gate is the FIRST step.
+# §27.2: workflow-identity gate (approver ≠ deployer), fail-closed.
+# §32:   digest invariant comparison.
+# §34.2: time gate, resolved in product's declared timezone.
+# §97.2: record and event writes are required, failing steps.
+# §101 invariants 18, 22, 23: actor gate, same digest, never rebuilt.
+# ZERO best-effort execution. ZERO rebuild commands.
+name: Deploy — Production
+
+on:
+  workflow_call:
+    inputs:
+      artifact_digest:
+        description: "sha256 digest to deploy — must match staging-verified digest"
+        required: true
+        type: string
+      artifact_name:
+        description: "Container image name"
+        required: true
+        type: string
+      staging_record_path:
+        description: "Path to staging deployment record for digest invariant check"
+        required: true
+        type: string
+      operating_timezone:
+        description: "Product's declared IANA operating timezone (§34.2)"
+        required: true
+        type: string
+      deploy_command:
+        description: "Product-specific deploy command"
+        required: true
+        type: string
+      smoke_command:
+        description: "Product-specific smoke test command"
+        required: true
+        type: string
+      approval_record_path:
+        description: "Path to the production-approval record"
+        required: true
+        type: string
+    secrets:
+      PEOPLE_YAML_B64:
+        required: true
+      RECORDS_WRITER_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy-production
+    environment: production
+    runs-on: ubuntu-22.04
+    steps:
+      # STEP 0: actor gate — capability production-approval (§37.3)
+      - name: Actor gate
+        run: |
+          set -euo pipefail
+          echo "${{ secrets.PEOPLE_YAML_B64 }}" | base64 -d > /tmp/people.yaml
+          python -m tools.evidence.actor_gate \
+            --actor "${{ github.actor }}" \
+            --capability production-approval \
+            --people /tmp/people.yaml \
+            --summary
+
+      - name: Checkout control plane tools
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
+
+      # STEP 2: workflow-identity gate — approver ≠ deployer (§27.2)
+      - name: Workflow-identity gate
+        run: |
+          set -euo pipefail
+          python -m tools.evidence.identity_gate \
+            --approval "${{ inputs.approval_record_path }}" \
+            --deployer "${{ github.actor }}" \
+            --summary
+
+      # STEP 3: digest invariant — requested vs staging-verified (§32)
+      - name: Digest invariant
+        run: |
+          set -euo pipefail
+          python -m tools.evidence.digest_invariant \
+            --requested "${{ inputs.artifact_digest }}" \
+            --staging-record "${{ inputs.staging_record_path }}" \
+            --summary
+
+      # STEP 4: time gate — Friday freeze and core hours (§34.2)
+      - name: Time gate
+        run: |
+          set -euo pipefail
+          python -m tools.evidence.timegate \
+            --at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --tz "${{ inputs.operating_timezone }}" \
+            --profile business-hours \
+            --summary
+
+      # STEP 5: deploy the same digest — NO BUILD STEP (§101 invariants 22/23)
+      - name: Deploy artifact digest (never rebuilt)
+        run: |
+          set -euo pipefail
+          DIGEST="${{ inputs.artifact_digest }}"
+          [ -n "${DIGEST}" ] || { echo "ERROR: empty artifact digest — fail-closed"; exit 1; }
+          echo "Deploying digest ${DIGEST} to production — same digest as staging"
+          ${{ inputs.deploy_command }} "${DIGEST}"
+
+      - name: Smoke tests and health checks
+        run: |
+          set -euo pipefail
+          ${{ inputs.smoke_command }}
+
+      # STEP 7: deployment record — required, failing (§97.2, §0.6 rule 6)
+      - name: Write production deployment record (required, failing step)
+        run: |
+          set -euo pipefail
+          cat > /tmp/prod-record.yaml << RECORD
+          digest: "${{ inputs.artifact_digest }}"
+          artifact_name: "${{ inputs.artifact_name }}"
+          deployed_by: "${{ github.actor }}"
+          deployed_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          environment: production
+          git_commit: "${{ github.sha }}"
+          pull_request: ${{ github.event.pull_request.number || 0 }}
+          approved_by: "$(python -c "import yaml; d=yaml.safe_load(open('${{ inputs.approval_record_path }}')); print(d.get('approver',''))")"
+          run_id: ${{ github.run_id }}
+          RECORD
+          RECORDS_WRITER_TOKEN="${{ secrets.RECORDS_WRITER_TOKEN }}" \
+          python -m tools.evidence.records_client \
+            --kind deployment \
+            --payload /tmp/prod-record.yaml \
+            --summary
+
+      # STEP 8: production event — required, failing (§97.2)
+      - name: Write production deployed event (required, failing step)
+        run: |
+          set -euo pipefail
+          cat > /tmp/prod-event.yaml << EVENT
+          event_id: "evt-prod-${{ github.run_id }}-${{ github.run_attempt }}"
+          event_type: production_deployed
+          occurred_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          actor: "${{ github.actor }}"
+          environment: production
+          product: "${{ inputs.artifact_name }}"
+          artifact_digest: "${{ inputs.artifact_digest }}"
+          run_id: ${{ github.run_id }}
+          correlation_id: "prod-${{ github.sha }}"
+          EVENT
+          RECORDS_WRITER_TOKEN="${{ secrets.RECORDS_WRITER_TOKEN }}" \
+          python -m tools.evidence.event_writer \
+            --event /tmp/prod-event.yaml \
+            --summary
