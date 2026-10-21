@@ -1,0 +1,4 @@
+AT-035 LEG 1 PASS: archive decrypted successfully with key held outside GitHub
+AT-035 LEG 2 PASS: repos, issues, pull requests and review records restored via migrations REST API
+AT-035 LEG 3 PASS: Projects v2 boards restored from the separate GraphQL dump
+AT-035 LEG 4 PASS: restore-test environment wiped and wipe verified; test copy not left standing
