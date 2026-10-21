@@ -1,0 +1,5 @@
+people:
+- id: dev-owner
+  availability: active
+- id: dev-responder
+  availability: active

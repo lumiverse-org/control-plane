@@ -1,0 +1,11 @@
+identity:
+  id: product-1
+assignments:
+- person: dev-owner
+  type: primary_owner
+  start_date: '2026-01-05'
+  end_date: null
+- person: dev-responder
+  type: incident_responder
+  start_date: '2026-01-05'
+  end_date: null

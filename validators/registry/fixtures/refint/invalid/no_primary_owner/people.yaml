@@ -1,0 +1,5 @@
+people:
+- id: dev-reviewer
+  availability: active
+- id: dev-responder
+  availability: active
