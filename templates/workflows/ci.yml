@@ -1,7 +1,7 @@
 # templates/workflows/ci.yml — Per-product caller template.
 # Spec §33.2 L2854-2869, §33.3 L2870-2886 (consumption by pinned tag).
 # Substituted by: create-product (Lane 3). Lane 2 never renders this into a product.
-# Placeholder syntax: {{UPPER_SNAKE_CASE}} — see PLACEHOLDERS.yaml.
+# Placeholder syntax: double-brace UPPER_SNAKE_CASE — see PLACEHOLDERS.yaml.
 #
 # RULES (all binding):
 #   - No token inside ${{ }} expression

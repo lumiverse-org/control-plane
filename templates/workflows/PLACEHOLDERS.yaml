@@ -13,11 +13,15 @@
 
 tokens:
   - "{{BUILD_CONFIG_PATHS}}"
+  - "{{CONFORMANCE_PROFILE}}"
+  - "{{CONTROL_PLANE_REPO}}"
+  - "{{DEFAULT_BRANCH}}"
   - "{{IDENTITY_MODE}}"
   - "{{IMAGE_REPO}}"
   - "{{LOCKFILE_PATHS}}"
   - "{{ORG}}"
   - "{{PRODUCT}}"
+  - "{{PRODUCT_NAME}}"
   - "{{PRODUCT_SLUG}}"
   - "{{RECORDS_REPO}}"
   - "{{RUNNER_LABEL}}"
