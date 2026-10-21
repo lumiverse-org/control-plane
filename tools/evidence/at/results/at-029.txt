@@ -1,0 +1,3 @@
+AT-029 LEG 1 PASS: all products continued serving during simulated control-plane outage
+AT-029 LEG 2 PASS: manual rollback completed using pull-only credential and locally cached digest; no GitHub contact
+AT-029 LEG 3 PASS: documented procedure followed exactly; no improvised steps recorded
