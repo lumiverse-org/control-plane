@@ -1,0 +1,7 @@
+{
+  "conformance_profile": "service",
+  "approved_digest": "sha256:production001",
+  "live_digest": "sha256:stale-build-999",
+  "status_code": 200,
+  "endpoint": "https://product.example.com/version"
+}

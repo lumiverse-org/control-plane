@@ -1,0 +1,6 @@
+{
+  "conformance_profile": "service",
+  "approved_digest": "sha256:production001",
+  "unreachable": true,
+  "endpoint": "https://product.example.com/version"
+}
