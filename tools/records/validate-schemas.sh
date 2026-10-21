@@ -291,5 +291,43 @@ print(f"FIXTURES VALID OK {validated}/{len(record_rows)}")
 sys.exit(0)
 PY
     ;;
-  *) echo "usage: validate-schemas.sh --coverage|--lint|--fields|--time|--negative|--at105|--at046-secreview|--selftest|--only <name>|--anchor|--fixtures valid|--all"; exit 1 ;;
+  --versions)
+    "$L4_PY" - "$CP_ROOT" <<'PY'
+import pathlib, sys, yaml
+
+cp_root = pathlib.Path(sys.argv[1])
+v_yaml = cp_root / "schemas" / "records" / "versions.yaml"
+v_md = cp_root / "schemas" / "records" / "VERSIONS.md"
+
+if not v_yaml.is_file():
+    print("VERSIONS FAIL missing schemas/records/versions.yaml")
+    sys.exit(1)
+if not v_md.is_file():
+    print("VERSIONS FAIL missing schemas/records/VERSIONS.md")
+    sys.exit(1)
+
+try:
+    doc = yaml.safe_load(v_yaml.read_text(encoding="utf-8"))
+    entries = doc.get("schemas", [])
+except Exception as exc:
+    print(f"VERSIONS FAIL unreadable versions.yaml: {exc}")
+    sys.exit(1)
+
+reg_files = {e["file"] for e in entries if "file" in e}
+schemas_dir = cp_root / "schemas" / "records"
+missing = []
+for p in schemas_dir.glob("*.schema.json"):
+    rel = f"schemas/records/{p.name}"
+    if rel not in reg_files:
+        missing.append(rel)
+
+if missing:
+    print(f"VERSIONS FAIL schemas not in versions.yaml: {missing}")
+    sys.exit(1)
+
+print(f"VERSIONS OK {len(entries)}")
+sys.exit(0)
+PY
+    ;;
+  *) echo "usage: validate-schemas.sh --coverage|--lint|--fields|--time|--negative|--at105|--at046-secreview|--selftest|--only <name>|--anchor|--fixtures valid|--versions|--all"; exit 1 ;;
 esac
