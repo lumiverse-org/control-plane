@@ -76,7 +76,9 @@ def get_job_names_from_dir(directory: str) -> set[str]:
         fpath = os.path.join(directory, fname)
         try:
             with open(fpath, "r", encoding="utf-8") as f:
-                wf = yaml.safe_load(f)
+                raw = f.read()
+            clean = re.sub(r'\{\{[A-Z_]+\}\}', 'placeholder', raw)
+            wf = yaml.safe_load(clean)
             if isinstance(wf, dict):
                 jobs = wf.get('jobs', {}) or {}
                 for jname, jdef in jobs.items():
@@ -99,7 +101,8 @@ def get_jobs_with_if_or_filter(directory: str) -> set[str]:
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 raw = f.read()
-                wf = yaml.safe_load(raw)
+            clean = re.sub(r'\{\{[A-Z_]+\}\}', 'placeholder', raw)
+            wf = yaml.safe_load(clean)
             has_path_filter = bool(PATH_FILTER_RE.search(raw))
             if isinstance(wf, dict):
                 jobs = wf.get('jobs', {}) or {}

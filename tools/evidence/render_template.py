@@ -187,7 +187,7 @@ def cmd_manifest(manifest_file: Path, summary: bool) -> int:
     manifest_dir = manifest_file.parent
 
     for entry in templates:
-        name = entry.get("file", "")
+        name = entry.get("file") or entry.get("template", "")
         if not (manifest_dir / name).exists():
             print(f"FAIL: manifest entry {name} does not exist at {manifest_dir / name}", file=sys.stderr)
             failed += 1
