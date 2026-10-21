@@ -1,0 +1,143 @@
+# registries/platform.yaml — L1-107 (§60.1, L1-D05)
+# Validated against schemas/registry/platform.registry.v1.schema.json (L1-106).
+#
+# Provenance notes (L1-107 discovery pass, 2026-09-16):
+# - reusable_workflow_versions is owned by Lane 2 (L1-D05). contracts/ has no
+#   genuine Lane-2-declared workflow tag today — the only "reusable_workflow"
+#   hits under contracts/ are contracts/stubs/platform.yaml and
+#   contracts/fixtures/C-REG-PLATFORM-1/*, which are test stub/fixture data
+#   (current: "v1.0.0") for a draft contract (C-REG-PLATFORM-1) whose own
+#   shape (platform_version as integer const 1, event_types as
+#   {id, retired} objects) conflicts with the platform.registry.v1 schema
+#   this file is validated against. Lane 1 does not invent a workflow tag,
+#   so this seeds empty per the task's fallback branch.
+# - event_type is owned by Lane 4 (L1-D05), but contracts/event-types.yaml
+#   is explicitly "the authoritative source for all lanes" (FD-Q12) and is
+#   shape-compatible (flat array of strings) with this schema's event_type
+#   field, so it is seeded verbatim from that file (111 unique identifiers:
+#   the FD-Q12 system meta-event set plus the closed C-EVT-ENUM-1 89-id
+#   enum, de-duplicated as contracts/event-types.yaml already does).
+platform_version: "4.0"
+supported_contract_versions:
+  product: [1]
+  verification: [1]
+  people_registry: [1]
+  service: [1]
+reusable_workflow_versions:
+  current: null
+  supported: []
+  deprecated: []
+  deprecation_deadline: {}
+canary_set: []
+event_type:
+  - product_created
+  - product_updated
+  - product_deleted
+  - product_activated
+  - product_deactivated
+  - schema_validated
+  - schema_rejected
+  - attention_raised
+  - attention_cleared
+  - lane_started
+  - lane_completed
+  - lane_blocked
+  - gate_passed
+  - gate_failed
+  - merge_train_started
+  - merge_train_completed
+  - merge_train_rejected
+  - rollback_initiated
+  - rollback_completed
+  - foreign_path_violation
+  - unassigned_path_violation
+  - phase_transition
+  - doc_retired
+  - doc_superseded
+  - work_item_created
+  - work_item_moved_to_ready
+  - work_item_assigned
+  - ready_queue_miss_recorded
+  - plan_submitted
+  - plan_rejected
+  - plan_approved
+  - change_class_assigned
+  - impact_scope_assigned
+  - reversibility_class_assigned
+  - requirement_changed_materially
+  - replan_triggered
+  - execute_started
+  - pr_opened
+  - review_requested
+  - gate2_approved
+  - ci_check_completed
+  - parity_check_completed
+  - artifact_built
+  - staging_deployed
+  - staging_smoke_completed
+  - uat_executed
+  - pr_merged
+  - production_approval_granted
+  - production_deployed
+  - production_smoke_completed
+  - version_digest_confirmed
+  - health_check_completed
+  - feature_flag_toggled
+  - hotfix_authorised
+  - incident_opened
+  - incident_resolved
+  - postmortem_completed
+  - regression_test_added
+  - security_incident_opened
+  - credential_rotated
+  - restore_test_executed
+  - asset_expiry_alerted
+  - asset_owner_reassigned
+  - lifecycle_transitioned
+  - launch_readiness_signed_off
+  - reviewer_matrix_changed
+  - knowledge_redundancy_status_changed
+  - person_added
+  - person_role_changed
+  - person_departed
+  - orphan_detected
+  - orphan_resolved
+  - temporary_assignment_state_changed
+  - acting_team_lead_state_changed
+  - drift_detected
+  - drift_repaired
+  - product_split
+  - product_merged
+  - product_transferred
+  - shared_service_created
+  - shared_service_breaking_change_released
+  - platform_change_proposed
+  - canary_started
+  - canary_completed
+  - fleet_rollout_started
+  - platform_rollback_initiated
+  - contract_version_migrated
+  - compatibility_state_changed
+  - background_pr_created
+  - background_pr_dispositioned
+  - task_class_state_changed
+  - ai_runtime_changed
+  - ai_provider_outage_recorded
+  - model_benchmark_completed
+  - status_request_received
+  - plan_approver_notified
+  - verification_block_state_changed
+  - degraded_mode_state_changed
+  - gap_procedure_run
+  - eval_regression_detected
+  - pending_decision_state_changed
+  - onboarding_phase_completed
+  - support_item_ingested
+  - support_first_touch_breached
+  - delegation_expiry_warned
+  - temporary_person_expiry_warned
+  - launch_signoff_requested
+  - weekend_exception_state_changed
+  - support_loop_closure
+  - deletion_request_recorded
+  - work_item_closed
