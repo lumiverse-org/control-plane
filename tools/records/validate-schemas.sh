@@ -129,19 +129,16 @@ case "$MODE" in
   --time)     run_py --time ;;
   --fields)   CP_ROOT="$CP_ROOT" L4_PY="$L4_PY" bash "$CP_ROOT/tools/records/validate-no-names.sh" --schemas ;;
   --negative)
-    # DoD-3: verify invalid records are rejected by the schema validator
+    # DoD-3: verify invalid records/events are rejected by the schema validator
     FAILED=0; TOTAL=0
     for invalid in "$CP_ROOT/tools/records/fixtures/invalid"/*.json; do
       [ -e "$invalid" ] || continue
+      [[ "$invalid" == *".schema.json" ]] && continue
       TOTAL=$((TOTAL+1))
-      "$L4_PY" -c "import jsonschema, json, sys
-schema=json.load(open('$CP_ROOT/contracts/records/record.envelope.v1.json'))
-data=json.load(open('$invalid'))
-try:
-  jsonschema.validate(data, schema)
-  print('UNEXPECTED PASS: $invalid'); sys.exit(1)
-except jsonschema.ValidationError:
-  pass" || FAILED=$((FAILED+1))
+      if "$L4_PY" "$CP_ROOT/tools/records/lib/validate.py" "$CP_ROOT/schemas/records/event.envelope.schema.json" "$invalid" >/dev/null 2>&1; then
+        echo "UNEXPECTED PASS: $invalid"
+        FAILED=$((FAILED+1))
+      fi
     done
     [ "$FAILED" -eq 0 ] && echo "NEGATIVE OK ${TOTAL}/${TOTAL}" || { echo "NEGATIVE FAIL ${FAILED}/${TOTAL}"; exit 1; }
     ;;
