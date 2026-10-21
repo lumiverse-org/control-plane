@@ -1,0 +1,83 @@
+framework_version: v2
+status: active
+effective_date: "2026-07-01"
+retirement_date: null
+affected_roles: [developer]
+multi_framework_transition: false
+review_cadence: "quarterly"
+rating_scale:
+  verbatim: true
+  bands:
+    - label: "1"
+      definition: "Well below expectation"
+    - label: "2"
+      definition: "Partially meets expectation"
+    - label: "3"
+      definition: "Consistently meets expectation"
+    - label: "4"
+      definition: "Exceeds expectation"
+kras:
+  - id: KRA-DELIVERY
+    title: "Delivery"
+    weight: 20
+    definition: "Committed work reaches verified done"
+  - id: KRA-QUALITY
+    title: "Quality"
+    weight: 20
+    definition: "High standard of quality"
+kpis:
+  - id: KPI-DCA
+    kra_id: KRA-DELIVERY
+    title: "Delivery Commitment Achievement"
+    weight: 10
+    definition: "Share of committed items verified within the period"
+    target: "85 percent"
+    stretch_target: "95 percent"
+    evidence_sources: ["planning board", "records/verification-results/"]
+    human_judgement_areas: ["scope-change legitimacy"]
+    time_window: "one review period"
+    known_limitations: "counts items, not item size"
+  - id: KPI-REWORK
+    kra_id: KRA-DELIVERY
+    title: "Rework rate"
+    weight: 10
+    definition: "Share of merged items reopened within the period"
+    target: "below 5 percent"
+    stretch_target: null
+    evidence_sources: ["records/incidents/"]
+    human_judgement_areas: ["rework legitimacy"]
+    time_window: "one review period"
+    known_limitations: none-known
+  - id: KPI-REVIEW
+    kra_id: KRA-DELIVERY
+    title: "Cross-review participation"
+    weight: 5
+    definition: "Reviews completed on products where the person holds cross_reviewer"
+    target: "at least two per assigned product per month"
+    stretch_target: null
+    evidence_sources: ["DevLake"]
+    human_judgement_areas: []
+    time_window: "90 days"
+    known_limitations: "DevLake ingest lags by up to 24 hours"
+  - id: KPI-TEST-COVERAGE
+    kra_id: KRA-QUALITY
+    title: "Test Coverage Maintenance"
+    weight: 10
+    definition: "Maintains required test coverage"
+    target: "above 80 percent"
+    stretch_target: null
+    evidence_sources: ["CI"]
+    human_judgement_areas: []
+    time_window: "one review period"
+    known_limitations: none-known
+  - id: KPI-DOCS
+    kra_id: KRA-QUALITY
+    title: "Documentation Completeness"
+    weight: 5
+    definition: "Keeps docs complete and accurate"
+    target: "100 percent"
+    stretch_target: null
+    evidence_sources: ["docs review"]
+    human_judgement_areas: ["thoroughness"]
+    time_window: "one review period"
+    known_limitations: none-known
