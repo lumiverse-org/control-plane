@@ -54,21 +54,6 @@ def _errors_for(case):
 def test_valid_minimal():
     assert _errors_for(os.path.join("valid", "minimal")) == []
 
-
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "DISCOVERED SPEC CONTRADICTION (not in the original audit): L1-101's "
-        "stableId pattern '^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$' forbids "
-        "underscores, but 5 of Section 8's own 11 role ids are snake_case "
-        "(team_lead, acting_team_lead, mobile_developer, senior_developer, "
-        "foundational_developer). L1-102 says role id : $ref stableId, so "
-        "the mandated 'valid/full' fixture (all eleven spec roles) cannot "
-        "pass schema validation as both tasks are literally specified. "
-        "Not resolved here -- resolving it is an L1-101/L1-103 spec-fidelity "
-        "call, not a roles-schema-authoring call."
-    ),
-)
 def test_valid_full():
     doc = _load_fixture(os.path.join("valid", "full"))
     assert len(doc["roles"]) == 11
