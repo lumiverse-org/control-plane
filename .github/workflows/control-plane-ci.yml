@@ -39,7 +39,7 @@ jobs:
       - name: Run Lane 1 registry and schema validation (§15.5, Option B CLI)
         run: |
           set -euo pipefail
-          python -m validators.registry.cli --root . --as-of "$(date +%Y-%m-%d)" --records-root records/ --summary
+          python -m validators.registry.cli --root . --as-of "$(date +%Y-%m-%d)" --records-root records/ --format text
 
       - name: Concordance check
         run: |
