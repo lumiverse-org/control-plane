@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://control-plane.local/schemas/registry/invariants.v1.schema.json",
+  "title": "Invariant Classification Registry (registries/invariants.yaml)",
+  "description": "Section 101. The catalogue contains 111 invariants, each carrying exactly one enforcement classification -- mechanical, policy or review-held.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["registry_version", "declared_count", "invariants"],
+  "properties": {
+    "registry_version": { "const": 1 },
+    "declared_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "invariants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "number",
+          "text",
+          "classification",
+          "enforced_by",
+          "policy_id",
+          "review",
+          "chair"
+        ],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 111
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classification": {
+            "type": "string",
+            "enum": ["mechanical", "policy", "review-held"]
+          },
+          "enforced_by": {
+            "type": ["string", "null"]
+          },
+          "policy_id": {
+            "type": ["string", "null"]
+          },
+          "review": {
+            "type": ["string", "null"]
+          },
+          "chair": {
+            "type": ["string", "null"]
+          }
+        }
+      }
+    }
+  }
+}

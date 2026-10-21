@@ -1,0 +1,14 @@
+registry_version: 1
+
+# Section 101: the catalogue contains 111 invariants, each carrying exactly one
+# enforcement classification -- mechanical, policy or review-held.
+declared_count: 111
+
+# Classifying an invariant means naming the live check that enforces it. Most
+# of those checks are Lane 2 workflow contexts, Lane 3 reconciliation rows and
+# Lane 5 access enforcement; PARTITION rule 4 forbids Lane 1 discovering them
+# by reaching into those trees, and rule 2 routes cross-lane consumption
+# through contracts/. Lane 1 ships the register, the schema and rule R-INV-02;
+# classifications land as each lane publishes its check ids, at Phase G2
+# (Section 98.5). See the L1-902 and L1-505 blockers on the artifact count.
+invariants: []
