@@ -1,0 +1,110 @@
+# L2-T130 — deploy-staging.yml
+# §37.3 L3261-3268: actor gate is the FIRST step — nothing before it, not even checkout.
+# §97.2 L8843-8926: record and event writes are required, failing steps.
+# §33.4 L2887-2912: staging deploy → smoke → UAT.
+# No rebuild. No best-effort execution anywhere.
+name: Deploy — Staging
+
+on:
+  workflow_call:
+    inputs:
+      artifact_digest:
+        description: "sha256 digest of the artifact to deploy (from build.yml)"
+        required: true
+        type: string
+      artifact_name:
+        description: "Container image name"
+        required: true
+        type: string
+      deploy_command:
+        description: "Product-specific deploy command"
+        required: true
+        type: string
+      smoke_command:
+        description: "Product-specific smoke test command"
+        required: true
+        type: string
+    secrets:
+      PEOPLE_YAML_B64:
+        required: true
+      RECORDS_WRITER_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-staging-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy-staging
+    environment: staging
+    runs-on: ubuntu-22.04
+    steps:
+      # STEP 0: actor gate — first step, nothing precedes it (§37.3)
+      - name: Actor gate
+        run: |
+          set -euo pipefail
+          echo "${{ secrets.PEOPLE_YAML_B64 }}" | base64 -d > /tmp/people.yaml
+          python -m tools.evidence.actor_gate \
+            --actor "${{ github.actor }}" \
+            --capability devops \
+            --people /tmp/people.yaml \
+            --summary
+
+      - name: Checkout control plane tools
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
+
+      - name: Deploy artifact digest (never rebuilt — §101 invariants 22/23)
+        run: |
+          set -euo pipefail
+          DIGEST="${{ inputs.artifact_digest }}"
+          [ -n "${DIGEST}" ] || { echo "ERROR: empty artifact digest"; exit 1; }
+          echo "Deploying digest ${DIGEST} to staging — no rebuild path"
+          ${{ inputs.deploy_command }} "${DIGEST}"
+
+      - name: Smoke tests
+        run: |
+          set -euo pipefail
+          ${{ inputs.smoke_command }}
+
+      - name: Write staging deployment record (required, failing step — §97.2)
+        run: |
+          set -euo pipefail
+          cat > /tmp/staging-record.yaml << RECORD
+          digest: "${{ inputs.artifact_digest }}"
+          artifact_name: "${{ inputs.artifact_name }}"
+          deployed_by: "${{ github.actor }}"
+          deployed_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          environment: staging
+          git_commit: "${{ github.sha }}"
+          pull_request: ${{ github.event.pull_request.number || 0 }}
+          approved_by: "${{ github.actor }}"
+          run_id: ${{ github.run_id }}
+          RECORD
+          RECORDS_WRITER_TOKEN="${{ secrets.RECORDS_WRITER_TOKEN }}" \
+          python -m tools.evidence.records_client \
+            --kind deployment \
+            --payload /tmp/staging-record.yaml \
+            --summary
+
+      - name: Write staging deployed event (required, failing step — §97.2)
+        run: |
+          set -euo pipefail
+          cat > /tmp/staging-event.yaml << EVENT
+          event_id: "evt-staging-${{ github.run_id }}-${{ github.run_attempt }}"
+          event_type: staging_deployed
+          occurred_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          actor: "${{ github.actor }}"
+          environment: staging
+          product: "${{ inputs.artifact_name }}"
+          artifact_digest: "${{ inputs.artifact_digest }}"
+          run_id: ${{ github.run_id }}
+          correlation_id: "staging-${{ github.sha }}"
+          EVENT
+          RECORDS_WRITER_TOKEN="${{ secrets.RECORDS_WRITER_TOKEN }}" \
+          python -m tools.evidence.event_writer \
+            --event /tmp/staging-event.yaml \
+            --summary
