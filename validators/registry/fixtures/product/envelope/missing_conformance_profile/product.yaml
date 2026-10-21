@@ -1,5 +1,6 @@
 contract_version: 2
 platform_compatibility: supported
+platform_migration: null
 identity:
   id: checkout-svc
   display_name: Checkout Service

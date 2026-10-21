@@ -69,6 +69,7 @@ operations:
   triager: null
   weekend_exception_eligible: false
 platform_compatibility: supported
+platform_migration: null
 recovery:
   backup_frequency: daily
   backup_retention_days: 30

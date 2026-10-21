@@ -1,5 +1,6 @@
 contract_version: 3
 platform_compatibility: supported
+platform_migration: null
 conformance_profile: service
 identity:
   id: checkout-svc

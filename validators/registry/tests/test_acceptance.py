@@ -192,7 +192,15 @@ def test_at025_both_versions_one_run():
     supported simultaneously" -- the two-document single-run case from
     L1-701 (contract_version 1 and 2 validated together)."""
     from validators.registry import versioning  # L1-701
-    raise NotImplementedError("L1-701 (versioning.py) not yet built -- see impl spec HARD PREREQUISITES")
+
+    fixtures_dir = os.path.join(os.path.dirname(__file__), "..", "fixtures", "versioning", "valid", "both_versions_one_run")
+    v1_doc = yaml.safe_load(open(os.path.join(fixtures_dir, "product-v1.yaml"), encoding="utf-8"))
+    v2_doc = yaml.safe_load(open(os.path.join(fixtures_dir, "product-v2.yaml"), encoding="utf-8"))
+
+    assert versioning.document_version("product", v1_doc) == 1
+    assert versioning.document_version("product", v2_doc) == 2
+    assert versioning.select_schema("product", v1_doc) == "schemas/product/product.contract.v1.schema.json"
+    assert versioning.select_schema("product", v2_doc) == "schemas/product/product.contract.v2.schema.json"
 
 
 def test_at034_governance_layerability():

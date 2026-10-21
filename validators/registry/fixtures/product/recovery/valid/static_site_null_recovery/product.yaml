@@ -76,6 +76,7 @@ operations:
   triager: triage-lead-1
   weekend_exception_eligible: true
 platform_compatibility: supported
+platform_migration: null
 recovery: null
 reversibility_default: fully-reversible
 security:
