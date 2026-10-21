@@ -1,0 +1,3 @@
+platform_version: "four"
+supported_contract_versions:
+  product: [1, 2]
