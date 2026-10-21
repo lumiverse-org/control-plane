@@ -145,6 +145,12 @@ def main() -> None:
     gha_bad = get_jobs_with_if_or_filter(gha_workflows)
 
     for ctx_name, group in contexts.items():
+        if ctx_name == "renovate-path-guard":
+            # FD-123: scope renovate-path-guard required-context to only fire once Renovate activates (Phase 2)
+            renovate_active = os.environ.get("RENOVATE_ACTIVE", "").lower() in ("1", "true", "yes")
+            if not renovate_active and not os.path.exists("ops-vm/renovate/config.js"):
+                continue
+
         if group == "always":
             jobs, bad, tree = gha_jobs, gha_bad, ".github/workflows/"
         else:

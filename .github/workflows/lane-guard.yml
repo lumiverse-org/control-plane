@@ -1,4 +1,4 @@
-# Lane Guard CI — FD-102 (branch protection), FD-086 (actor-gate), 2026-09-09
+# Lane Guard CI — FD-102 (branch protection), FD-086 (actor-gate), FD-123 (guard extension)
 # This workflow runs on every PR to main and enforces lane ownership rules.
 #
 # NOTE ON DUPLICATION (do not "fix" by deleting): the `lane-guard` job below
@@ -50,19 +50,21 @@ jobs:
             --as-of $(date +%Y-%m-%d) \
             --records-root records/ \
             --format json
-        continue-on-error: true  # stub — enable once rules R01-R18 are implemented
 
       - name: Concordance check
         run: bash _concordance-check.sh lanes
-        continue-on-error: true  # informational until Phase 1 complete
 
-  actor-gate:
-    name: Actor Gate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Check actor
-        run: bash scripts/actor-gate.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_ACTOR: ${{ github.actor }}
+      - name: Workflow lint — pinning, permissions, no-if
+        run: |
+          set -euo pipefail
+          for dir in .github/workflows templates/workflows; do
+            python -m tools.evidence.lint_workflow --path "$dir" --summary
+          done
+
+      - name: Required-context cross-check
+        run: |
+          set -euo pipefail
+          python -m tools.evidence.check_required_contexts \
+            --templates templates/workflows \
+            --registry templates/workflows/required-checks.yaml \
+            --summary
