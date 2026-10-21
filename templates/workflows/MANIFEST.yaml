@@ -1,0 +1,45 @@
+# Lane 2 template manifest — consumed by Lane 3 create-product.
+# Authoritative source for rendering conditions and the rollback filename.
+# Exactly nine templates; exactly two conditional rows.
+# PARTITION.md rule 4: this is the published artifact for Lane 3 consumption.
+
+rollback_workflow: rollback.yml
+
+templates:
+  - template: ci.yml
+    destination: .github/workflows/ci.yml
+    rendered: always
+
+  - template: build.yml
+    destination: .github/workflows/build.yml
+    rendered: always
+
+  - template: deploy-staging.template.yml
+    destination: .github/workflows/deploy-staging.yml
+    rendered: always
+
+  - template: deploy-production.template.yml
+    destination: .github/workflows/deploy-production.yml
+    rendered: always
+
+  - template: migrate.yml
+    destination: .github/workflows/migrate.yml
+    rendered: always
+
+  - template: restore-test.template.yml
+    destination: .github/workflows/restore-test.yml
+    rendered: always
+
+  - template: restore-production.template.yml
+    destination: .github/workflows/restore-production.yml
+    rendered: conditional
+    condition: "product declares a recovery: block"
+
+  - template: background-queue.yml
+    destination: .github/workflows/background-queue.yml
+    rendered: conditional
+    condition: "product declares background work"
+
+  - template: rollback.template.yml
+    destination: .github/workflows/rollback.yml
+    rendered: always
