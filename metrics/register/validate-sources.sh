@@ -45,8 +45,8 @@ for m in metrics:
     if not src:
         errs.append("measure %s has no source" % mid)
         continue
-    if not (src.startswith("metrics/") or src.startswith("records/")):
-        errs.append("measure %s source %r is not under metrics/** or records/**" % (mid, src))
+    if not (src.startswith("metrics/") or src.startswith("records/") or src.startswith("events/")):
+        errs.append("measure %s source %r is not under metrics/**, records/** or events/**" % (mid, src))
         continue
     path_part = src.split(" ")[0].rstrip("/")
     if not os.path.exists(os.path.join(repo_root, path_part)):

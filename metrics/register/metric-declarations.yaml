@@ -1,6 +1,155 @@
 # metrics/register/metric-declarations.yaml
-# Schema for metric declarations - sources, SIG linkage, AT coverage
-# Populated by L4-P7-01. This file is a bootstrap skeleton; L4-P7-01 fills it.
+# Schema for metric declarations — sources, SIG linkage, AT coverage
+# Populated by L4-P7-01..05. Master Spec v4.0 §103.
 $schema: urn:multiproduct:schemas/metric-declarations/v1
 version: 1
-metrics: []
+metrics:
+  - id: deployment_frequency
+    definition: "Deployment frequency, failure rate, and rollback rate derived from records/deployments/"
+    source: "records/deployments/"
+    time_window: "30d"
+    baseline: "unbaselined"
+    expected_interpretation: "higher frequency with low failure rate is better"
+    known_limitations: "excludes manual hotfixes not committed to repo"
+    owner: "team_lead"
+    action_on_breach: "halt deployment pipeline and review failures"
+
+  - id: incident_mttr
+    definition: "Mean time to resolution and detection-to-response latency derived from records/incidents/"
+    source: "records/incidents/"
+    time_window: "30d"
+    baseline: "unbaselined"
+    expected_interpretation: "lower MTTR is better"
+    known_limitations: "relies on accurate incident timestamps"
+    owner: "team_lead"
+    action_on_breach: "page on-call and initiate incident escalation"
+
+  - id: restore_freshness
+    definition: "Disaster recovery restore test freshness and pass rate derived from records/restore-tests/"
+    source: "records/restore-tests/"
+    time_window: "90d"
+    baseline: "unbaselined"
+    expected_interpretation: "recent clean restore test required"
+    known_limitations: "does not simulate complete cloud provider outage"
+    owner: "foundational_developer"
+    action_on_breach: "trigger manual restore rehearsal and alert team_lead"
+
+  - id: uat_pass_rate
+    definition: "User acceptance testing coverage and pass rate derived from records/uat/"
+    source: "records/uat/"
+    time_window: "30d"
+    baseline: "unbaselined"
+    expected_interpretation: "100% pass rate before production promotion"
+    known_limitations: "covers scripted acceptance scenarios only"
+    owner: "senior_developer"
+    action_on_breach: "block production deployment"
+
+  - id: support_first_response
+    definition: "Support ticket load and first response latency by severity derived from records/support/"
+    source: "records/support/"
+    time_window: "30d"
+    baseline: "unbaselined"
+    expected_interpretation: "first response within SLA for all severities"
+    known_limitations: "measured only for ingested support records"
+    owner: "team_lead"
+    action_on_breach: "escalate unacknowledged tickets to secondary rota"
+
+  - id: eval_regression
+    definition: "AI model eval regression detection derived from records/eval/"
+    source: "records/eval/"
+    time_window: "30d"
+    baseline: "unbaselined"
+    expected_interpretation: "zero regression on benchmark score"
+    known_limitations: "benchmark dataset static between prompt updates"
+    owner: "mobile_developer"
+    action_on_breach: "block model pin update PR in CI"
+
+  - id: security_review_findings
+    definition: "Security audit-log review finding count and open finding age from records/security-reviews/"
+    source: "records/security-reviews/"
+    time_window: "90d"
+    baseline: "unbaselined"
+    expected_interpretation: "zero critical or high open findings"
+    known_limitations: "findings logged after review completion"
+    owner: "security_auditor"
+    action_on_breach: "raise SIG-46 security alert and block release"
+
+  - id: decision_latency
+    definition: "Architectural decision latency and pending queue depth derived from records/decisions/"
+    source: "records/decisions/"
+    time_window: "30d"
+    baseline: "unbaselined"
+    expected_interpretation: "decisions resolved within review window"
+    known_limitations: "pending decisions measured from prompt receipt"
+    owner: "team_lead"
+    action_on_breach: "escalate stalled decisions to founder"
+
+  - id: learning_loop_unclosed
+    definition: "Unclosed learning loop action items derived from records/postmortems/"
+    source: "records/postmortems/"
+    time_window: "90d"
+    baseline: "unbaselined"
+    expected_interpretation: "zero unassigned or expired action items"
+    known_limitations: "tracks items linked in postmortem documents"
+    owner: "team_lead"
+    action_on_breach: "raise SIG-47 learning loop alert"
+
+  - id: estimate_accuracy
+    definition: "Estimate vs actual calibration input derived from records/estimates/"
+    source: "records/estimates/"
+    time_window: "60d"
+    baseline: "unbaselined"
+    expected_interpretation: "actuals within estimate variance band"
+    known_limitations: "subject to task scope changes"
+    owner: "senior_developer"
+    action_on_breach: "conduct estimation calibration retrospective"
+
+  - id: ready_queue_misses
+    definition: "Ready queue miss 30-day rolling count and trend derived from records/estimates/"
+    source: "records/estimates/"
+    time_window: "30d"
+    baseline: "unbaselined"
+    expected_interpretation: "zero refill misses on ready queue"
+    known_limitations: "measured per sprint cadence"
+    owner: "team_lead"
+    action_on_breach: "trigger planning board refill session"
+
+  - id: status_request_volume
+    definition: "Status request count derived from events/ stream"
+    source: "events/"
+    time_window: "30d"
+    baseline: "unbaselined"
+    expected_interpretation: "lower status request volume indicates dashboard efficacy"
+    known_limitations: "counts explicit status query events"
+    owner: "team_lead"
+    action_on_breach: "review dashboard visibility with stakeholder"
+
+  - id: lifecycle_cadence
+    definition: "Onboarding, launch, and demo cadence measures derived from records/launches/"
+    source: "records/launches/"
+    time_window: "90d"
+    baseline: "unbaselined"
+    expected_interpretation: "launches on schedule with completed checklists"
+    known_limitations: "tracked per product launch event"
+    owner: "team_lead"
+    action_on_breach: "delay launch and schedule readiness review"
+
+  - id: weekend_residual_activity
+    definition: "Undeclared weekend activation residual derived from events/"
+    source: "events/"
+    time_window: "30d"
+    baseline: "unbaselined"
+    expected_interpretation: "zero unscheduled weekend activations"
+    known_limitations: "identifies off-hours activity from commit and event timestamps"
+    owner: "team_lead"
+    action_on_breach: "audit off-hours access and verify authorization"
+
+  - id: attention_sessions
+    definition: "Attention-ledger session telemetry measures derived from metrics/attention/"
+    source: "metrics/attention/"
+    time_window: "30d"
+    baseline: "unbaselined"
+    expected_interpretation: "balanced distribution across planning and execution"
+    known_limitations: "aggregated from session telemetry logs"
+    owner: "team_lead"
+    action_on_breach: "rebalance workload distribution"

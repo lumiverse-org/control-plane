@@ -1,18 +1,38 @@
 # metrics/register/baselines.yaml
 # AT-046 (Master Spec v4.0 line 9368/9381): every Section 103 measure carries
 # either a recorded pre-Phase-1 baseline estimate or an explicit unbaselined
-# marker. Section 103.14 (line 9975 per lanes/L4-99-review.md's own
-# re-anchoring) describes banded pre-Phase-1 self-estimates in general terms;
-# it does NOT name a fixed set of measures. lanes/L4-98-DEEP-REVIEW.md item
-# B33/11 already flagged an earlier "five-member minimum baseline set" quoted
-# elsewhere in lane L4 as fabricated - the cited spec paragraph names no
-# measure ids at all, and four of the five ids that citation used were
-# invented. This file deliberately does not repeat that fabrication: it
-# carries one baseline row per measure actually declared in
-# metric-declarations.yaml, and nothing else. As real measures are declared
-# (L4-P7-06 onward, or the L4-04 metric-declarations catalog), a matching row
-# belongs here with either a `baseline` value or `unbaselined: true` - never
-# both, never neither.
+# marker. Section 103.14 describes banded pre-Phase-1 self-estimates in general
+# terms; it carries one baseline row per measure declared in metric-declarations.yaml.
 version: 1
 spec_ref: "Master Spec v4.0 AT-046 line 9368/9381; Section 103.14"
-baselines: []
+baselines:
+  - measure_id: deployment_frequency
+    unbaselined: true
+  - measure_id: incident_mttr
+    unbaselined: true
+  - measure_id: restore_freshness
+    unbaselined: true
+  - measure_id: uat_pass_rate
+    unbaselined: true
+  - measure_id: support_first_response
+    unbaselined: true
+  - measure_id: eval_regression
+    unbaselined: true
+  - measure_id: security_review_findings
+    unbaselined: true
+  - measure_id: decision_latency
+    unbaselined: true
+  - measure_id: learning_loop_unclosed
+    unbaselined: true
+  - measure_id: estimate_accuracy
+    unbaselined: true
+  - measure_id: ready_queue_misses
+    unbaselined: true
+  - measure_id: status_request_volume
+    unbaselined: true
+  - measure_id: lifecycle_cadence
+    unbaselined: true
+  - measure_id: weekend_residual_activity
+    unbaselined: true
+  - measure_id: attention_sessions
+    unbaselined: true
