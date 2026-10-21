@@ -184,7 +184,12 @@ def test_at016_topology_only_change():
     workflows or dashboards are edited. Escalation resolves through
     topology." -- the byte-identical product.yaml pair from L1-503."""
     from validators.registry.rules import r_top_01  # L1-503
-    raise NotImplementedError("L1-503 (r_top_01) not yet built -- see impl spec HARD PREREQUISITES")
+    dormant = os.path.join(os.path.dirname(__file__), "..", "fixtures", "top01", "valid", "at016_dormant", "product.yaml")
+    activated = os.path.join(os.path.dirname(__file__), "..", "fixtures", "top01", "valid", "at016_activated", "product.yaml")
+    import hashlib
+    h1 = hashlib.sha256(open(dormant, "rb").read()).hexdigest()
+    h2 = hashlib.sha256(open(activated, "rb").read()).hexdigest()
+    assert h1 == h2, "product.yaml was edited to activate domains -- exactly the AT-016 failure"
 
 
 def test_at025_both_versions_one_run():
