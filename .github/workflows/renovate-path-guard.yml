@@ -1,0 +1,133 @@
+# renovate-path-guard.yml — Spec §33.2, Ruleset B, no bypass-actor list.
+# Lane 2 (Pipeline & Evidence). Owned path: .github/workflows/**.
+# Required context: renovate-path-guard
+# Pinned SHA: actions/checkout, actions/setup-python — see tools/evidence/action-pins.txt
+
+name: renovate-path-guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: renovate-path-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  renovate-path-guard:
+    name: renovate-path-guard
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+
+      - name: Assert Renovate-only Authorship and Committer Identity
+        env:
+          RENOVATE_LOGIN: renovate[bot]
+        run: |
+          set -euo pipefail
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+            BASE_SHA="HEAD~1"
+            HEAD_SHA="HEAD"
+          fi
+
+          FAILED=0
+          while IFS= read -r commit_sha; do
+            [ -z "$commit_sha" ] && continue
+            AUTHOR_LOGIN="$(git log -1 --format='%ae' "${commit_sha}" || echo 'UNKNOWN')"
+            COMMITTER_LOGIN="$(git log -1 --format='%ce' "${commit_sha}" || echo 'UNKNOWN')"
+
+            if ! echo "${AUTHOR_LOGIN}" | grep -qiE 'renovate(\[bot\])?|renovate-bot' || \
+               ! echo "${COMMITTER_LOGIN}" | grep -qiE 'renovate(\[bot\])?|renovate-bot'; then
+              echo "FOREIGN_AUTHOR: commit ${commit_sha} authored by ${AUTHOR_LOGIN}, committer ${COMMITTER_LOGIN} — expected Renovate" >&2
+              FAILED=$((FAILED + 1))
+            fi
+          done < <(git rev-list "${BASE_SHA}..${HEAD_SHA}")
+
+          if [ "$FAILED" -gt 0 ]; then
+            echo "ERROR: ${FAILED} authorship violation(s) — all commits must be by Renovate" >&2
+            exit 1
+          fi
+          echo "INFO: all commits authored and committed by Renovate — authorship check passed"
+
+      - name: Assert Renovate-only path scope
+        run: |
+          set -euo pipefail
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+            BASE_SHA="HEAD~1"
+            HEAD_SHA="HEAD"
+          fi
+
+          export CHANGED="$(git diff --name-only "${BASE_SHA}..${HEAD_SHA}")"
+
+          python3 - << 'PY_EOF'
+          import sys, os, fnmatch
+
+          policy_file = "registries/policies.yaml"
+          if not os.path.exists(policy_file):
+              print(f"ERROR: {policy_file} not found — declared path list unavailable", file=sys.stderr)
+              sys.exit(3)
+
+          allowed_patterns = []
+          try:
+              import yaml
+              with open(policy_file, encoding="utf-8") as f:
+                  data = yaml.safe_load(f)
+              for p in data.get("policies", []):
+                  if p.get("id") == "POL-RENOVATE-PATHS":
+                      allowed_patterns = p.get("paths", [])
+                      break
+          except Exception:
+              import re
+              with open(policy_file, encoding="utf-8") as f:
+                  in_p = False
+                  in_path_list = False
+                  for line in f:
+                      if "id: POL-RENOVATE-PATHS" in line:
+                          in_p = True
+                      elif in_p and re.match(r"^\s*-\s+id:", line):
+                          break
+                      elif in_p and line.strip().startswith("paths:"):
+                          in_path_list = True
+                      elif in_path_list:
+                          m = re.match(r"^\s*-\s*[\"']?([^\"'\s]+)[\"']?\s*$", line)
+                          if m:
+                              allowed_patterns.append(m.group(1))
+                          elif re.match(r"^\s*[a-zA-Z0-9_]+:", line):
+                              break
+
+          if not allowed_patterns:
+              print("ERROR: declared path list unavailable in registries/policies.yaml", file=sys.stderr)
+              sys.exit(3)
+
+          changed_str = os.environ.get("CHANGED", "")
+          changed_files = [line.strip() for line in changed_str.splitlines() if line.strip()]
+
+          foreign_files = []
+          for file_path in changed_files:
+              matched = any(fnmatch.fnmatch(file_path, pat) for pat in allowed_patterns)
+              if not matched:
+                  print(f"ERROR: foreign path in Renovate PR: {file_path}", file=sys.stderr)
+                  foreign_files.append(file_path)
+
+          if foreign_files:
+              print(f"ERROR: {len(foreign_files)} file(s) outside declared Renovate manifest/lockfile paths", file=sys.stderr)
+              sys.exit(1)
+
+          print("INFO: all changed files are within declared Renovate manifest/lockfile paths")
+          PY_EOF

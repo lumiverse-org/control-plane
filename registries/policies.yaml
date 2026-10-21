@@ -29,3 +29,51 @@ policies:
     retirement_condition: "Zero attributable weekend incidents over 4 consecutive quarters AND rollback median under 10 minutes"
     exceptions_open: 0
     status: active
+
+  - id: POL-RENOVATE-PATHS
+    title: "Renovate dependency manifest and lockfile scope"
+    owner: nimesh
+    purpose: "Define the allowed repository paths for automated Renovate dependency updates per FD-122"
+    origin: "Section 33.2 (Renovate disposition policy), FD-122"
+    version: 1
+    effective_date: "2026-10-21"
+    enforcement_stage: enforce
+    min_dwell:
+      warn: 14
+      pilot: 1
+    pilot_products: []
+    entered_at_enforce_directly: false
+    justification: null
+    exception_window_closes: "2027-10-21"
+    supersedes: null
+    enforcement_mechanism: "renovate-path-guard.yml path assertion"
+    evidence:
+      metric: "out-of-manifest Renovate PRs rejected by guard"
+      baseline: "0"
+      current: "0 since effective_date"
+    review_date: "2027-10-21"
+    retirement_condition: "Renovate dependency update scope retired or replaced by a platform-wide manifest policy"
+    exceptions_open: 0
+    status: active
+    paths:
+      - "requirements.txt"
+      - "requirements-dev.txt"
+      - "requirements*.txt"
+      - "*/requirements.txt"
+      - "*/*/requirements.txt"
+      - ".github/workflows/*.yml"
+      - ".github/workflows/*.yaml"
+      - "tools/evidence/action-pins.txt"
+      - "package-lock.json"
+      - "*/package-lock.json"
+      - "yarn.lock"
+      - "*/yarn.lock"
+      - "Pipfile.lock"
+      - "*/Pipfile.lock"
+      - "poetry.lock"
+      - "*/poetry.lock"
+      - "go.sum"
+      - "*/go.sum"
+      - "Gemfile.lock"
+      - "*/Gemfile.lock"
+

@@ -10,6 +10,10 @@
     "name": { "type": "string" },
     "enforced_by": { "type": "string" },
     "scope": { "type": "string" },
-    "effective_date": { "type": "string", "format": "date" }
+    "effective_date": { "type": "string", "format": "date" },
+    "paths": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
   }
 }
