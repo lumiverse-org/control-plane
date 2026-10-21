@@ -1,0 +1,5 @@
+platform_rebuild:
+  pinned_commit: "abc123def456"
+  lockfile: "package-lock.json@sha256:lock1"
+  # missing: build_configuration
+verified_at: "2026-09-05T14:00:00Z"
