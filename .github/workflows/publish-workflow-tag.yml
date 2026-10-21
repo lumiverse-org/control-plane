@@ -1,0 +1,86 @@
+# publish-workflow-tag.yml — Immutable workflows/vN release.
+# Spec §33.2 (L2854-2869): "a tag ruleset blocking updates and deletions on
+# workflows/* with an empty bypass-actor list"; tags are published immutably.
+# This workflow CUTS a new tag; it does not move or delete existing ones.
+# Lane 2 (Pipeline & Evidence). Owned path: .github/workflows/**.
+#
+# Ruleset creation and tag protection are in Lane 5's tree.
+# This file creates no ruleset and writes no foreign path.
+# Authority: lanes/L2-05-tasks.md L2-T112 (row 27, BT-1).
+
+name: publish-workflow-tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number N (creates tag workflows/vN)'
+        required: true
+        type: string
+
+permissions:
+  contents: write   # required to create and push the tag
+
+concurrency:
+  group: publish-workflow-tag
+  cancel-in-progress: false
+
+jobs:
+  publish-tag:
+    name: publish-tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Validate version input
+        run: |
+          set -euo pipefail
+          VERSION="${{ inputs.version }}"
+          if ! echo "$VERSION" | grep -qE '^[0-9]+$'; then
+            echo "ERROR: version input must be a positive integer, got: ${VERSION}" >&2
+            exit 1
+          fi
+          echo "TAG_NAME=workflows/v${VERSION}" >> "$GITHUB_ENV"
+
+      - name: Assert tag does not already exist
+        run: |
+          set -euo pipefail
+          # Moving a tag "is the one way to execute new code in every product's
+          # pipeline with no pull request, no change manifest, no canary set and
+          # no diff in any product repository" (§33.2). It is never allowed.
+          if git ls-remote --tags origin "refs/tags/${TAG_NAME}" | grep -q "${TAG_NAME}"; then
+            echo "TAG_ALREADY_EXISTS: ${TAG_NAME} already exists on remote — cannot overwrite an immutable tag" >&2
+            exit 1
+          fi
+          echo "INFO: ${TAG_NAME} does not exist — proceeding to create it"
+
+      - name: Create and push immutable tag
+        id: create_tag
+        run: |
+          set -euo pipefail
+          # Resolve the HEAD commit SHA — this is what the tag will point to.
+          COMMIT_SHA="$(git rev-parse HEAD)"
+          echo "INFO: creating ${TAG_NAME} at commit ${COMMIT_SHA}"
+
+          git tag "${TAG_NAME}" "${COMMIT_SHA}"
+          git push origin "refs/tags/${TAG_NAME}"
+
+          # Print the resolved 40-hex commit SHA (Lane 3's reconciliation uses this).
+          echo "TAG_COMMIT_SHA=${COMMIT_SHA}"
+          echo "tag_commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Record tag creation summary
+        run: |
+          set -euo pipefail
+          echo "### Tag published" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Tag name | \`${TAG_NAME}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commit SHA | \`${{ steps.create_tag.outputs.tag_commit_sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Repository | \`${{ github.repository }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "This tag is now immutable. The tag ruleset (Lane 5) blocks any update or deletion." >> "$GITHUB_STEP_SUMMARY"
