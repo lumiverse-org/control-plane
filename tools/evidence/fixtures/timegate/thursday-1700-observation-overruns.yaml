@@ -1,0 +1,5 @@
+at: "2026-09-10T11:00:00Z"
+tz: "Asia/Kolkata"
+profile: business-hours
+# 11:00 UTC = 16:30 IST; observation window ends at 18:00 IST — past core hours
+expected_status: FAIL
