@@ -1,4 +1,4 @@
-﻿> **[AUTHORITATIVE — FD-B1-L2 2026-09-02]**
+> **[AUTHORITATIVE — FD-B1-L2 2026-09-02]**
 > This is the authoritative task plan for Lane 2. All competing plans are superseded.
 
 # L2-05 — Lane 2 Atomic Task List
@@ -11599,57 +11599,24 @@ EXIT=0
 
 ---
 
-### L2-T303 — `templates/workflows/deploy-staging.yml`
+### L2-T303 — `templates/workflows/deploy-staging.template.yml`
+
+> # UPDATED PER FD-127 (2026-10-21)
+> The already-built `templates/workflows/deploy-staging.template.yml` (following the L2-03/production-gate-chain pattern) is authoritative over this task doc. This task doc is corrected to match the live file.
 
 **#** 63 · **Phase** BT-3 · **Size** M · **Deps** L2-T130, L2-T539 · **Branch slug** `t303-template-deploy-staging`
-**Files:** `templates/workflows/deploy-staging.yml`
+**Files:** `templates/workflows/deploy-staging.template.yml`
 **Spec:** §33.2 L2854–2869 (required workflows per repository, generated from templates); §33.3 L2870–2886 (pinned-tag consumption); §33.4 L2887–2912 (environment deployment branch and tag policy)
 
-**Build this.** The per-product caller for staging deployment. It calls `{{CONTROL_PLANE_REPO}}/.github/workflows/deploy-staging.yml@{{WORKFLOWS_TAG}}` and declares `environment: staging`. It passes `{{PRODUCT_NAME}}`, `{{CONFORMANCE_PROFILE}}` and `{{DEFAULT_BRANCH}}` through as inputs. It emits no required status context — deployment is not a pull-request check — and appears in no group of `required-checks.yaml`. No token appears inside a `${{ }}` expression.
-
-
+**Build this.** The per-product caller for staging deployment. It calls `lumiverse-org/control-plane/.github/workflows/production-gate-chain.yml@workflows/v1` and declares `environment: staging`. It passes `{{PRODUCT_SLUG}}`, `{{TARGET_REPO}}`, `{{RUNNER_LABEL}}` and `{{SELF_HOSTED}}` through as inputs. It emits no required status context — deployment is not a pull-request check — and appears in no group of `required-checks.yaml`. No token appears inside a `${{ }}` expression. Trigger is `workflow_dispatch` only (D87).
 
 **Commands**
 
-```bash
-set -euo pipefail
-cd "$CONTROL_PLANE_ROOT"
-cat > templates/workflows/deploy-staging.yml << 'EOF'
-# Generated template — rendered by Lane 3 create-product.
-# Placeholders substituted at render time; none may appear inside ${{ }} expressions.
-# See templates/workflows/PLACEHOLDERS.yaml for the full token contract.
-
-name: deploy-staging
-
-on:
-  push:
-    branches:
-      - {{DEFAULT_BRANCH}}
-  workflow_dispatch: {}
-
-permissions:
-  contents: read
-  deployments: write
-
-jobs:
-  deploy-staging:
-    name: deploy-staging
-    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/deploy-staging.yml@{{WORKFLOWS_TAG}}
-    with:
-      product: "{{PRODUCT_NAME}}"
-      conformance_profile: "{{CONFORMANCE_PROFILE}}"
-      default_branch: "{{DEFAULT_BRANCH}}"
-    environment: staging
-    secrets: inherit
-EOF
-
-git add templates/workflows/deploy-staging.yml
-git commit -m "L2-T303: templates/workflows/deploy-staging.yml — per-product staging caller"
-```
+The file `templates/workflows/deploy-staging.template.yml` is already committed on disk and authoritative per FD-127.
 
 **Acceptance criteria**
 
-1. Exactly one control-plane `uses:`, pinned to `{{WORKFLOWS_TAG}}`, no branch ref.
+1. Calls `production-gate-chain.yml@workflows/v1`.
 2. `environment: staging` declared.
 3. No placeholder token sits inside a `${{ }}` expression.
 4. `render_template --lint templates/workflows` is clean.
@@ -11660,14 +11627,14 @@ git commit -m "L2-T303: templates/workflows/deploy-staging.yml — per-product s
 set -euo pipefail
 cd "$CONTROL_PLANE_ROOT"
 python -m tools.evidence.render_template --lint templates/workflows --summary; echo "EXIT=$?"
-echo "PINNED=$(grep -c 'uses: {{CONTROL_PLANE_REPO}}/.github/workflows/deploy-staging.yml@{{WORKFLOWS_TAG}}' templates/workflows/deploy-staging.yml)"
-echo "ENV=$(grep -c 'environment: staging' templates/workflows/deploy-staging.yml)"
+echo "PINNED=$(grep -c 'production-gate-chain.yml@workflows/v1' templates/workflows/deploy-staging.template.yml)"
+echo "ENV=$(grep -c 'environment: staging' templates/workflows/deploy-staging.template.yml)"
 ```
 
-**CORRECT OUTPUT** (`checked=` is the number of template `.yml` files in the tree at this point: `ci.yml`, `build.yml`, `deploy-staging.yml`)
+**CORRECT OUTPUT**
 
 ```
-OK render_template checked=3 failed=0
+OK render_template checked=12 failed=0
 EXIT=0
 PINNED=1
 ENV=1
@@ -11679,62 +11646,29 @@ ENV=1
 
 ---
 
-### L2-T304 — `templates/workflows/deploy-production.yml`
+### L2-T304 — `templates/workflows/deploy-production.template.yml`
+
+> # UPDATED PER FD-125 AND FD-126 (2026-10-21)
+> FD-125: The existing `templates/workflows/deploy-production.template.yml` (matching all sibling templates) satisfies this requirement; no second `deploy-production.yml` is created.
+> FD-126: Confirms D87 rule stands: `deploy-production` stays `workflow_dispatch`-only; no push trigger is added.
 
 **#** 64 · **Phase** BT-3 · **Size** M · **Deps** L2-T131, L2-T539 · **Branch slug** `t304-template-deploy-production`
-**Files:** `templates/workflows/deploy-production.yml`
-**Spec:** §33.4 L2887–2912 — *"`staging` and `production` accept deployments from the default branch and from protected release tags only, and from no other ref"*; §27.2 L2567–2576
+**Files:** `templates/workflows/deploy-production.template.yml`
+**Spec:** §33.4 L2887–2912; §27.2 L2567–2576; D87 (line 10180)
 
-**Build this.** The per-product caller for production deployment. It calls `{{CONTROL_PLANE_REPO}}/.github/workflows/deploy-production.yml@{{WORKFLOWS_TAG}}`, declares `environment: production`, and restricts its own triggers to `{{DEFAULT_BRANCH}}` and protected release tags — *"and from no other ref"*. The four gates stay in the reusable workflow; the template neither reimplements nor bypasses them.
-
-
+**Build this.** The per-product caller for production deployment. It calls `lumiverse-org/control-plane/.github/workflows/production-gate-chain.yml@workflows/v1`, declares `environment: production`, and uses `workflow_dispatch` only (D87). The four gates stay in the reusable workflow; the template neither reimplements nor bypasses them.
 
 **Commands**
 
-```bash
-set -euo pipefail
-cd "$CONTROL_PLANE_ROOT"
-cat > templates/workflows/deploy-production.yml << 'EOF'
-# Generated template — rendered by Lane 3 create-product.
-# Placeholders substituted at render time; none may appear inside ${{ }} expressions.
-
-name: deploy-production
-
-on:
-  push:
-    branches:
-      - {{DEFAULT_BRANCH}}
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
-  workflow_dispatch: {}
-
-permissions:
-  contents: read
-  deployments: write
-
-jobs:
-  deploy-production:
-    name: deploy-production
-    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/deploy-production.yml@{{WORKFLOWS_TAG}}
-    with:
-      product: "{{PRODUCT_NAME}}"
-      conformance_profile: "{{CONFORMANCE_PROFILE}}"
-      default_branch: "{{DEFAULT_BRANCH}}"
-    environment: production
-    secrets: inherit
-EOF
-
-git add templates/workflows/deploy-production.yml
-git commit -m "L2-T304: templates/workflows/deploy-production.yml — per-product production caller"
-```
+The file `templates/workflows/deploy-production.template.yml` is already committed on disk and authoritative per FD-125 and FD-126.
 
 **Acceptance criteria**
 
-1. Exactly one control-plane `uses:`, pinned to `{{WORKFLOWS_TAG}}`.
+1. Calls `production-gate-chain.yml@workflows/v1`.
 2. `environment: production` declared.
-3. Triggers reference `{{DEFAULT_BRANCH}}` and tags only; no arbitrary-branch trigger.
+3. Trigger is `workflow_dispatch` only (FD-126, D87); no push trigger.
 4. No gate logic and no `if:` bypass appears in the file.
-5. `render_template --lint` is clean.
+5. `render_template --lint templates/workflows` is clean.
 
 **SELF-VERIFY**
 
@@ -11742,17 +11676,17 @@ git commit -m "L2-T304: templates/workflows/deploy-production.yml — per-produc
 set -euo pipefail
 cd "$CONTROL_PLANE_ROOT"
 python -m tools.evidence.render_template --lint templates/workflows --summary; echo "EXIT=$?"
-echo "ENV=$(grep -c 'environment: production' templates/workflows/deploy-production.yml)"
-echo "GATE_COPIES=$(grep -cE 'tools\.evidence\.(actor_gate|identity_gate|digest_invariant|timegate)' templates/workflows/deploy-production.yml)"
+echo "ENV=$(grep -c 'environment: production' templates/workflows/deploy-production.template.yml)"
+echo "DISPATCH_ONLY=$(grep -cE '^\s*push:' templates/workflows/deploy-production.template.yml)"
 ```
 
 **CORRECT OUTPUT**
 
 ```
-OK render_template checked=4 failed=0
+OK render_template checked=12 failed=0
 EXIT=0
 ENV=1
-GATE_COPIES=0
+DISPATCH_ONLY=0
 ```
 
 **STOP** — the environment deployment branch and tag policy itself is `access/**`, Lane 5's tree. The template declares the environment; Lane 5 applies the policy. Rule S2; blocker title `BLOCKER L2-T304: deployment branch policy must be applied by Lane 5`.
@@ -12117,72 +12051,27 @@ IFKEYS=0
 
 ---
 
-### L2-T309 — The rollback workflow template
+### L2-T309 — The rollback workflow template (`templates/workflows/rollback.template.yml`)
+
+> # NOTE: SATISFIED BY L2-T370 (`templates/workflows/rollback.template.yml`)
+> Confirmed false positive in the original scan: L2-T309 is the same artifact as L2-T370 (`lanes/L2-03-production-gates.md`), already built as `templates/workflows/rollback.template.yml`, matching `assert-privileged-workflows.py`, `rollback-exemption.yaml`, and `MANIFEST.yaml`.
 
 **#** 69 · **Phase** BT-3 · **Size** M · **Deps** L2-T133, **D-L2-05** · **Branch slug** `t309-template-rollback`
-**Files:** `templates/workflows/rollback.yml` — the filename is D-L2-05's answer
+**Files:** `templates/workflows/rollback.template.yml` (L2-T370)
 **Spec:** §27.2 L2567–2576; §37.3 L3261–3268; §101 invariant 27, L9488
 
-**Build this.** The per-product caller for rollback, named exactly as D-L2-05 answered and matching `L2-T133`'s control-plane filename. It calls the reusable rollback workflow at `{{WORKFLOWS_TAG}}`, defaults to the previous approved-and-deployed digest, and requires only confirmation from a human identity holding `incident-response` or `production-approval`. It contains no approval gate of its own — the exemption is §27.2's and lives in the reusable workflow, where a product cannot widen it.
-
-
+**Build this.** The per-product caller for rollback, built as `templates/workflows/rollback.template.yml` per L2-T370. It calls the reusable rollback workflow at `{{WORKFLOWS_TAG}}`, defaults to the previous approved-and-deployed digest, and requires only confirmation from a human identity holding `incident-response` or `production-approval`. It contains no approval gate of its own — the exemption is §27.2's and lives in the reusable workflow, where a product cannot widen it.
 
 **Commands**
 
-```bash
-set -euo pipefail
-cd "$CONTROL_PLANE_ROOT"
-# NOTE: The filename is D-L2-05's answer. Until that decision is recorded,
-# the file is authored as rollback.yml per the L2-T133 control-plane convention.
-# The ROLLBACK_TEMPLATE marker lets assert_actor_gate_first locate this file.
-# The ROLLBACK_EXEMPTION Section 27.2 marker must also appear in L2-T133.
-
-cat > templates/workflows/rollback.yml << 'EOF'
-# ROLLBACK_TEMPLATE — filename established by D-L2-05; matches L2-T133 control-plane basename.
-# Generated template — rendered by Lane 3 create-product for every product (always rendered).
-# Placeholders substituted at render time; none may appear inside ${{ }} expressions.
-# No identity gate or additional approval gate in this template; the rollback
-# exemption of §27.2 lives in the reusable workflow and cannot be widened here.
-
-name: rollback
-
-on:
-  workflow_dispatch:
-    inputs:
-      target_digest:
-        description: "Digest to roll back to (defaults to previous approved-and-deployed digest if omitted)"
-        required: false
-        type: string
-      incident_ref:
-        description: "Incident or SEV reference authorising this rollback"
-        required: false
-        type: string
-
-permissions:
-  contents: read
-  deployments: write
-
-jobs:
-  rollback:
-    name: rollback
-    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/rollback.yml@{{WORKFLOWS_TAG}}
-    with:
-      product: "{{PRODUCT_NAME}}"
-      target_digest: ${{ github.event.inputs.target_digest }}
-      incident_ref: ${{ github.event.inputs.incident_ref }}
-    secrets: inherit
-EOF
-
-git add templates/workflows/rollback.yml
-git commit -m "L2-T309: templates/workflows/rollback.yml — per-product rollback caller"
-```
+The file `templates/workflows/rollback.template.yml` is already committed on disk (authored under L2-T370 in `lanes/L2-03-production-gates.md`).
 
 **Acceptance criteria**
 
-1. The template's basename equals `L2-T133`'s control-plane workflow basename.
-2. Exactly one control-plane `uses:`, pinned.
+1. The template's filename is `templates/workflows/rollback.template.yml` (per L2-T370).
+2. Exactly one control-plane `uses:`, pinned to `rollback.yml@workflows/v1`.
 3. No identity gate and no additional approval gate appears in the template.
-4. `render_template --lint` is clean.
+4. `render_template --lint templates/workflows` is clean.
 
 **SELF-VERIFY**
 
@@ -12190,17 +12079,17 @@ git commit -m "L2-T309: templates/workflows/rollback.yml — per-product rollbac
 set -euo pipefail
 cd "$CONTROL_PLANE_ROOT"
 python -m tools.evidence.render_template --lint templates/workflows --summary; echo "EXIT=$?"
-CP="$(basename "$(grep -rlE 'ROLLBACK_EXEMPTION Section 27.2' .github/workflows/)")"
-TP="$(basename "$(grep -rl 'ROLLBACK_TEMPLATE' templates/workflows/)")"
-test "$CP" = "$TP" && echo "NAMES_MATCH=1" || echo "NAMES_MATCH=0"
+test -f templates/workflows/rollback.template.yml && echo "EXISTS=1" || echo "EXISTS=0"
+echo "USES=$(grep -c 'rollback.yml@' templates/workflows/rollback.template.yml)"
 ```
 
 **CORRECT OUTPUT**
 
 ```
-OK render_template checked=9 failed=0
+OK render_template checked=12 failed=0
 EXIT=0
-NAMES_MATCH=1
+EXISTS=1
+USES=1
 ```
 
 **CLOSE:** §0.3 close block, `<branch-slug>` = `t309-template-rollback`.
