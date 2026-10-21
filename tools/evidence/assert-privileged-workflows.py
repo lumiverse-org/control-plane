@@ -25,11 +25,11 @@ except ImportError:
 EXEMPTION_PATH = "templates/workflows/rollback-exemption.yaml"
 STEP_ANCHOR = "RUNNER-TIER-ASSERT v1"
 GATE_JOBS = ("actor-gate", "runner-tier-assert", "env-policy-assert",
-             "workflow-identity-gate", "rollback")
+             "workflow-identity-gate", "rollback", "restore-production")
 # A composer is a reusable workflow whose own first job is the actor gate and
-# which this tool checks in its own right: the gate chain (L2-T175) and the
-# rollback workflow (L2-T176).
-COMPOSERS = ("production-gate-chain.yml@", "rollback.yml@")
+# which this tool checks in its own right: the gate chain (L2-T175), the
+# rollback workflow (L2-T176), and the restore-production engine (FD-128).
+COMPOSERS = ("production-gate-chain.yml@", "rollback.yml@", "restore-production.yml@")
 
 FINDINGS = []
 
@@ -176,7 +176,8 @@ def check(path, exempt, is_rollback):
     # is that it does not (D52). production-gate-chain.yml is.
     has_identity = ("workflow-identity-gate.yml@" in text
                     or "workflow-identity-gate" in jobs
-                    or "production-gate-chain.yml@" in text)
+                    or "production-gate-chain.yml@" in text
+                    or "restore-production.yml@" in text)
     if is_rollback:
         if "workflow-identity-gate" not in exempt:
             finding("ROLLBACK_EXEMPTION_UNDECLARED", path)
