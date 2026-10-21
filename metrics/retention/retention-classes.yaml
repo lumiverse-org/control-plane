@@ -1,0 +1,130 @@
+# Store Retention Classes — Master Spec v4.0 §97.6, Invariant 47
+# Canonical records are append-only permanent with effective dating.
+# Raw activity telemetry runs on a declared diagnostic window.
+version: "1"
+stores:
+  - id: "incidents"
+    path: "records/incidents/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Production incident records"
+
+  - id: "postmortems"
+    path: "records/postmortems/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Postmortem analysis records"
+
+  - id: "uat"
+    path: "records/uat/"
+    retention_class: "permanent"
+    permanence: true
+    description: "UAT sign-off records"
+
+  - id: "estimates"
+    path: "records/estimates/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Engineering estimate and actuals records"
+
+  - id: "deployments"
+    path: "records/deployments/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Production and staging deployment records"
+
+  - id: "restore-tests"
+    path: "records/restore-tests/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Disaster recovery restore test records"
+
+  - id: "decisions"
+    path: "records/decisions/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Founder and architectural decision records"
+
+  - id: "decisions-pending"
+    path: "records/decisions/pending/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Pending decision requests"
+
+  - id: "breaches"
+    path: "records/breaches/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Contract and SLA breach records"
+
+  - id: "deletion-requests"
+    path: "records/deletion-requests/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Privacy and GDPR deletion request records"
+
+  - id: "security-reviews"
+    path: "records/security-reviews/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Security review and audit records"
+
+  - id: "eval"
+    path: "records/eval/"
+    retention_class: "permanent"
+    permanence: true
+    description: "AI-eval regression test run records"
+
+  - id: "launches"
+    path: "records/launches/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Product launch readiness and sign-off records"
+
+  - id: "demos"
+    path: "records/demos/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Sprint demo records"
+
+  - id: "support"
+    path: "records/support/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Customer and internal support incident records"
+
+  - id: "onboarding"
+    path: "records/onboarding/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Product and team member onboarding records"
+
+  - id: "leave"
+    path: "records/leave/"
+    retention_class: "permanent"
+    permanence: true
+    description: "Leave calendar records"
+
+  - id: "events"
+    path: "events/"
+    retention_class: "permanent"
+    permanence: true
+    description: "System event stream envelope records"
+
+  - id: "attention-session-raw"
+    path: "metrics/attention/raw/"
+    retention_class: "diagnostic"
+    diagnostic_window_days: 90
+    description: "Raw engineer attention session telemetry"
+
+  - id: "metric-raw-telemetry"
+    path: "metrics/telemetry/raw/"
+    retention_class: "diagnostic"
+    diagnostic_window_days: 90
+    description: "Raw platform metrics collection telemetry"
+
+  - id: "health-dashboard-snapshots"
+    path: "metrics/snapshots/"
+    retention_class: "diagnostic"
+    diagnostic_window_days: 365
+    description: "Historical dashboard health snapshots"
