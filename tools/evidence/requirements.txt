@@ -1,0 +1,12 @@
+# L2 Pipeline & Evidence (tools/evidence/**) — pinned third-party dependencies.
+# Master Spec Section 101 invariant 85 (third-party dependencies pinned).
+# Toolchain decision: FD-005 / REG-003 (lanes/L0-04-decisions-register.md), Option A —
+# Python 3.12, PyYAML, pinned by exact `==`, no lockfile generator. (This lane's own
+# Section 1 calls the same question "D-L2-07"; REG-003 lists that exact label as one of
+# ten lane-local aliases for itself and records state "Closed" — already ratified, nothing
+# open here.)
+#
+# Every entry below is pinned with `==`. Do not add a range, a caret, or an unpinned line.
+# A new dependency is added here with an exact version the same day it is first imported
+# by any file under tools/evidence/**.
+PyYAML==6.0.2
