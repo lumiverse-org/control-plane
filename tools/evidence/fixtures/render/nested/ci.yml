@@ -1,0 +1,11 @@
+# Fixture: nested/ci.yml — {{PRODUCT_NAME}} inside ${{ }} expression
+name: ci
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - run: echo "${{ env.{{PRODUCT_NAME}} }}"

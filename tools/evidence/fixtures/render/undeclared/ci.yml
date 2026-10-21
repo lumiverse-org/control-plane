@@ -1,0 +1,11 @@
+# Fixture: undeclared/ci.yml — uses {{NOPE}} which is not declared
+name: ci-{{PRODUCT_NAME}}
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - run: echo "{{NOPE}}"
