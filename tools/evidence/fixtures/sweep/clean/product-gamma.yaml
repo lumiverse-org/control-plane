@@ -1,0 +1,11 @@
+q1_git_commit: "cccaaabbb"
+q2_pull_request: "PR-30"
+q3_gate2_approver: "eve (role: tech-lead)"
+q4_ci_run: "https://github.com/org/gamma/actions/runs/3"
+q5_artifact_digest: "sha256:gamma003"
+q6_staging_deploy: "2026-09-03T10:00:00Z"
+q7_staging_passed: true
+q8_prod_approver: "frank (role: release-manager)"
+q9_prod_deploy: "2026-09-03T14:00:00Z"
+q10_smoke_passed: true
+q11_live_digest: "sha256:gamma003"
