@@ -1,0 +1,4 @@
+AT-103 LEG 1 PASS: all products declaring recovery: carry restore-production.yml generated from template
+AT-103 LEG 2 PASS: workflow executed end to end; forensic snapshot completed before restore stage
+AT-103 LEG 3 PASS: exceptional-authorisation record written with all six required fields
+AT-103 LEG 4 PASS: no credential was handed to or typed by a human; access via scoped workflow identity
