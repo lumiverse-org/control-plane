@@ -1,0 +1,5 @@
+[
+  {"id": "CVE-2024-0001", "rule": "vuln", "location": "lib/a.py", "package": "requests"},
+  {"id": "CVE-2024-0002", "rule": "vuln", "location": "lib/b.py", "package": "urllib3"},
+  {"id": "LGPL-001",       "rule": "licence", "location": "lib/c.py", "package": "gpl-lib"}
+]
