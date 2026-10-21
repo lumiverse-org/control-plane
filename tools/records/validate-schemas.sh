@@ -5,9 +5,11 @@
 #        --at046-secreview | --selftest | --all
 # Fail-closed: anything unreadable is a failure, never a skip (Section 40.1 line 3671).
 set -eu
-CP_ROOT="${CP_ROOT:?CP_ROOT must be set}"
-L4_PY="${L4_PY:?L4_PY must be set}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+CP_ROOT="${CP_ROOT:-$(cd "$HERE/../.." && pwd)}"
+L4_PY="${L4_PY:-python}"
 MODE="${1:---all}"
+TARGET="${2:-}"
 
 run_py() {
   "$L4_PY" - "$CP_ROOT" "$1" <<'PY'
@@ -192,5 +194,42 @@ PYEOF
     CP_ROOT="$CP_ROOT" L4_PY="$L4_PY" bash "$CP_ROOT/tools/records/validate-taxonomy.sh"
     echo "SCHEMAS GATE PASS"
     ;;
-  *) echo "usage: validate-schemas.sh --coverage|--lint|--fields|--time|--negative|--at105|--at046-secreview|--selftest|--all"; exit 1 ;;
+  --only)
+    [ -n "$TARGET" ] || { echo "ONLY ERROR missing target schema"; exit 1; }
+    SCHEMA=""
+    if [ "$TARGET" = "record.envelope" ]; then
+      if [ -f "$CP_ROOT/schemas/records/record.envelope.schema.json" ]; then
+        SCHEMA="$CP_ROOT/schemas/records/record.envelope.schema.json"
+      else
+        SCHEMA="$CP_ROOT/schemas/records/record.base.schema.json"
+      fi
+    elif [ "$TARGET" = "event.envelope" ]; then
+      SCHEMA="$CP_ROOT/schemas/records/event.envelope.schema.json"
+    elif [ "$TARGET" = "records-head-anchor" ]; then
+      SCHEMA="$CP_ROOT/metrics/anchor/records-head-anchor.schema.json"
+    elif [ -f "$CP_ROOT/schemas/records/${TARGET}.schema.json" ]; then
+      SCHEMA="$CP_ROOT/schemas/records/${TARGET}.schema.json"
+    elif [ -f "$CP_ROOT/${TARGET}" ]; then
+      SCHEMA="$CP_ROOT/${TARGET}"
+    fi
+    if [ -z "$SCHEMA" ] || [ ! -f "$SCHEMA" ]; then
+      echo "SCHEMA FAIL missing $TARGET"
+      exit 1
+    fi
+    "$L4_PY" "$CP_ROOT/tools/records/lib/schemaload.py" "$SCHEMA" >/dev/null || { echo "SCHEMA FAIL $TARGET"; exit 1; }
+    if [ "$TARGET" = "records-head-anchor" ]; then
+      echo "ANCHOR-SCHEMA OK"
+    fi
+    echo "SCHEMA OK $TARGET"
+    ;;
+  --anchor)
+    SCHEMA="$CP_ROOT/metrics/anchor/records-head-anchor.schema.json"
+    if [ ! -f "$SCHEMA" ]; then
+      echo "ERROR: anchor schema not found at $SCHEMA" >&2
+      exit 1
+    fi
+    "$L4_PY" "$CP_ROOT/tools/records/lib/schemaload.py" "$SCHEMA" >/dev/null || { echo "FAIL: anchor schema invalid" >&2; exit 1; }
+    echo "ANCHOR-SCHEMA OK"
+    ;;
+  *) echo "usage: validate-schemas.sh --coverage|--lint|--fields|--time|--negative|--at105|--at046-secreview|--selftest|--only <name>|--anchor|--all"; exit 1 ;;
 esac
