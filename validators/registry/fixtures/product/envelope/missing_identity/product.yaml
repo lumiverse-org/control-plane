@@ -5,3 +5,4 @@ classification:
   class: commercial
   reliability_criticality: high
   domain: payments
+commitments: []

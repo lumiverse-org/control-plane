@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://control-plane.local/schemas/product/product.contract.v2.schema.json",
   "title": "Product Operating Contract (product.yaml) v2",
-  "description": "Section 15 (lines 1284-1606). Built incrementally across L1-301..L1-308, one block per task, all edits to this single file. This lane's cluster (L1-301, L1-302 [separate file], L1-303, L1-304, L1-305) lands the envelope, identity, classification, code/verification/environments/deployment, the infrastructure/dependencies/security/data/observability/ai/business blocks, and operations. Commitments (L1-306), recovery (L1-307) and the conformance-profile rules (L1-308) are later tasks in this same phase and are not yet reflected here.",
+  "description": "Section 15 (lines 1284-1606). Built incrementally across L1-301..L1-308, one block per task, all edits to this single file. This lane's cluster (L1-301, L1-302 [separate file], L1-303, L1-304, L1-305, L1-306) lands the envelope, identity, classification, code/verification/environments/deployment, the infrastructure/dependencies/security/data/observability/ai/business blocks, operations, and commitments. Recovery (L1-307) and the conformance-profile rules (L1-308) are later tasks in this same phase and are not yet reflected here.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -27,7 +27,8 @@
     "observability",
     "automated_containment",
     "business",
-    "operations"
+    "operations",
+    "commitments"
   ],
   "properties": {
     "contract_version": { "const": 2 },
@@ -418,6 +419,67 @@
           ]
         },
         "critical_incident_response": { "type": "string", "minLength": 1 }
+      }
+    },
+    "commitments": {
+      "type": "array",
+      "description": "Section 21.1; Section 15.5. May be empty. `customer` is a stable reference -- invariant 111: the mapping from reference to legal entity lives with the customer contact list, never in this repo. R-PRD-06/16/17 live in validators/registry/rules/r_prd_06.py, not encoded here.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "customer",
+          "sla_uptime_pct",
+          "measurement_window",
+          "support_commitment",
+          "breach_notification_hours",
+          "service_credit",
+          "contract_end",
+          "termination_notice_period_days",
+          "conflict_check"
+        ],
+        "properties": {
+          "customer": {
+            "type": "string",
+            "pattern": "^customer-ref-[a-z0-9-]+$",
+            "description": "Invariant 111: a stable reference, never a legal name."
+          },
+          "sla_uptime_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+          "measurement_window": { "type": "string", "enum": ["monthly", "quarterly"] },
+          "support_commitment": { "type": "string", "enum": ["business-hours", "extended", "24x7"] },
+          "response_targets": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["sev1_hours", "sev2_hours"],
+                "properties": {
+                  "sev1_hours": { "type": "number", "minimum": 0 },
+                  "sev2_hours": { "type": "number", "minimum": 0 }
+                }
+              }
+            ]
+          },
+          "breach_notification_hours": { "type": "integer", "minimum": 1 },
+          "service_credit": { "type": "string", "enum": ["none", "per-msa", "defined-schedule"] },
+          "data_commitments": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["residency"],
+                "properties": {
+                  "residency": { "type": "string", "minLength": 1 }
+                }
+              }
+            ]
+          },
+          "contract_end": { "$ref": "https://control-plane.local/schemas/registry/common/defs.v1.schema.json#/$defs/isoDate" },
+          "termination_notice_period_days": { "type": "integer", "minimum": 0 },
+          "conflict_check": { "type": "string", "enum": ["passed", "waived-with-decision"] }
+        }
       }
     }
   }

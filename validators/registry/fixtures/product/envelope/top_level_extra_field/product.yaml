@@ -12,3 +12,4 @@ classification:
   reliability_criticality: high
   domain: payments
 extra_top_field: not allowed
+commitments: []

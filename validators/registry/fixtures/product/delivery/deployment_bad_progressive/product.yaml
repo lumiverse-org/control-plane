@@ -40,3 +40,4 @@ deployment:
   progressive_delivery: canary
   staged_rollout: null
 reversibility_default: fully-reversible
+commitments: []

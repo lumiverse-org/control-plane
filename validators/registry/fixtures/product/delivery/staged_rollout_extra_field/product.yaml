@@ -50,3 +50,4 @@ deployment:
       sev1_below_pct: 0.1
     extra_field: nope
 reversibility_default: fully-reversible
+commitments: []

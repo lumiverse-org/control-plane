@@ -40,3 +40,4 @@ deployment:
   progressive_delivery: none
   staged_rollout: null
 reversibility_default: maybe
+commitments: []
