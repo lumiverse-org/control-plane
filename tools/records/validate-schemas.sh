@@ -231,5 +231,68 @@ PYEOF
     "$L4_PY" "$CP_ROOT/tools/records/lib/schemaload.py" "$SCHEMA" >/dev/null || { echo "FAIL: anchor schema invalid" >&2; exit 1; }
     echo "ANCHOR-SCHEMA OK"
     ;;
-  *) echo "usage: validate-schemas.sh --coverage|--lint|--fields|--time|--negative|--at105|--at046-secreview|--selftest|--only <name>|--anchor|--all"; exit 1 ;;
+  --fixtures)
+    SUBMODE="${TARGET:-valid}"
+    if [ "$SUBMODE" != "valid" ]; then
+      echo "FIXTURES ERROR unknown submode: $SUBMODE"
+      exit 3
+    fi
+    "$L4_PY" - "$CP_ROOT" <<'PY'
+import json, pathlib, sys, warnings, yaml
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+from jsonschema import Draft202012Validator, RefResolver
+
+cp_root = pathlib.Path(sys.argv[1])
+map_path = cp_root / "schemas" / "records" / "store-map.yaml"
+rows = yaml.safe_load(map_path.read_text(encoding="utf-8"))["stores"]
+record_rows = [r for r in rows if r["kind"] == "record"]
+valid_dir = cp_root / "tools" / "records" / "fixtures" / "valid"
+
+store = {}
+schemas_dir = cp_root / "schemas" / "records"
+for sibling in schemas_dir.glob("*.json"):
+    try:
+        doc = json.loads(sibling.read_text(encoding="utf-8"))
+        store[sibling.as_uri()] = doc
+        store[sibling.name] = doc
+    except Exception:
+        pass
+
+class _NoDate(yaml.SafeLoader):
+    pass
+_NoDate.yaml_implicit_resolvers = {
+    k: [(t, reg) for t, reg in v if t != "tag:yaml.org,2002:timestamp"]
+    for k, v in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
+
+failed = 0
+validated = 0
+for r in record_rows:
+    schema_path = cp_root / r["schema"]
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    name = schema_path.name.replace(".schema.json", "")
+    fixture_path = valid_dir / (name + ".yaml")
+    if not fixture_path.is_file():
+        print(f"FIXTURES FAIL missing fixture {fixture_path.name}")
+        failed += 1
+        continue
+    data = yaml.load(fixture_path.read_text(encoding="utf-8"), Loader=_NoDate)
+    base = schema_path.parent.as_uri() + "/"
+    resolver = RefResolver(base_uri=base, referrer=schema, store=store)
+    val = Draft202012Validator(schema, resolver=resolver)
+    errors = list(val.iter_errors(data))
+    if errors:
+        print(f"FIXTURES FAIL {name}: {errors[0].message}")
+        failed += 1
+    else:
+        validated += 1
+
+if failed > 0:
+    print(f"FIXTURES VALID FAIL {failed}/{len(record_rows)}")
+    sys.exit(1)
+print(f"FIXTURES VALID OK {validated}/{len(record_rows)}")
+sys.exit(0)
+PY
+    ;;
+  *) echo "usage: validate-schemas.sh --coverage|--lint|--fields|--time|--negative|--at105|--at046-secreview|--selftest|--only <name>|--anchor|--fixtures valid|--all"; exit 1 ;;
 esac
