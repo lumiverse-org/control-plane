@@ -1,0 +1,112 @@
+# control-plane-ci.yml — §15.5 control-plane validation.
+# Lane 2 (Pipeline & Evidence). Owned path: .github/workflows/**.
+# This workflow runs CI on the control-plane repository itself.
+# Spec §15.5 L1564-1582.
+
+name: control-plane-ci
+
+on:
+  push:
+    branches: ['integration', 'main']
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: control-plane-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract-and-registry-validation:
+    name: contract-and-registry-validation
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@0a5c61591373683505ea898e09a6004b80576f52 # v5.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install evidence toolchain
+        run: pip install -r tools/evidence/requirements.txt
+
+      - name: Run Lane 1 registry and schema validation (§15.5, Option B CLI)
+        run: |
+          set -euo pipefail
+          python -m validators.registry.cli --root . --as-of "$(date +%Y-%m-%d)" --records-root records/ --summary
+
+      - name: Concordance check
+        run: |
+          set -euo pipefail
+          bash _concordance-check.sh lanes
+
+      - name: Workflow lint (Lane 2 owned paths)
+        run: |
+          set -euo pipefail
+          python -m tools.evidence.lint_workflow \
+            --path .github/workflows \
+            --summary
+          python -m tools.evidence.lint_workflow \
+            --path templates/workflows \
+            --summary
+
+      - name: Required-context cross-check
+        run: |
+          set -euo pipefail
+          python -m tools.evidence.check_required_contexts \
+            --templates templates/workflows \
+            --registry templates/workflows/required-checks.yaml \
+            --summary
+
+      - name: Assert recovery product restore workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          FAILED=0
+          TARGET_WORKFLOW="restore-production.yml"
+          while IFS= read -r PRODUCT_REPO; do
+            if ! gh api "repos/$PRODUCT_REPO/contents/.github/workflows/$TARGET_WORKFLOW" >/dev/null 2>&1; then
+              echo "FAIL: $PRODUCT_REPO has recovery: block but no $TARGET_WORKFLOW" >&2
+              FAILED=$((FAILED+1))
+            fi
+          done < <(python -m tools.evidence.list_recovery_products 2>/dev/null || true)
+          if [ "$FAILED" -gt 0 ]; then
+            echo "RECOVERY_ASSERT_FAILED=$FAILED" >&2
+            exit 1
+          fi
+          echo "RECOVERY_ASSERT=passed"
+
+      - name: Assert template drift against manifest
+        run: |
+          set -euo pipefail
+          MANIFEST="templates/workflows/MANIFEST.yaml"
+          FAILED=0
+          # Every template row must resolve to a file that exists.
+          python3 - "$MANIFEST" <<'PY'
+          import yaml, sys
+          from pathlib import Path
+          manifest = yaml.safe_load(Path(sys.argv[1]).read_text())
+          failed = 0
+          for row in manifest.get("templates", []):
+              t = Path("templates/workflows") / row["template"]
+              if not t.exists():
+                  print(f"DRIFT: template listed in MANIFEST but absent: {t}", file=sys.stderr)
+                  failed += 1
+          # Every .yml in templates/workflows/ must be in the manifest.
+          listed = {r["template"] for r in manifest.get("templates", [])}
+          for f in sorted(Path("templates/workflows").glob("*.yml")):
+              if f.name.endswith(".call.yml") or f.name.endswith(".step.yml") or f.name == "build-platform-rebuild.yml":
+                  continue
+              if f.name not in listed:
+                  print(f"DRIFT: {f.name} present in templates/workflows but not in MANIFEST", file=sys.stderr)
+                  failed += 1
+          sys.exit(failed)
+          PY
+          echo "DRIFT_ASSERT=passed"
