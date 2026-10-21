@@ -1,0 +1,6 @@
+case: N3
+description: Required-context job carrying an if: condition
+fixture_file: bad_if.yml
+expected: lint_workflow fails (FAIL lint_workflow, exit 2) — DoD-06
+guard: tools/evidence/lint_workflow.py
+assertion: LW-02 fires because unit-tests carries an if:

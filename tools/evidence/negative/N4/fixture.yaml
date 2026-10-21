@@ -1,0 +1,6 @@
+case: N4
+description: Run reporting skipped on a required context
+fixture_file: skipped_run.json
+expected: assert_run_conclusions fails (FAIL assert_run_conclusions, exit 2) — DoD-07
+guard: tools/evidence/assert_run_conclusions.py
+assertion: unit-tests is skipped — skipped is never a passing conclusion for a required context

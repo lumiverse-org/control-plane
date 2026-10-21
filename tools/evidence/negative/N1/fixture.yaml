@@ -1,0 +1,9 @@
+case: N1
+description: Foreign-path diff on a lane/2/* branch
+branch: lane/2/test-foreign-write
+changed_paths:
+  - contracts/workflow-io/required-contexts.tsv   # FOREIGN — contracts/** is not owned by L2
+  - .github/workflows/ci.yml                       # owned — ok
+expected: lane-guard fails (non-zero exit)
+guard: lane-guard.yml
+assertion: changed_paths contains path outside .github/workflows/, templates/workflows/, tools/evidence/

@@ -1,0 +1,9 @@
+case: N5
+description: Renovate diff touching a file outside declared manifest/lockfile paths
+branch: renovate/dependency-update
+changed_paths:
+  - package-lock.json          # allowed — manifest
+  - src/index.js               # FOREIGN — not a manifest or lockfile
+expected: renovate-path-guard fails (non-zero exit) — DoD-11
+guard: renovate-path-guard.yml
+assertion: src/index.js is outside the declared Renovate manifest/lockfile path list

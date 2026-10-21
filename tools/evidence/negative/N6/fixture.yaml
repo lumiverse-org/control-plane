@@ -1,0 +1,9 @@
+case: N6
+description: Renovate branch with a commit authored by a non-Renovate identity
+branch: renovate/dependency-update
+author_email: developer@example.com
+committer_email: developer@example.com
+expected: renovate-path-guard fails, log contains FOREIGN_AUTHOR — DoD-11
+guard: renovate-path-guard.yml
+assertion: commit authored by developer@example.com, not by renovate[bot]
+expected_log_string: FOREIGN_AUTHOR
