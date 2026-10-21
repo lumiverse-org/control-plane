@@ -1,0 +1,11 @@
+name: bad-lw02
+on:
+  workflow_call: {}
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - run: make test
