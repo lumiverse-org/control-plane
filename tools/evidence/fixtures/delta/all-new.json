@@ -1,0 +1,5 @@
+[
+  {"id": "CVE-2025-1111", "rule": "vuln", "location": "lib/x.py", "package": "foo"},
+  {"id": "CVE-2025-2222", "rule": "vuln", "location": "lib/y.py", "package": "bar"},
+  {"id": "MIT-999",        "rule": "licence", "location": "lib/z.py", "package": "baz"}
+]

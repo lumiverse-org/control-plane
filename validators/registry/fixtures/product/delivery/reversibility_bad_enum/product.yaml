@@ -40,3 +40,15 @@ deployment:
   progressive_delivery: none
   staged_rollout: null
 reversibility_default: maybe
+commitments: []
+recovery:
+  backup_frequency: daily
+  backup_retention_days: 30
+  encrypted: true
+  storage_location: AWS S3 ap-south-1 (separate account)
+  restore_procedure: Run ops/restore.sh with backup ID
+  restore_environment: staging-restore.recovery-fixture.internal
+  integrity_check: SHA-256 checksum on backup file
+  restore_tested: '2026-08-20'
+  rpo_minutes: 60
+  rto_minutes: 120

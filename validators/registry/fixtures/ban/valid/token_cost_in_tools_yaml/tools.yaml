@@ -1,0 +1,12 @@
+tools:
+- id: cost-tracker
+  purpose: Tracks AI token usage cost per workflow run for budgeting; not a performance
+    measure
+  owner: lead-1
+  current_version: v1.0.0
+  upgrade_policy: platform change process; canary set required
+  replacement_candidates: []
+  exit_condition: Cost dashboard retired when the billing API provides equivalent
+    data directly
+  last_reviewed: '2026-07-01'
+  criticality: low

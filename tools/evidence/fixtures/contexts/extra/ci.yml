@@ -1,0 +1,23 @@
+name: ci-template
+on:
+  workflow_call: {}
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make test
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make integration
+  extra-job:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make extra
+  build:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - run: make build

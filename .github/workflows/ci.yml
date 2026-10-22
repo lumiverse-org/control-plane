@@ -1,0 +1,441 @@
+name: ci
+
+on:
+  workflow_call:
+    inputs:
+      product_name:
+        description: "The product name from product.yaml"
+        type: string
+        required: true
+      default_branch:
+        description: "The product repository default branch"
+        type: string
+        required: false
+        default: "main"
+      security_scanner_image:
+        type: string
+        required: false
+        default: ""
+      security_scanner_digest:
+        type: string
+        required: false
+        default: ""
+      security_scanner_sarif_path:
+        type: string
+        required: false
+        default: "security-findings.json"
+      security_baseline_path:
+        type: string
+        required: false
+        default: "verification/security-baseline.json"
+      licence_scanner_image:
+        type: string
+        required: false
+        default: ""
+      licence_scanner_digest:
+        type: string
+        required: false
+        default: ""
+      licence_scanner_report_path:
+        type: string
+        required: false
+        default: "licence-findings.json"
+      licence_policy_path:
+        type: string
+        required: false
+        default: ""
+      licence_baseline_path:
+        type: string
+        required: false
+        default: "verification/licence-baseline.json"
+      slopsquat_baseline_path:
+        type: string
+        required: false
+        default: "verification/slopsquat-baseline.json"
+      contract_validator_entrypoint:
+        type: string
+        required: false
+        default: ""
+      registry_validator_entrypoint:
+        type: string
+        required: false
+        default: ""
+      run_verification_contract:
+        type: string
+        required: false
+        default: "true"
+      reliability_criticality:
+        type: string
+        required: false
+        default: "standard"
+      run_seeded_defect:
+        type: string
+        required: false
+        default: "true"
+      seeded_defect_result_path:
+        type: string
+        required: false
+        default: "verification/seeded-results.json"
+    secrets:
+      CONTROL_PLANE_TOKEN:
+        description: "Read-only token for the control-plane repository"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ inputs.product_name }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout product repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run unit tests
+        run: |
+          set -euo pipefail
+          if [ ! -f Makefile ]; then
+            echo "REASON: no Makefile present — no unit test suite declared"
+            echo "CONCLUSION: success (no suite)"
+            exit 0
+          fi
+          if ! grep -q '^test:' Makefile && ! grep -q '^unit-test:' Makefile; then
+            echo "REASON: Makefile has no 'test' or 'unit-test' target — no unit test suite declared"
+            echo "CONCLUSION: success (no suite)"
+            exit 0
+          fi
+          make test
+        shell: bash
+
+  integration-tests:
+    name: integration-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout product repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run integration tests
+        run: |
+          set -euo pipefail
+          if [ ! -f Makefile ]; then
+            echo "REASON: no Makefile present — no integration test suite declared"
+            echo "CONCLUSION: success (no suite)"
+            exit 0
+          fi
+          if ! grep -q '^integration:' Makefile && ! grep -q '^integration-test:' Makefile; then
+            echo "REASON: Makefile has no 'integration' or 'integration-test' target — no integration test suite declared"
+            echo "CONCLUSION: success (no suite)"
+            exit 0
+          fi
+          make integration
+        shell: bash
+
+  build:
+    name: build
+    # L2-T121: delegates to the existing .github/workflows/build.yml (L2-T120).
+    # identity_mode is hard-coded to "digest" — the only mode exercised anywhere
+    # in this repo today (templates/workflows/build.yml does the same).
+    # control_plane_ref reuses the caller-supplied default_branch input; there is
+    # no better ref source on ci.yml's current input surface. Replace this if a
+    # dedicated ref input is ever added upstream.
+    uses: ./.github/workflows/build.yml
+    with:
+      product: ${{ inputs.product_name }}
+      identity_mode: digest
+      control_plane_ref: ${{ inputs.default_branch }}
+    secrets:
+      control_plane_read_token: ${{ secrets.CONTROL_PLANE_TOKEN }}
+
+  security-scan:
+    name: security-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
+        with:
+          python-version: "3.12"
+
+      - name: Install evidence toolchain
+        run: pip install -r tools/evidence/requirements.txt
+
+      - name: Run security scanner
+        id: scan
+        env:
+          SCANNER_IMAGE: ${{ inputs.security_scanner_image }}
+          SCANNER_DIGEST: ${{ inputs.security_scanner_digest }}
+          SARIF_PATH: ${{ inputs.security_scanner_sarif_path }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SCANNER_IMAGE:-}" ]; then
+            echo "ERROR: security_scanner_image input is empty — scanner toolchain undeclared" >&2
+            exit 3
+          fi
+          docker run --rm \
+            --pull=never \
+            -v "$(pwd):/workspace:ro" \
+            "${SCANNER_IMAGE}@${SCANNER_DIGEST}" \
+            /workspace \
+            --output "${SARIF_PATH}" || true
+          echo "FINDINGS_PATH=${SARIF_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Delta gate — new findings only
+        env:
+          FINDINGS: ${{ steps.scan.outputs.FINDINGS_PATH }}
+          BASELINE: ${{ inputs.security_baseline_path }}
+        run: |
+          set -euo pipefail
+          python -m tools.evidence.delta_gate \
+            --baseline "${BASELINE}" \
+            --current "${FINDINGS}"
+
+  licence-scan:
+    name: licence-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
+        with:
+          python-version: "3.12"
+
+      - name: Install evidence toolchain
+        run: pip install -r tools/evidence/requirements.txt
+
+      - name: Run licence scanner
+        id: scan
+        env:
+          SCANNER_IMAGE: ${{ inputs.licence_scanner_image }}
+          SCANNER_DIGEST: ${{ inputs.licence_scanner_digest }}
+          REPORT_PATH: ${{ inputs.licence_scanner_report_path }}
+          POLICY_PATH: ${{ inputs.licence_policy_path }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SCANNER_IMAGE:-}" ]; then
+            echo "ERROR: licence_scanner_image input is empty — scanner toolchain undeclared" >&2
+            exit 3
+          fi
+          docker run --rm \
+            --pull=never \
+            -v "$(pwd):/workspace:ro" \
+            -v "${POLICY_PATH}:/policy:ro" \
+            "${SCANNER_IMAGE}@${SCANNER_DIGEST}" \
+            /workspace --policy /policy --output "${REPORT_PATH}" || true
+          echo "FINDINGS_PATH=${REPORT_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Delta gate — new licence findings only
+        env:
+          FINDINGS: ${{ steps.scan.outputs.FINDINGS_PATH }}
+          BASELINE: ${{ inputs.licence_baseline_path }}
+        run: |
+          set -euo pipefail
+          python -m tools.evidence.delta_gate \
+            --baseline "${BASELINE}" \
+            --current "${FINDINGS}"
+
+  slopsquat-check:
+    name: slopsquat-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
+        with:
+          python-version: "3.12"
+
+      - name: Install evidence toolchain
+        run: pip install -r tools/evidence/requirements.txt
+
+      - name: Slopsquat legitimacy check (execute time)
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          CHANGED_LOCKFILES="$(git diff --name-only "${BASE_REF}...HEAD" -- \
+            '*.lock' 'package-lock.json' 'yarn.lock' 'Pipfile.lock' 'poetry.lock' \
+            'Gemfile.lock' 'requirements*.txt' 'go.sum' 'pom.xml' 'build.gradle' \
+            'build.gradle.kts' 'pyproject.toml' 'Cargo.lock' 'composer.lock' \
+            'package.json' '*.gemspec' 'setup.cfg' 'setup.py' 2>/dev/null || true)"
+
+          if [ -z "$CHANGED_LOCKFILES" ]; then
+            echo "INFO: no lockfile or manifest changes in this pull request — explicit success, no legitimacy check needed"
+            exit 0
+          fi
+
+          echo "Changed lockfiles/manifests:"
+          echo "$CHANGED_LOCKFILES"
+          python -c "import sys, json; files = '''$CHANGED_LOCKFILES'''.splitlines(); print(json.dumps([{'id': f, 'path': f} for f in files if f]))" > /tmp/slopsquat-current.json
+
+          python -m tools.evidence.delta_gate \
+            --baseline "${{ inputs.slopsquat_baseline_path }}" \
+            --current /tmp/slopsquat-current.json
+
+  contract-validation:
+    name: contract-validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
+        with:
+          python-version: "3.12"
+
+      - name: Install evidence toolchain
+        run: pip install -r tools/evidence/requirements.txt
+
+      - name: Assert §33.1 required-file presence
+        run: |
+          set -euo pipefail
+          FAILED=0
+
+          check_file() {
+            local label="$1"; local path="$2"
+            if [ -e "$path" ]; then
+              echo "REQUIRED_FILE: PRESENT ${label}"
+            else
+              echo "REQUIRED_FILE: MISSING ${label}" >&2
+              FAILED=$((FAILED + 1))
+            fi
+          }
+
+          check_file ".env.example"             ".env.example"
+          check_file "docker-compose.dev.yml"   "docker-compose.dev.yml"
+          check_file "Makefile"                 "Makefile"
+          check_file "seed data"                "$(find . -maxdepth 3 \( -name 'seeds' -o -name 'seed_data' -o -path './db/seeds' \) 2>/dev/null | head -1)"
+          check_file "migration directory"      "$(find . -maxdepth 3 \( -name 'migrations' -o -path './db/migrate' \) 2>/dev/null | head -1)"
+          check_file "verification/"            "verification/"
+          check_file "AGENTS.md"                "AGENTS.md"
+          check_file "product.yaml"             "$(find . -maxdepth 2 -name 'product.yaml' 2>/dev/null | head -1)"
+
+          if [ "$FAILED" -gt 0 ]; then
+            echo "ERROR: ${FAILED} required file(s) absent" >&2
+            exit 1
+          fi
+
+      - name: Invoke Lane 1 contract validator
+        env:
+          VALIDATOR_ENTRYPOINT: ${{ inputs.contract_validator_entrypoint }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VALIDATOR_ENTRYPOINT:-}" ]; then
+            echo "ERROR: contract_validator_entrypoint input is empty — no published validator entrypoint yet (REG-018, validators/registry/bin/ is empty)" >&2
+            exit 3
+          fi
+          exec ${VALIDATOR_ENTRYPOINT}
+
+  registry-validation:
+    name: registry-validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
+        with:
+          python-version: "3.12"
+
+      - name: Invoke Lane 1 registry and assignment validator
+        env:
+          VALIDATOR_ENTRYPOINT: ${{ inputs.registry_validator_entrypoint }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VALIDATOR_ENTRYPOINT:-}" ]; then
+            echo "ERROR: registry_validator_entrypoint input is empty — no published validator entrypoint yet (REG-018, validators/registry/bin/ is empty)" >&2
+            exit 3
+          fi
+          exec ${VALIDATOR_ENTRYPOINT}
+
+  parity-check:
+    name: parity-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Run parity check
+        run: |
+          set -euo pipefail
+          make parity
+        shell: bash
+
+  verification-contract:
+    name: verification-contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
+        with:
+          python-version: "3.12"
+
+      - name: Check verification contract
+        run: |
+          set -euo pipefail
+          # Cadence input: caller supplies whether this run is due.
+          # The context is always emitted; no if: is used (§33.2).
+          RUN_DUE="${{ inputs.run_verification_contract || 'true' }}"
+          if [ "${RUN_DUE}" = "false" ]; then
+            echo "Verification contract check not due this run — explicit recorded success (§33.2)"
+            exit 0
+          fi
+          python -m tools.evidence.verification_contract_check \
+            --contract verification/contract.yaml \
+            --criticality "${{ inputs.reliability_criticality || 'standard' }}" \
+            --summary
+
+  seeded-defect-case:
+    name: seeded-defect-case
+    runs-on: ubuntu-latest
+    needs: [verification-contract]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
+        with:
+          python-version: "3.12"
+
+      - name: Execute seeded-defect case (inversion — §31.2)
+        run: |
+          set -euo pipefail
+          RUN_DUE="${{ inputs.run_seeded_defect || 'true' }}"
+          if [ "${RUN_DUE}" = "false" ]; then
+            echo "Seeded-defect check not due this run — explicit recorded success (§33.2)"
+            exit 0
+          fi
+          python -m tools.evidence.seeded_defect \
+            --result "${{ inputs.seeded_defect_result_path || 'verification/seeded-results.json' }}" \
+            --summary

@@ -8,3 +8,4 @@ operations:
     start: "08:00"
     end: "20:00"
     timezone: UTC
+commitments: []

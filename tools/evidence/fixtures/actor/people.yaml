@@ -1,0 +1,14 @@
+# L2-T541 actor gate fixture — people registry
+people:
+  - login: dev-1
+    type: human
+    capabilities:
+      - devops
+      - production-approval
+  - login: dev-2
+    type: human
+    capabilities: []
+  - login: machine-1
+    type: machine
+    action: background-worker
+    capabilities: []

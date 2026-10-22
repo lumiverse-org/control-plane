@@ -1,0 +1,5 @@
+identity:
+  id: product-1
+dependencies:
+  internal:
+  - ghost-svc

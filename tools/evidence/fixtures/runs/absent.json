@@ -1,0 +1,4 @@
+[
+  {"name": "unit-tests", "conclusion": "success"},
+  {"name": "integration-tests", "conclusion": "success"}
+]

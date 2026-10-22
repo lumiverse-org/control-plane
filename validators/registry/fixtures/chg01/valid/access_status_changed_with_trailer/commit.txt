@@ -1,0 +1,3 @@
+L1-504: suspend dev-a
+
+Decision-Record: DEC-2026-001

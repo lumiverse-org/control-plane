@@ -1,0 +1,7 @@
+people:
+- id: dev-owner
+  availability: on_leave
+- id: dev-reviewer
+  availability: active
+- id: dev-responder
+  availability: active

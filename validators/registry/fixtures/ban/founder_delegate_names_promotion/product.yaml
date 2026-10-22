@@ -1,0 +1,10 @@
+identity:
+  id: checkout-svc
+assignments:
+- person: alice-dev
+  type: founder_decision_delegate
+  start_date: '2026-01-01'
+  end_date: '2026-12-31'
+  scope:
+    decisions:
+    - promotion

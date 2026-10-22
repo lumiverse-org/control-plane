@@ -1,0 +1,12 @@
+name: bad-lw03
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make test

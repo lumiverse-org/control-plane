@@ -1,0 +1,22 @@
+affected_roles:
+- developer
+effective_date: '2026-01-01'
+framework_version: v1
+kpis:
+- definition: Share of committed items verified within the period
+  evidence_sources:
+  - screenshot agent
+  human_judgement_areas: []
+  id: KPI-DCA
+  known_limitations: none-known
+  kra_id: KRA-DELIVERY
+  stretch_target: null
+  target: 80 percent
+  time_window: one review period
+  title: Delivery Commitment Achievement
+  weight: 25
+kras: []
+multi_framework_transition: false
+retirement_date: null
+review_cadence: quarterly
+status: active

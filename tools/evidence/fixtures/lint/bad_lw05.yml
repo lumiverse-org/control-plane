@@ -1,0 +1,11 @@
+name: bad-lw05
+on:
+  workflow_call: {}
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make test
+        continue-on-error: true

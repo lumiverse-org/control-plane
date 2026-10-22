@@ -1,0 +1,7 @@
+identity:
+  id: checkout-svc
+assignments:
+- person: alice-dev
+  type: primary_owner
+  start_date: '2026-01-01'
+  end_date: null

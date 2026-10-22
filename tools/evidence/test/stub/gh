@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Lane 2 test double for `gh`. Used only by tools/evidence/test/run-pins.sh.
+# Behaviour is selected by STUB_GH_MODE so the action-pin resolver can be
+# proved offline. This file is never on PATH outside the test harness.
+case "${STUB_GH_MODE:-ok}" in
+  ok)        printf '%s\n' "$(printf 'e%.0s' $(seq 1 40))"; exit 0 ;;
+  not-found) printf 'stub: gh api: 404 Not Found\n' >&2; exit 1 ;;
+  bad-sha)   printf 'deadbeef\n'; exit 0 ;;
+  *) printf 'stub: unknown STUB_GH_MODE=%s\n' "${STUB_GH_MODE}" >&2; exit 1 ;;
+esac

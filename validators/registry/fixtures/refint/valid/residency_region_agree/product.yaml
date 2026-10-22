@@ -1,0 +1,6 @@
+identity:
+  id: product-1
+infrastructure:
+  region: eu-west-1
+data:
+  residency: eu

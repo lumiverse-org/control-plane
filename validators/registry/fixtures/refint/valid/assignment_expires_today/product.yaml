@@ -1,0 +1,7 @@
+identity:
+  id: product-1
+assignments:
+- person: dev-x
+  type: temporary_contributor
+  start_date: '2026-01-05'
+  end_date: '2026-08-27'
