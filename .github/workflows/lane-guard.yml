@@ -43,6 +43,70 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_ACTOR: ${{ github.actor }}
 
+      - name: Branch path ownership check
+        run: |
+          set -euo pipefail
+          HEAD_REF="${{ github.head_ref || github.ref_name }}"
+          echo "Evaluating branch-path ownership for ref: $HEAD_REF"
+          case "$HEAD_REF" in
+            lane/1/*)
+              ALLOW_REGEX='^(schemas/registry/|schemas/product/|registries/|validators/registry/)'
+              LANE="1"
+              ;;
+            lane/2/*)
+              ALLOW_REGEX='^(\.github/workflows/|templates/workflows/|tools/evidence/)'
+              LANE="2"
+              ;;
+            lane/3/*)
+              ALLOW_REGEX='^(reconciler/|tools/provision/|validators/drift/)'
+              LANE="3"
+              ;;
+            lane/4/*)
+              ALLOW_REGEX='^(schemas/records/|metrics/|tools/records/)'
+              LANE="4"
+              ;;
+            lane/5/*)
+              ALLOW_REGEX='^(access/|infra/|ops-vm/|notify/|assets/)'
+              LANE="5"
+              ;;
+            l0/*|integration|main)
+              echo "Branch $HEAD_REF is an L0 / integration branch: exempt from lane path partition."
+              exit 0
+              ;;
+            *)
+              echo "Branch $HEAD_REF does not match lane/[1-5]/* prefix; skipping lane partition check."
+              exit 0
+              ;;
+          esac
+
+          BASE_SHA="${{ github.event.pull_request.base.sha || '' }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha || '' }}"
+          if [ -n "$BASE_SHA" ] && [ -n "$HEAD_SHA" ]; then
+            CHANGED="$(git diff --name-only "$BASE_SHA...$HEAD_SHA" 2>/dev/null || git diff --name-only "$BASE_SHA..$HEAD_SHA" 2>/dev/null || true)"
+          else
+            CHANGED="$(git diff --name-only origin/main...HEAD 2>/dev/null || git diff --name-only HEAD~1..HEAD 2>/dev/null || true)"
+          fi
+
+          if [ -z "$CHANGED" ]; then
+            echo "No files changed."
+            exit 0
+          fi
+
+          VIOLATIONS=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            if ! echo "$file" | grep -qE "$ALLOW_REGEX"; then
+              echo "LANE-GUARD VIOLATION: Lane $LANE ($HEAD_REF) touched foreign path: $file"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done <<< "$CHANGED"
+
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo "LANE-GUARD FAIL: $VIOLATIONS foreign path violation(s). PARTITION.md rule 1: one owner per path."
+            exit 1
+          fi
+          echo "LANE-GUARD PASS: All files modified by $HEAD_REF belong to Lane $LANE."
+
       - name: Validate schemas
         run: |
           python -m validators.registry.cli \
