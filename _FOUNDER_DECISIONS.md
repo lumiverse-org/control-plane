@@ -2201,3 +2201,53 @@ Publish the accepted set as `contracts/orphans/decisions.yaml`.
 **Date:** 2026-10-21
 
 **Decision:** "Delegation-type" assignments, for the 14-day expiry-warning rule (L3-P0-DEL14), are temporary or acting assignments only (e.g. acting-team-lead, temporary coverage roles) — not every assignment that happens to carry an `end_date`. Permanent role assignments with a scheduled end are out of scope for this warning.
+
+---
+
+## FD-130 — flags.schema.json: retired, store-specific field typing stands
+
+**Date:** 2026-10-22
+
+**Decision:** `schemas/records/defs/flags.schema.json` (L4-P2-23) is retired as redundant, not built. The already-shipped design stands: `incident.schema.json` enforces `detection_source` as a strict enum, `support.schema.json` leaves it an open string, each with its own written justification. Matches §97.2's "include" (not "are") wording — per-store variance was intentional, not an oversight.
+
+**Resolves:** RD-01 in `_gravity-handoff/batch-3/remaining-decisions.md`.
+
+---
+
+## FD-131 — Writer test harness: Python stdlib modules + pytest, not shell
+
+**Date:** 2026-10-22
+
+**Decision:** The Lane 4 writer tooling (`tools/records/record-write`, `event-append`, `record-verification-result` and their test harness) is built as Python stdlib modules under `tools/records/lib/` with dedicated pytest suites under `tools/records/tests/`, matching the convention already used throughout `tools/evidence/tests/`. The shell-script design in `lanes/L4-03-write-paths.md` is superseded — not built.
+
+**Resolves:** RD-02 (Blocker B2) in `_gravity-handoff/batch-3/remaining-decisions.md`.
+
+---
+
+## FD-132 — Freshness end-to-end test: built now with a synthetic git fixture
+
+**Date:** 2026-10-22
+
+**Decision:** `tools/records/test-freshness-e2e.sh` is built now as an offline test — a temporary git repository with backdated commits (`GIT_COMMITTER_DATE`) — rather than deferred until a live `control-plane-records` repository exists with real multi-day commit history. Matches this project's existing fixture-driven test convention; keeps the write-freshness Blocking-class signal provable at V1 instead of unproven indefinitely.
+
+**Resolves:** RD-03 in `_gravity-handoff/batch-3/remaining-decisions.md`.
+
+---
+
+## FD-133 — DoD matrix runner: offline matrix, remote-required rows explicitly skipped
+
+**Date:** 2026-10-22
+
+**Decision:** `tools/records/run-dod-matrix.sh` is built to actually execute and prove the 15 charter DoD rows that are checkable locally, and to explicitly report `SKIPPED (REMOTE-REQUIRED)` — never a silent pass — for the 5 rows that need live GitHub App credentials. The matrix is not deferred wholesale to Phase 6.
+
+**Resolves:** RD-04 in `_gravity-handoff/batch-3/remaining-decisions.md`.
+
+---
+
+## FD-134 — Lane 4 handoff manifest: harmonized to tools/records/HANDOFF.md
+
+**Date:** 2026-10-22
+
+**Decision:** Lane 4's cross-lane handoff manifest lives at `tools/records/HANDOFF.md`, not `metrics/HANDOFF.md` as `lanes/L4-06-tasks.md` originally named. Harmonizes with Lane 3's `reconciler/HANDOFF.md` and Lane 5's `infra/handoff/` — `tools/records/` is where the actual cross-lane-consumed tooling already lives, so the manifest sits beside what it documents.
+
+**Resolves:** RD-05 in `_gravity-handoff/batch-3/remaining-decisions.md`.

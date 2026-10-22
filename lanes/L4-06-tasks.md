@@ -465,7 +465,7 @@ Work top to bottom. `Deps` are task ids that must be **merged to `integration`**
 | 39 | L4-P2-20 | 2 | `support` record schema — `detection_source`, received-timestamp anchor | `schemas/records/support.schema.json` | L4-P2-06 | M | `bash tools/records/validate-schemas.sh --only support` |
 | 40 | L4-P2-21 | 2 | `onboarding` record schema | `schemas/records/onboarding.schema.json` | L4-P2-06 | M | `bash tools/records/validate-schemas.sh --only onboarding` |
 | 41 | L4-P2-22 | 2 | `leave` record schema — working calendar and operating timezone | `schemas/records/leave.schema.json` | L4-P2-06 | M | `bash tools/records/validate-schemas.sh --only leave` |
-| 42 | L4-P2-23 | 2 | Shared flag definitions: `agent_authored`, `detection_source`, `pre_onboarding` | `schemas/records/defs/flags.schema.json` | L4-P2-07, L4-P2-20 | S | `bash tools/records/validate-schemas.sh --fields` |
+| 42 | L4-P2-23 **RETIRED** | 2 | Shared flag definitions: `agent_authored`, `detection_source`, `pre_onboarding` | `schemas/records/defs/flags.schema.json` | L4-P2-07, L4-P2-20 | S | *(retired per FD-130 — store-specific typing confirmed)* |
 | 43 | L4-P2-24 | 2 | AT-105 conformance assertion on `deletion-request` | `tools/records/asserts/at105.py` | L4-P2-15 | S | `bash tools/records/validate-schemas.sh --at105` |
 | 44 | L4-P2-25 | 2 | Security-review conformance assertion (unfixed-finding linkage) | `tools/records/asserts/secreview.py` | L4-P2-16 | S | `bash tools/records/validate-schemas.sh --at046-secreview` |
 | 45 | L4-P2-26 | 2 | Golden valid fixtures — one file per store | `tools/records/fixtures/valid/**` | L4-P2-22 | M | `bash tools/records/validate-schemas.sh --fixtures valid` |
@@ -603,7 +603,7 @@ Each row below is the complete acceptance criterion for its task. Every criterio
 | L4-P2-20 | `support.schema.json` requires `detection_source` whose enum **includes** `founder_direct` and `customer` alongside the intake channels, and a `received_at` field distinct from the ingest timestamp, so the first-response clock anchors to the message's received timestamp. | §97.2 line 8888; §103.4 (D80 note); AT-104 line 9387 |
 | L4-P2-21 | `onboarding.schema.json` carries the phase completed, whether it was machine- or human-written, and the first-accepted-PR reference where the phase produces one. | §97.2 line 8874 |
 | L4-P2-22 | `leave.schema.json` carries the declared working calendar and operating timezone that every business-day rule resolves against, and the calendar **version**. | §6.4 lines 446–454; §97.1 line 8851 |
-| L4-P2-23 | `agent_authored` is a required boolean on change records and PR records. `detection_source` is defined once and referenced, never redeclared per store. | §97.2 line 8886 |
+| L4-P2-23 | **RETIRED per FD-130.** Redundant; not built. Store-specific field typing confirmed correct as-is matching §97.2 line 8873 "include" wording. | §97.2 line 8873, 8886; FD-130 |
 | L4-P2-24 | A deletion-request record missing any one of the four timestamps, the executor, the checklist, or the carve-out statement is rejected. Six negative cases. | AT-105 line 9388 |
 | L4-P2-25 | A security-review record carrying an `unfixed` finding with no owner or no date is rejected. | §97.2 line 8882 |
 | L4-P2-26 | Exactly one valid golden fixture exists per store in `store-inventory.yaml`, and every one validates. | §0.8 rule 3 |

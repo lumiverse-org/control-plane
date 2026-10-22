@@ -253,7 +253,7 @@ scoped. Nothing here is authored in this file.
 | Index id | What the index promises | Why nothing matches |
 | --- | --- | --- |
 | L4-P2-01 | `tools/records/check.sh` (the universal per-task check dispatcher, byte-identical to `L4-06` §0.6) and `tools/records/CONTRACT.md` (transcribing the §0.5 OK/FAIL/ERROR exit contract). **Every index task from `L4-P2-01` onward is required to contribute `tools/records/checks/<TASK-ID>.sh`.** | No body creates `check.sh`. `L4-00-charter.md` `L4-T005` creates `lane-selfcheck.sh`, a different script (path ownership). `L4-P5-14` line 1345 *runs* `bash tools/records/check.sh ZZZ` as entry condition E2, i.e. treats it as a prerequisite built elsewhere. `CONTRACT.md` appears only in `L4-06-tasks.md`. **This is load-bearing: the entire index-side SELF-VERIFY convention rests on a dispatcher no body builds.** |
-| L4-P2-23 | `schemas/records/defs/flags.schema.json` — `agent_authored` a required boolean on change records and PR records; `detection_source` **defined once and referenced, never redeclared per store**. Charter DoD-10. | The bodies do the opposite by design. `record.base.schema.json` has eleven `$defs` (`person_ref`, `record_ref`, `evidence_link`, `digest`, `pass_fail`, `nonempty_string`, `record_schema_version`, `record_id`, `product_ref`, `timestamp_utc`, `date_utc`) — no flags. `detection_source` is redeclared per store: an enum in `incident` (`L4-T206`, line 1344) and an open `nonempty_string` in `support` (`L4-T220`, line 2850), each with its own justification. No change-record or PR-record schema exists in the lane at all, so `agent_authored` has no record to be required on — it exists only as an event payload key in `L4-T203`. `validate-schemas.sh --fields` exists but proves the D88 no-names lint, a different assertion under the same flag name. **A design conflict, not just a gap: L0 must rule.** |
+| L4-P2-23 | `schemas/records/defs/flags.schema.json` — **RETIRED per FD-130.** Redundant; not built. | Store-specific field typing confirmed correct as-is per FD-130: `incident.schema.json` enforces strict enum, `support.schema.json` open string, each with written justification matching §97.2 line 8873 "include" wording. |
 | L4-P2-28 | `schemas/records/versions.yaml` + `schemas/records/VERSIONS.md` — every schema file listed with its version; a statement that record and event schemas are §60.2 versioned contracts and that a retired version is marked, never removed. | Neither filename appears in any body. Partial substance only: `store-map.yaml` (`L4-T223`) carries a `version:` column per row and documents the §60.2 "write v2 alongside v1, never replace" rule as a new-row convention. There is no version register document and no retired-version marking rule for schemas. Mapped at LOW and therefore **not counted as mapped**. |
 
 ### 3.2 Phase 3 residue (4) — the taxonomy and store-policy tail
@@ -386,10 +386,7 @@ The index's Phase 8 has four rows; the tests phase has fourteen bodies. Six map 
 
 Three items in this concordance are **conflicts**, not gaps, and cannot be closed by writing code:
 
-1. **`L4-P2-23` vs `L4-T206`/`L4-T220`** — the index requires `detection_source` defined once and
-   referenced; the bodies deliberately redeclare it per store with written justification (an enum
-   for `incident`, an open string for `support`, because §97.2 line 8873 says *"include"* not
-   *"are"*). One of the two is wrong.
+1. **`L4-P2-23` vs `L4-T206`/`L4-T220`** — **RESOLVED by FD-130:** Store-specific field typing confirmed; `flags.schema.json` retired as redundant.
 2. **`L4-P3-02` vs `L4-T203`** — the index requires one payload file per event type
    (directory-per-item, `PARTITION.md` rule 3); the body puts `payload_required` inline as a column
    of the single shared `event-types.yaml`.
