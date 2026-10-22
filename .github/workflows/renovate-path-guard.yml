@@ -21,10 +21,6 @@ jobs:
   renovate-path-guard:
     name: renovate-path-guard
     runs-on: ubuntu-22.04
-    # FD-123: this check is required only once Renovate actually activates (Phase 2).
-    # Until then it must not block ordinary PRs — a non-Renovate PR exits cleanly
-    # without running the authorship/path checks below, rather than failing them.
-    if: github.event.pull_request.user.login == 'renovate[bot]'
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -36,7 +32,16 @@ jobs:
         with:
           python-version: '3.12'
 
+      # FD-123: this check is required only once Renovate actually activates
+      # (Phase 2). Until then it must not block ordinary PRs. A job-level `if`
+      # is deliberately NOT used here: lint_workflow.py's LW-02 forbids it on a
+      # required-context job, because GitHub reports a skipped job as
+      # perpetually pending on a required check, not as passed. Instead each
+      # substantive step below is individually conditional, so the job itself
+      # always completes and reports a clean, genuine success for non-Renovate
+      # PRs rather than being skipped.
       - name: Assert Renovate-only Authorship and Committer Identity
+        if: github.event.pull_request.user.login == 'renovate[bot]'
         env:
           RENOVATE_LOGIN: renovate[bot]
         run: |
@@ -68,6 +73,7 @@ jobs:
           echo "INFO: all commits authored and committed by Renovate — authorship check passed"
 
       - name: Assert Renovate-only path scope
+        if: github.event.pull_request.user.login == 'renovate[bot]'
         run: |
           set -euo pipefail
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
