@@ -2329,3 +2329,27 @@ One of the contract's five rules does not hold: the workflow uses `actions/check
    - `onboard-rank.sh` executed to calculate deterministic rank sequence (`06,01,03,04,08,05,02,07`).
    - `onboard-gate.sh` confirmed with `rank OK`.
 
+---
+
+## FD-139 — Resolution of Placeholder Workflows (product-P1..P8, product-template) & Workflow Lint Compliance
+
+**Date:** 2026-10-23 · **Status:** DECIDED
+
+**Decision:**
+Per-product workflows in `.github/workflows/` (`product-P1.yml` through `product-P8.yml` and `product-template.yml`) are resolved as lint-clean placeholder workflows conforming strictly to MasterSpec §33.2 (LW-03 and LW-04):
+1. **Least-Privilege Permissions:** Added top-level `permissions: contents: read` to all 9 files, resolving `LW-04`.
+2. **Prohibition on Path Filters:** Removed `paths:` filters on push/pull_request triggers, retaining `workflow_dispatch:`, resolving `LW-03`.
+
+**Investigation Findings & Architectural Evidence:**
+1. **Architectural Role:**
+   - In the MultiProduct OS (MasterSpec §19.1, §33.2, V1 Scope §3 item 3 & 4), product CI workflows execute inside each product's own repository (`Product-1`, `Product-2`, etc.), created via `tools/provision/create_product.py` from `templates/workflows/MANIFEST.yaml`.
+   - The authoritative product caller template is `templates/workflows/ci.yml` (which renders to `.github/workflows/ci.yml` in each product repo, consuming `.github/workflows/ci.yml@{{WORKFLOWS_TAG}}` by pinned tag, with zero path filters and `permissions: contents: read`).
+   - `.github/workflows/product-P1.yml` through `product-P8.yml` and `product-template.yml` are control-plane-level placeholder dispatchers from early Phase-0 prototype development (FD-110).
+2. **Phase Boundary & Scope:**
+   - Per `master/04-phase-map.md` §2 and `master/06-v1-scope.md` §1-3, per-product onboarding (`OT-P4` through `OT-P7`) runs on the Onboarding Track after the Build Track (`BT-0` through `BT-3`). Per-product CI does not run against `control-plane` trunk commits.
+   - The control plane repository lacks a product verification contract (`verification/contract.yaml`), meaning automatic execution of `reusable-ci.yml` on push in `control-plane` would fail.
+3. **Spec Alignment (§33.2):**
+   - MasterSpec §33.2 (L2854–2869) and `tools/evidence/lint_workflow.py` rule LW-03 strictly prohibit `paths:` or `paths-ignore:` filters on workflows emitting or wrapping required status contexts.
+   - Restricting `product-P1` through `product-P8` and `product-template` to manual trigger (`workflow_dispatch:`) ensures they remain available for manual testing and promotion cuts (`scheduled-cut.yml`) while eliminating path filter drift and ensuring 100% compliance with workflow lint rules.
+
+

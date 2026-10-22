@@ -14,15 +14,6 @@
 name: product-PRODUCT_ID
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "records/products/PRODUCT_ID/**"
-      - "registries/capabilities/PRODUCT_ID.yaml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "records/products/PRODUCT_ID/**"
   workflow_dispatch:
     inputs:
       action:
@@ -31,6 +22,9 @@ on:
         type: choice
         options: [ci, promote, release]
         default: ci
+
+permissions:
+  contents: read
 
 jobs:
   ci:
