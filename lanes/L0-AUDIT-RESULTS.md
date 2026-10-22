@@ -322,7 +322,7 @@ In strict compliance with `AGENTS.md` ("RADICAL HONESTY" and "ABSOLUTE PROHIBITI
 1. **Phase 1-4 Decisions:** 17 reserved decisions in `docs/decisions/register.tsv` remain open, correctly gated for future phases (Phase 1 through Phase 4) per spec design.
 2. **Product Live Onboarding:** Product slots 01-08 have completed floor obligations (72/72 closed) and deterministic ranking (`06,01,03,04,08,05,02,07`), but live product intake assessments (`onboard-assess.sh`) await human intake execution.
 3. **Tracked Operational Exceptions:**
-   - `FD-135`: `lumiverse-org/control-plane-records` has no branch protection (GitHub Team plan limitation; no-bypass ruleset protects against deletion/force-push).
+   - `FD-135`: `lumiverse-org/control-plane-records` has no branch protection or rulesets (GitHub Free plan lacks branch protection and ruleset support on private repositories; both protection and rulesets API endpoints return HTTP 403; append-only enforcement is temporarily accepted as a known gap until an organization plan upgrade).
    - `FD-136`: `records-writer` GitHub App private key resides at `$SECRETS_DIR/records-writer.pem` on local development machine until `ops-vm-control-plane-01` is provisioned.
-   - `FD-137`: `lane-guard.yml` uses `actions/checkout` without SHA pinning in bootstrap mode.
+   - `FD-137`: `lane-guard.yml` uses a third-party action (`actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2`, pinned to full commit SHA) as a tracked exception to L0D-LG-4's zero-third-party-actions rule, with rewriting to raw git commands deferred.
    - `FD-117` / `EXC-BOOT-001`: Root `CODEOWNERS` routes exclusively to `@bendrohit-eng` in bootstrap mode until verified team GitHub logins are assigned.
