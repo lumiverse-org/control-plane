@@ -2251,3 +2251,27 @@ Publish the accepted set as `contracts/orphans/decisions.yaml`.
 **Decision:** Lane 4's cross-lane handoff manifest lives at `tools/records/HANDOFF.md`, not `metrics/HANDOFF.md` as `lanes/L4-06-tasks.md` originally named. Harmonizes with Lane 3's `reconciler/HANDOFF.md` and Lane 5's `infra/handoff/` — `tools/records/` is where the actual cross-lane-consumed tooling already lives, so the manifest sits beside what it documents.
 
 **Resolves:** RD-05 in `_gravity-handoff/batch-3/remaining-decisions.md`.
+
+---
+
+## FD-135 — control-plane-records branch protection: gap accepted temporarily
+
+**Date:** 2026-10-22
+
+**Decision:** `control-plane-records` was made private on 2026-10-22 per spec. Doing so revealed that GitHub's current plan tier (Free) only supports branch protection and repository rulesets on *public* repositories — both `GET .../branches/main/protection` and `GET .../rulesets` return HTTP 403 "Upgrade to GitHub Pro... or make this repository public" on the live repo. Upgrading the organization to a plan that supports both private visibility and branch protection (e.g. GitHub Team) is deferred, not actioned now. The gap — this repo currently has no append-only enforcement, no force-push/deletion protection, and D107's "append-only is enforced, not merely asserted" does not currently hold in practice — is accepted temporarily rather than reverting the repo to public.
+
+**Trigger to revisit:** before write access to `control-plane-records` is extended beyond the current trusted set of people, and before the records-writer GitHub App (FD-136, if created) is given broader rollout than a single installation. Separately noted: the current `main` HEAD commit is unsigned (`verified: false`) — compounds the same gap, not a new one.
+
+---
+
+## FD-136 — records-writer App: created and installed; host-custody exception tracked
+
+**Date:** 2026-10-22
+
+**Decision:** The `records-writer` GitHub App (`records-writer-lumiverse-org`, App ID `5422825`) was created and installed on `lumiverse-org`, scoped to `control-plane-records` only (`repository_selection: selected`, exactly 1 repository), with permissions exactly `{"contents":"write","metadata":"read"}` — matching L4-P1-T09/L4-P1-T10's acceptance criteria exactly. A private key was generated.
+
+Every fifth-tier credential envelope in this repo (`access/secrets/fifth-tier/records-writer.yaml` and its siblings) declares `host: "ops-vm-control-plane-01"` as the expected source host — but that host does not exist: no asset-inventory entry, nothing under `infra/` or `ops-vm/` provisions it. The private key currently has no spec-compliant home.
+
+**Decision:** use the key from the current working machine for now, as a deliberate, tracked exception to the envelope's `expected_source_host` check — not a silent violation. This unblocks L4-P1-T11 (proving the App can actually write) without waiting for ops-vm-control-plane-01 to be provisioned.
+
+**Trigger to revisit:** as soon as `ops-vm-control-plane-01` (or an equivalent designated host) is actually provisioned, migrate the key there and stop using it from any developer machine. Until then, `access/secrets/envelope/check-envelope.sh`'s `expected_source_host` check for this credential is expected to fail/flag — that is correct, known behavior under this exception, not a new defect to fix.
