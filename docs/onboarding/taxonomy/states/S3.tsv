@@ -1,0 +1,5 @@
+id	S3
+state	CD only - auto-deploy with no meaningful tests
+spec_line	L8810
+ai_gate	no
+prereq	cd-gate

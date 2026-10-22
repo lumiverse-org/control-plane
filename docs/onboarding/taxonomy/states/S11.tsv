@@ -1,0 +1,5 @@
+id	S11
+state	No monitoring no health endpoints
+spec_line	L8818
+ai_gate	no
+prereq	-

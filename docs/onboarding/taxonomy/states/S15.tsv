@@ -1,0 +1,5 @@
+id	S15
+state	Multi-product monorepo
+spec_line	L8822
+ai_gate	no
+prereq	shared-repo-decl

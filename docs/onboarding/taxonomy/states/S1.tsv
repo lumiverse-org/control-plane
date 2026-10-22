@@ -1,0 +1,5 @@
+id	S1
+state	No CI and no CD - manual everything
+spec_line	L8808
+ai_gate	no
+prereq	-

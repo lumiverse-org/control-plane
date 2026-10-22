@@ -1,0 +1,13 @@
+# standard.tsv — Section 96.6 target-standard coverage. Assessor input.
+# id	verdict	evidence_or_gap	disposition
+# verdict: met | gap | equivalent      disposition: scheduled-step | accepted-risk | -
+T1	UNSET	UNSET	UNSET
+T2	UNSET	UNSET	UNSET
+T3	UNSET	UNSET	UNSET
+T4	UNSET	UNSET	UNSET
+T5	UNSET	UNSET	UNSET
+T6	UNSET	UNSET	UNSET
+T7	UNSET	UNSET	UNSET
+T8	UNSET	UNSET	UNSET
+T9	UNSET	UNSET	UNSET
+T10	UNSET	UNSET	UNSET

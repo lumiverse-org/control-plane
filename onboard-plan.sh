@@ -1,0 +1,130 @@
+#!/usr/bin/env sh
+# =============================================================================
+# onboard-plan.sh — L0-owned. Generates docs/onboarding/products/NN/plan.tsv.
+# Section 10.2 of implementation/lanes/L0-07-onboarding-track.md, which is
+# MasterSpec v4.0 Section 98.2 Phases 4-7 sequenced under Section 96.5 and
+# serialised under Section 73.1 (spec L6005).
+# GENERATED — never hand-edited (invariant 46, spec L9514).
+# Writes EXPRESSIONS, never dates (D99, spec L10192).
+# usage: onboard-plan.sh [--slot NN] [--check]
+# =============================================================================
+set -u
+OB="${OB_ROOT:-docs/onboarding}"
+ONLY=""; CHECK=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --slot)  ONLY="$2"; shift 2 ;;
+    --check) CHECK=1;   shift ;;
+    *) echo "usage: onboard-plan.sh [--slot NN] [--check]" >&2; exit 2 ;;
+  esac
+done
+
+kv() { awk -F'\t' -v k="$2" '$1==k{print $2; f=1} END{if(!f) print "UNSET"}' "$1"; }
+
+rank_of()  { awk -F'\t' -v s="$1" 'FNR==1{r=""} $1=="rank"{r=$2} $1=="slot" && $2==s{print r}' "$OB"/rank/*.tsv 2>/dev/null; }
+slot_at()  { f="$OB/rank/$1.tsv"; [ -f "$f" ] && awk -F'\t' '$1=="slot"{print $2}' "$f"; }
+prereq_of(){ f="$OB/taxonomy/states/$1.tsv"; [ -f "$f" ] && awk -F'\t' '$1=="prereq"{print $2}' "$f"; }
+
+# The prereq token -> artifact that satisfies it (this plan, section 10.4).
+prereq_file() {
+  case "$1" in
+    cd-gate)                 echo "cd-gate.tsv" ;;
+    s10-gate|s19-gate)       echo "gates.tsv" ;;
+    repo-in-org)             echo "floor/F7.tsv" ;;   # section 10.4: satisfied by floor row F7 and by nothing else
+    restore-target|environment-mapping|lifecycle-decision|shared-repo-decl|equivalent-identity) echo "interim.tsv" ;;
+    profile-client-app|profile-customer-hosted|profile-library-or-batch) echo "facts.tsv" ;;
+    store-account-transfer|shared-db-ownership) echo "interim.tsv" ;;
+    *) echo "" ;;
+  esac
+}
+
+blocked=0; written=0; stale=0
+for d in "$OB"/products/*/; do
+  slot=$(basename "$d")
+  [ -z "$ONLY" ] || [ "$ONLY" = "$slot" ] || continue
+
+  k=$(rank_of "$slot")
+  if [ -z "$k" ]; then echo "PLAN-BLOCKED slot=$slot reason=no-rank — DR-L0-07-D"; blocked=$((blocked+1)); continue; fi
+  if [ "$(kv "$d/assessment.tsv" status)" != "recorded" ]; then
+    echo "PLAN-BLOCKED slot=$slot reason=no-recorded-assessment — Section 96.6 L8783"; blocked=$((blocked+1)); continue
+  fi
+  states=$(kv "$d/states.tsv" states)
+  if [ "$states" = "UNSET" ] || [ -z "$states" ]; then
+    echo "PLAN-BLOCKED slot=$slot reason=no-states-recorded"; blocked=$((blocked+1)); continue
+  fi
+
+  # ---- prereq rows, composed from the recorded states and notes (section 10.4)
+  rows=""; bad=""; has_s3=no
+  for sid in $(printf '%s' "$states" | tr ',' ' ') $(printf '%s' "$(kv "$d/states.tsv" notes)" | tr ',' ' '); do
+    [ "$sid" = "UNSET" ] && continue
+    case "$sid" in N1) t="store-account-transfer" ;; N2) t="shared-db-ownership" ;; *) t=$(prereq_of "$sid") ;; esac
+    [ "$sid" = "S3" ] && has_s3=yes
+    [ -z "$t" ] && { echo "PLAN-BLOCKED slot=$slot reason=unknown-state-$sid"; bad="x"; break; }
+    [ "$t" = "-" ] && continue
+    pf=$(prereq_file "$t")
+    if [ -n "$pf" ] && [ ! -f "$d/$pf" ]; then bad="prereq-$t-unrecorded"; break; fi
+    # section 10.4: a prereq is satisfied by the RECORDED VALUE, not by the file existing.
+    # Gates must carry the specific status field; floor rows must show the gating action closed.
+    # Negative test: file present but field value wrong → expect prereq-<token>-unrecorded.
+    case "$t" in
+      s10-gate)    grep -q 's10_status=pass' "$d/gates.tsv"    2>/dev/null || { bad="prereq-s10-gate-unrecorded";   break; } ;;
+      repo-in-org) grep -q 'status=closed'   "$d/floor/F7.tsv" 2>/dev/null || { bad="prereq-repo-in-org-unrecorded"; break; } ;;
+      profile-client-app)       [ "$(kv "$d/facts.tsv" conformance_profile)" = "client-app" ]      || { bad="prereq-$t-unrecorded"; break; } ;;
+      profile-customer-hosted)  [ "$(kv "$d/facts.tsv" conformance_profile)" = "customer-hosted" ] || { bad="prereq-$t-unrecorded"; break; } ;;
+      profile-library-or-batch) case "$(kv "$d/facts.tsv" conformance_profile)" in library|batch) : ;; *) bad="prereq-$t-unrecorded"; break ;; esac ;;
+    esac
+    r=$(printf 'PREREQ:%s\t-\t%s\t-\tUNSET' "$t" "$sid")
+    rows="$rows$r
+"
+  done
+  if [ -n "$bad" ]; then
+    [ "$bad" = "x" ] || echo "PLAN-BLOCKED slot=$slot reason=$bad"
+    blocked=$((blocked+1)); continue
+  fi
+  if [ "$has_s3" = yes ]; then
+    r=$(printf 'NOTE:S3-verification-contract-first\t-\tS3\t-\tspec-L8810-standard-order-already-satisfies-it')
+    rows="$rows$r
+"
+  fi
+
+  # ---- the six phase rows, in the standard order, always (OB-F3)
+  prev=""
+  if [ "$k" != "01" ]; then
+    pk=$(printf '%02d' $(( ${k#0} - 1 )))
+    prev=$(slot_at "$pk")
+  fi
+  if [ -n "$prev" ]; then p4="max(S3+0w,OT-P6-$prev+0w)"; else p4="S3+0w"; fi
+
+  tmp="$d/.plan.$$"
+  {
+    printf '# plan.tsv — GENERATED by onboard-plan.sh. Never hand-edited. rank=%s\n' "$k"
+    printf '# phase\tearliest_expr\tgate\tserialiser\tstatus\n'
+    printf '%s' "$rows"
+    printf 'OT-FLOOR\tOT-FLOOR+0w\tnone\tproduct-team\tUNSET\n'
+    printf 'OT-INTAKE\tOT-FLOOR+0w\tintake-template\thuman-assessor\tUNSET\n'
+    printf 'OT-P4\t%s\tintake-recorded\tdevops-stream\tUNSET\n' "$p4"
+    printf 'OT-P5\tOT-P4-%s+0w\tOT-P4-complete\tqa-takeover\tUNSET\n' "$slot"
+    printf 'OT-P6\tmax(OT-P5-%s+0w,S3+0w)\tOT-P5-complete\tdevops-stream\tUNSET\n' "$slot"
+    printf 'OT-P7\tOT-P6-%s+0w\tplan-checker\tnone\tUNSET\n' "$slot"
+  } > "$tmp"
+
+  if [ "$CHECK" -eq 1 ]; then
+    if [ ! -f "$d/plan.tsv" ] || ! cmp -s "$tmp" "$d/plan.tsv"; then
+      echo "PLAN-STALE slot=$slot — regenerate with onboard-plan.sh"; stale=$((stale+1))
+    fi
+    rm -f "$tmp"
+  else
+    mv "$tmp" "$d/plan.tsv"
+    for ph in OT-P4 OT-P5 OT-P6 OT-P7; do
+      a="$OB/anchors/$ph-$slot.tsv"
+      [ -f "$a" ] || printf 'token\t%s\ndate\tUNSET\ndeclared_by\tUNSET\n' "$ph-$slot" > "$a"
+    done
+    echo "PLAN-WRITTEN slot=$slot rank=$k prereqs=$(printf '%s' "$rows" | grep -c '^PREREQ:') phases=6"
+  fi
+  written=$((written+1))
+done
+
+echo "PLAN-SUMMARY planned=$written blocked=$blocked stale=$stale"
+{ [ "$blocked" -eq 0 ] && [ "$stale" -eq 0 ]; } || exit 1
+exit 0
+PLAN

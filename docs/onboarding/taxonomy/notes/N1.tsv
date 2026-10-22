@@ -1,0 +1,4 @@
+id	N1
+note	A store account owned by a personal Google or Apple account is the mobile-store analogue of S9: transfer to the company account is scheduled at intake or its absence is a dated accepted risk
+spec_line	L8828
+prereq	store-account-transfer

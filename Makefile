@@ -212,3 +212,26 @@ guard-verify:
 	  && echo "workflow IDENTICAL" || { echo "workflow TAMPERED"; exit 1; }
 	@$(MAKE) --no-print-directory promote-check
 
+# BEGIN onboarding-track targets (L0-07-14) — do not hand-edit between the markers
+.PHONY: onboard-gate onboard-floor onboard-aigate onboard-plan onboard-qa onboard-interim onboard-stream onboard-deadline onboard-report
+onboard-gate:
+	@./onboard-gate.sh
+onboard-floor:
+	@./onboard-floor.sh
+onboard-aigate:
+	@./onboard-aigate.sh
+onboard-plan:
+	@./onboard-plan.sh
+onboard-qa:
+	@./onboard-qa.sh
+onboard-interim:
+	@./onboard-interim.sh
+onboard-stream:
+	@./onboard-stream.sh holder
+onboard-deadline:
+	@./onboard-deadline.sh
+onboard-report:
+	@./onboard-report.sh
+# END onboarding-track targets
+
+

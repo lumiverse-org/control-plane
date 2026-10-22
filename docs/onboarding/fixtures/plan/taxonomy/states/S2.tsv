@@ -1,0 +1,5 @@
+id	S2
+state	CI only - tests run deployment manual
+spec_line	L8809
+ai_gate	no
+prereq	-

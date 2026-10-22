@@ -1,0 +1,5 @@
+id	S13
+state	Heavy tech debt or legacy stack nobody wants to touch
+spec_line	L8820
+ai_gate	no
+prereq	lifecycle-decision
