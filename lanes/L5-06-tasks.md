@@ -1,4 +1,4 @@
-﻿<!-- CONCORDANCE INDEX ONLY — FD-047 2026-09-06
+<!-- CONCORDANCE INDEX ONLY — FD-047 2026-09-06
      Phase files L5-01..L5-05 are authoritative.
      Do NOT execute task bodies from this file.
      Use this file to locate canonical task bodies in L5-01..L5-05. -->
@@ -4463,6 +4463,10 @@ rc=1
 ---
 
 ### L5-T53 — Per-person public-key registration and annual re-key  **[ASSISTED — L0 EXECUTES]**
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative document at access/layer-b/assisted/key-registration-request.md per L5-03.
+
 **Phase** P6 · **Size** S · **Mode** ASSISTED · **Deps** L5-T52 · **Spec** §90.6, §43.4
 **Files:** `access/layerb/assisted/key-registration-request.md` (new)
 
