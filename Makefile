@@ -28,7 +28,9 @@ gate-freeze:
 	@echo "GATE-FROZEN $$(cat gate.sha256)"
 
 promote-check:
+	@$(MAKE) decisions-gate PHASE=$$(cat contracts/gate/PHASE 2>/dev/null || echo Ph0)
 	@test -d contracts || { echo "CONTRACTS-NOT-FROZEN: contracts/ does not exist"; exit 1; }
+
 	@test -f contracts.sha256 || { echo "CONTRACTS-NOT-FROZEN: no freeze hash recorded"; exit 1; }
 	@now=$$(find contracts -type f -not -path 'contracts/gate/*' -not -path 'contracts/ci/*' \
 	  | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1); \
@@ -139,4 +141,30 @@ train-log:
 
 promote-gate:
 	@./train-promote-gate.sh $(CYCLE)
+
+# --- L0-04: the decision register -------------------------------------------
+# `decisions`      the queue, for the standing decision window (charter 8.2)
+# `decisions-lint` integrity of the register itself
+# `decisions-gate` PHASE=<token>: fails if any P0 or P1 entry gating at or
+#                  before PHASE is still open. Local only (L0D-DR-7).
+.PHONY: decisions decisions-lint decisions-gate
+
+decisions:
+	@docs/decisions/bin/reg-status.sh
+
+decisions-lint:
+	@docs/decisions/bin/reg-lint.sh
+
+decisions-gate:
+	@test -n "$(PHASE)" || { echo "DECISIONS-GATE FAIL: PHASE is required"; exit 2; }
+	@docs/decisions/bin/reg-lint.sh >/dev/null || { echo "DECISIONS-GATE FAIL: register integrity"; exit 1; }
+	@n=$$(docs/decisions/bin/reg-status.sh "$(PHASE)" | tail -1 | sed 's/.*overdue=//'); \
+	 b=$$(awk -F'\t' '!/^#/ && $$6=="open" && ($$2=="P0" || $$2=="P1")' docs/decisions/register.tsv | wc -l | tr -d ' '); \
+	 if [ "$$b" -gt 0 ]; then \
+	   echo "DECISIONS-GATE FAIL: $$b P0/P1 entries still open at $(PHASE) (overdue=$$n)"; \
+	   docs/decisions/bin/reg-status.sh "$(PHASE)" | awk '$$2=="P0" || $$2=="P1"'; \
+	   exit 1; \
+	 fi; \
+	 echo "DECISIONS-GATE OK phase=$(PHASE) overdue=$$n blocking=0"
+
 
