@@ -20,7 +20,7 @@ import sys
 
 import yaml
 
-OUT = os.path.join("access", "published", "secret-tiers.v1.json")
+OUT = "access/published/secret-tiers.v1.json"
 
 
 def read_all(pattern):
