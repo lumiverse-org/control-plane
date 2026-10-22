@@ -1,4 +1,4 @@
-﻿# FOUNDER DECISIONS â€” the closed register
+# FOUNDER DECISIONS â€” the closed register
 
 Decisions the founder has answered directly. This file is **additive and authoritative**: where a plan
 document disagrees with a row here, the row here wins and the document is to be corrected in the next
@@ -2287,3 +2287,60 @@ Every fifth-tier credential envelope in this repo (`access/secrets/fifth-tier/re
 One of the contract's five rules does not hold: the workflow uses `actions/checkout@<SHA> # v4.2.2`, a third-party action, where L0D-LG-4 requires zero third-party actions in this specific file. This is accepted as a deliberate, tracked exception rather than silently waived — the action is pinned to an exact commit SHA, not a floating tag, which substantially mitigates the supply-chain risk the rule targets. Rewriting the checkout step as raw `git` commands is deferred as its own, separately-reviewed change.
 
 **Trigger to revisit:** before this exception is cited as precedent for any other third-party action in `.github/workflows/**`; standing item to replace `actions/checkout` with an inline `git` checkout.
+
+---
+
+## FD-138 — Business Criticality Enum Contradiction: 3 Tiers vs 4 Tiers
+
+**Date:** 2026-10-22 · **Status:** PENDING FOUNDER RESOLUTION
+
+**Context & Contradiction:**
+A cross-specification contradiction exists across the Master Spec, data contracts, and onboarding track regarding the valid enumeration values for `business_criticality` (`business.criticality`):
+
+1. **Master Spec §15.1 (Product Operating Contract, line 1531):**
+   Explicitly defines `business.criticality` under the `business:` block with three tiers:
+   ```yaml
+   business:
+     criticality: high                  # high | medium | low — business importance
+   ```
+   Contrasting with `classification.reliability_criticality` (line 1313) which has four tiers:
+   ```yaml
+   classification:
+     reliability_criticality: high      # low | medium | high | critical
+   ```
+   Master Spec §15.2 (lines 1536–1543) and D4 (line 10080) emphasize:
+   *"Two criticality fields, deliberately distinct... business.criticality expresses business importance... classification.reliability_criticality expresses operational stringency... Collapsing them into one field forces one of the two decisions to be wrong."*
+
+2. **Lane 1 Production Schema (`schemas/product/product.contract.v2.schema.json` lines 380–386):**
+   Matches Master Spec §15.1:
+   ```json
+   "criticality": { "type": "string", "enum": ["high", "medium", "low"] }
+   ```
+
+3. **Onboarding Track (`lanes/L0-07-onboarding-track.md` lines 462–466):**
+   Transcribes Master Spec §15.1 for the Section 96.5 ranking function:
+   - Key 1: `reliability_criticality` (`critical` → `high` → `medium` → `low`)
+   - Key 2: `business_criticality` (`high` → `medium` → `low`)
+
+4. **Phase 0 Contract Draft & Frozen Contract (`lanes/L0-01-phase-0-contracts.md` line 1061 & `contracts/registry/product.contract.v2.json` line 187):**
+   Contradicts Master Spec §15.1 by placing `business_criticality` inside `classification` with four tiers:
+   ```json
+   "business_criticality": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
+   ```
+
+5. **Existing Intake Fixture (`docs/onboarding/products/06/facts.tsv`):**
+   Authored in commit `852c816` with:
+   ```tsv
+   reliability_criticality	critical
+   business_criticality	critical
+   ```
+   which is valid under `product.contract.v2.json` and `L0-01`, but rejected as invalid by `onboard-rank.sh` under `L0-07` and Master Spec §15.1.
+
+**Decision Required from Founder:**
+Choose between:
+- **Option A (3 Tiers — Canonical Spec):** Enforce `business.criticality` ∈ `[high, medium, low]` per Master Spec §15.1 and `schemas/product/product.contract.v2.schema.json`. Action: amend `lanes/L0-01-phase-0-contracts.md` schema, re-freeze `contracts/registry/product.contract.v2.json`, and update `Product-6`'s intake `facts.tsv` to `high`.
+- **Option B (4 Tiers — Extended Parity):** Admit `critical` as a valid fourth tier for `business_criticality` (`[critical, high, medium, low]`), acknowledging that certain core platforms carry critical business revenue importance. Action: amend Master Spec §15.1, `lanes/L0-07-onboarding-track.md`, `schemas/product/product.contract.v2.schema.json`, and update `onboard-rank.sh` to rank `critical` ahead of `high`.
+
+**Interim Rule in Force:**
+Pending the Founder's decision, `docs/onboarding/products/06/facts.tsv` remains at its original declared value (`business_criticality critical`). `onboard-rank.sh` flags slot 06 as `RANK-BLOCKED slot=06 field=business_criticality — FD-138-pending (critical value under founder review)` rather than raising an unhandled syntax error, cleanly propagating a `PENDING` state to `onboard-gate.sh`.
+

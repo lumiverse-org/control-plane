@@ -31,7 +31,18 @@ for d in "$OB"/products/*/; do
   for pair in "reliability_criticality=$r:$rk" "business_criticality=$b:$bk" "onboarding_cost_band=$c:$ck"; do
     case "$pair" in *:9)
       v=${pair%%=*}; val=${pair#*=}; val=${val%:9}
-      case "$val" in UNSET) : ;; *) echo "RANK-INVALID slot=$slot field=$v value=$val"; blocked=$((blocked+1)) ;; esac ;;
+      case "$val" in
+        UNSET) : ;;
+        critical)
+          if [ "$v" = "business_criticality" ]; then
+            echo "RANK-BLOCKED slot=$slot field=$v — FD-138-pending (critical value under founder review)"
+            blocked=$((blocked+1))
+          else
+            echo "RANK-INVALID slot=$slot field=$v value=$val"
+            blocked=$((blocked+1))
+          fi ;;
+        *) echo "RANK-INVALID slot=$slot field=$v value=$val"; blocked=$((blocked+1)) ;;
+      esac ;;
     esac
   done
   lines="$lines$rk $bk $ck $slot

@@ -1,5 +1,10 @@
-# STUB — placeholder for C-WF-CTX-1
+# Required status check contexts fixture for consuming lanes (L1, L2) (FD-010, §11.3)
 # context	phase	lane	scope
 tests	4	L2	product
+build	4	L2	product
+security-scan	4	L2	product
 contract-validation	4	L2	product
-stub	1	L0	test
+reviewer-matrix-validation	4	L2	product
+parity-check	4	L2	product
+verification-contract	5	L2	product
+control-plane/blocking-drift	6	L3	product

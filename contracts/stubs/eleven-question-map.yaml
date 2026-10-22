@@ -1,5 +1,57 @@
-# STUB — placeholder for C-EV-11Q-1
-contract_id: C-EV-11Q-1
+# Section 32 production evidence chain question map fixture for consuming lanes (L1, L2, L3, L4, L5) (D-L2-07)
 contract_version: 1
 schema: eleven-question-map/v1
-stub: true
+provenance: canonical
+map:
+  1:
+    question: "Which git commit?"
+    store: "records/deployments/"
+    record_field: "commit"
+  2:
+    question: "Which pull request?"
+    store: "github-api"
+    api: "repos/{owner}/{repo}/commits/{sha}/pulls"
+  3:
+    question: "Who approved it at Gate 2, and in which role?"
+    store: "github-api"
+    api: "repos/{owner}/{repo}/pulls/{number}/reviews"
+  4:
+    question: "Which CI run produced it?"
+    store: "github-api"
+    api: "repos/{owner}/{repo}/actions/runs"
+  5:
+    question: "What is the artifact digest?"
+    store: "records/deployments/"
+    record_field: "digest"
+  6:
+    question: "When was it deployed to staging?"
+    store: "records/deployments/"
+    record_field: "deployed_at"
+    filter_field: "environment"
+    filter_value: "staging"
+  7:
+    question: "Did staging verification pass?"
+    store: "records/deployments/"
+    record_field: "staging_verified"
+    also: ["smoke_result", "uat_record"]
+  8:
+    question: "Who approved production?"
+    store: "records/deployments/"
+    record_field: "approved_by"
+    also: ["approval_event"]
+  9:
+    question: "When was it deployed to production?"
+    store: "records/deployments/"
+    record_field: "deployed_at"
+    filter_field: "environment"
+    filter_value: "production"
+  10:
+    question: "Did production verification pass?"
+    store: "records/deployments/"
+    record_field: "smoke_result"
+    filter_field: "environment"
+    filter_value: "production"
+  11:
+    question: "What is the live digest running right now?"
+    store: "live-observation"
+    record_field: "observed_digest"

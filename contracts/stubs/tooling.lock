@@ -1,3 +1,3 @@
-# STUB — placeholder for C-CFG-TOOLING-1
+# Pinned tooling lock fixture for consuming lanes (L0) (L0-P0-021)
 check-jsonschema==0.38.0
 PyYAML==6.0.3

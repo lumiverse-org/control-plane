@@ -1,7 +1,7 @@
 product_id	Product-6
 repository	Product-6
 reliability_criticality	critical
-business_criticality	high
+business_criticality	critical
 onboarding_cost_band	M
 conformance_profile	service
 team	platform

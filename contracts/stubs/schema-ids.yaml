@@ -1,5 +1,21 @@
-# STUB — placeholder for C-CFG-SCHEMA-IDS-1
-contract_id: C-CFG-SCHEMA-IDS-1
+# Schema ID URN mapping fixture for consuming lanes (L0, L1) (FD-007-R)
 contract_version: 1
 urn_scheme: "urn:controlplane:<family>:<entity>:v<version>"
-stub: true
+
+families:
+  registry:
+    people: "urn:controlplane:registry:people:v1"
+    roles: "urn:controlplane:registry:roles:v1"
+    product: "urn:controlplane:registry:product:v2"
+    verification: "urn:controlplane:registry:verification:v1"
+    service: "urn:controlplane:registry:service:v1"
+    topology: "urn:controlplane:registry:topology:v1"
+    platform: "urn:controlplane:registry:platform:v1"
+  records:
+    record_envelope: "urn:controlplane:records:record-envelope:v1"
+    event_envelope: "urn:controlplane:records:event-envelope:v1"
+    store_map: "urn:controlplane:records:store-map:v1"
+  reconciler:
+    drift_finding: "urn:controlplane:reconciler:drift-finding:v1"
+    repair_record: "urn:controlplane:reconciler:repair-record:v1"
+    run_record: "urn:controlplane:reconciler:run-record:v1"

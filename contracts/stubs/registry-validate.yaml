@@ -1,5 +1,26 @@
-# STUB — placeholder for C-CLI-VALIDATE-1
-contract_id: C-CLI-VALIDATE-1
+# CLI Registry Validator fixture for consuming lanes (L0) (L0D-18)
 contract_version: 1
 entrypoint: "validators/registry/bin/validate"
-stub: true
+command: "python -m validators.registry.cli"
+exit_codes:
+  success: 0
+  invalid: 1
+  config_error: 2
+  unresolved: 3
+output_format: "json-lines"
+sample_findings:
+  - rule_id: "REG-VAL-001"
+    severity: "error"
+    file: "registries/product/product-01.yaml"
+    pointer: "/business/criticality"
+    message: "Missing required property: criticality"
+  - rule_id: "REG-VAL-002"
+    severity: "warning"
+    file: "registries/topology/mesh.yaml"
+    pointer: "/routes/staging"
+    message: "Route target staging has no explicit healthcheck"
+  - rule_id: "REG-VAL-003"
+    severity: "info"
+    file: "registries/people/bendrohit.yaml"
+    pointer: "/roles/0"
+    message: "Validated single-owner role binding"
