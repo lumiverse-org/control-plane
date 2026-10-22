@@ -30,22 +30,16 @@
 
 # --- L0-owned trees ---
 /contracts/	@bendrohit-eng
-/.github/workflows/	@bendrohit-eng
-/lane-paths.tsv	@bendrohit-eng
-/Makefile	@bendrohit-eng
 /contracts/event-types.yaml	@bendrohit-eng
 /contracts/tag-ruleset.json	@bendrohit-eng
 /contracts/lane-paths.yaml	@bendrohit-eng
 /contracts/harness/	@bendrohit-eng
 /e2e/	@bendrohit-eng
-/.github/workflows/lane-guard.yml	@bendrohit-eng
-/contracts/	@bendrohit-eng
 /docs/	@bendrohit-eng
 /plan-checker/	@bendrohit-eng
 /verification/acceptance/*	@bendrohit-eng
 /tools/at/*	@bendrohit-eng
 /tools/train/*	@bendrohit-eng
-/e2e/	@bendrohit-eng
 /tools/lane-guard/	@bendrohit-eng
 /derived/*	@bendrohit-eng
 /gate-state/*	@bendrohit-eng
