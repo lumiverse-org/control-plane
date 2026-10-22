@@ -1,0 +1,43 @@
+# phase<TAB>at<TAB>owner_lane<TAB>twin
+# FROZEN (L0D-IG-5). Transcribed from protocol/02-acceptance-mapping.md sections
+# 9.2 (phase), 9.3 and protocol/00-test-strategy.md section 6 (owner), 10 (twin).
+# owner "G" means the subsystem is UNASSIGNED in PARTITION v1 - see L0-IG-D4.
+# twin "-" means protocol/02 section 10 registers no twin (the four H-class tests).
+# 37 rows. This file never grows past 37 without an L0 decision record.
+Ph1	AT-022	L5	-
+Ph2	AT-051	L1	NT-051
+Ph3	AT-011	L5	NT-011
+Ph3	AT-018	L3	NT-018
+Ph3	AT-021	L1	NT-021
+Ph3	AT-036	L3	NT-036
+Ph3	AT-039	L1	NT-039
+Ph3	AT-075	L1	NT-075
+Ph3	AT-102	L3	NT-102
+Ph3	AT-109	L5	NT-109
+Ph3	AT-110	L3	NT-110
+Ph4	AT-010	L1	NT-010
+Ph5	AT-009	L2	NT-009
+Ph5	AT-049	L1	NT-049
+Ph5	AT-107	L5	NT-107
+Ph6	AT-028	L5	-
+Ph6	AT-029	L2	-
+Ph6	AT-101	L1	-
+Ph6	AT-103	L2	NT-103
+Ph7	AT-030	L5	NT-030
+Ph7	AT-034	L0	NT-034
+Ph7	AT-106	G	NT-106
+EH	AT-003	L1	NT-003
+EH	AT-004	L3	NT-004
+EH	AT-023	L2	NT-023
+EH	AT-024	L2	NT-024
+EH	AT-025	L1	NT-025
+EH	AT-026	L2	NT-026
+EH	AT-033	L3	NT-033
+EH	AT-035	L2	NT-035
+EH	AT-048	L4	NT-048
+EH	AT-104	L4	NT-104
+SA	AT-008	L3	NT-008
+SA	AT-019	L1	NT-019
+SA	AT-020	L1	NT-020
+SA	AT-105	L2	NT-105
+COND	AT-108	L5	NT-108

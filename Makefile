@@ -181,3 +181,14 @@ bootstrap-log:
 
 bootstrap-fresh:
 	@CP=$(CURDIR) sh docs/plan/bin/bootstrap-log-fresh.sh
+
+# --- integration gate (L0-05) ---
+.PHONY: gate-integration gate-integration-dry
+
+gate-integration:
+	@test -n "$(CYCLE)" || { echo "GATE FAIL: CYCLE=<id> required"; exit 2; }
+	@git fetch --prune origin >/dev/null 2>&1
+	@./contracts/gate/run-integration.sh "$(CYCLE)"
+
+gate-integration-dry:
+	@GATE_DRY=1 ./contracts/gate/run-integration.sh "$(CYCLE)"
