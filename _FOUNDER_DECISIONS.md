@@ -2275,3 +2275,15 @@ Every fifth-tier credential envelope in this repo (`access/secrets/fifth-tier/re
 **Decision:** use the key from the current working machine for now, as a deliberate, tracked exception to the envelope's `expected_source_host` check — not a silent violation. This unblocks L4-P1-T11 (proving the App can actually write) without waiting for ops-vm-control-plane-01 to be provisioned.
 
 **Trigger to revisit:** as soon as `ops-vm-control-plane-01` (or an equivalent designated host) is actually provisioned, migrate the key there and stop using it from any developer machine. Until then, `access/secrets/envelope/check-envelope.sh`'s `expected_source_host` check for this credential is expected to fail/flag — that is correct, known behavior under this exception, not a new defect to fix.
+
+---
+
+## FD-137 — lane-guard.yml.frozen placed; `actions/checkout` exception tracked
+
+**Date:** 2026-10-22
+
+**Decision:** `contracts/ci/lane-guard.yml.frozen` and `contracts/ci/lane-guard.contract.md` are placed now (L0D-LG-1/L0D-LG-3), as a retrofit rather than the Phase-0 bootstrap timing `lanes/L0-02-lane-guard.md` originally assumed — the live workflow had already been edited multiple times (FD-102, FD-086, FD-123, branch-path-ownership enforcement) before this freeze was ever established. The job's display name was corrected from `Lane Guard` to `lane-guard` (matching the contract's own exactness requirement) before freezing.
+
+One of the contract's five rules does not hold: the workflow uses `actions/checkout@<SHA> # v4.2.2`, a third-party action, where L0D-LG-4 requires zero third-party actions in this specific file. This is accepted as a deliberate, tracked exception rather than silently waived — the action is pinned to an exact commit SHA, not a floating tag, which substantially mitigates the supply-chain risk the rule targets. Rewriting the checkout step as raw `git` commands is deferred as its own, separately-reviewed change.
+
+**Trigger to revisit:** before this exception is cited as precedent for any other third-party action in `.github/workflows/**`; standing item to replace `actions/checkout` with an inline `git` checkout.
