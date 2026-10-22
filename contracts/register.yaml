@@ -241,3 +241,151 @@ contracts:
   - L1
   - L4
   stub: stubs/event-types.yaml
+- id: C-CFG-SCHEMA-IDS-1
+  path: schema-ids.yaml
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L0
+  - L1
+  stub: stubs/schema-ids.yaml
+- id: C-CFG-ESTATE-1
+  path: estate.yaml
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L0
+  - L2
+  - L4
+  - L5
+  stub: stubs/estate.yaml
+- id: C-CFG-TOOLING-1
+  path: tooling.lock
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L0
+  stub: stubs/tooling.lock
+- id: C-CFG-ENV-SCHEMA-1
+  path: environment-schema.yaml
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L5
+  stub: stubs/environment-schema.yaml
+- id: C-CLI-VALIDATE-1
+  path: cli/registry-validate.yaml
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L0
+  stub: stubs/registry-validate.yaml
+- id: C-WF-CTX-1
+  path: workflow-io/required-contexts.tsv
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L1
+  - L2
+  stub: stubs/required-contexts.tsv
+- id: C-EV-VER-OBS-1
+  path: evidence/version-observation.yaml
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L3
+  - L4
+  stub: stubs/version-observation.yaml
+- id: C-EV-11Q-1
+  path: evidence/eleven-question-map.yaml
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L1
+  - L2
+  - L3
+  - L4
+  - L5
+  stub: stubs/eleven-question-map.yaml
+- id: C-L3-HARNESS-1
+  path: l3-test-harness.env
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L3
+  stub: stubs/l3-test-harness.env
+- id: C-L3-ORG-GATE-1
+  path: l3-live-org-gate.md
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L3
+  stub: stubs/l3-live-org-gate.md
+- id: C-L4-RECORDS-1
+  path: l4-records.yaml
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L4
+  stub: stubs/l4-records.yaml
+- id: C-CFG-INTEG-1
+  path: integration.yaml
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L0
+  stub: stubs/integration.yaml
+- id: C-DOC-AT-PHASE-1
+  path: docs/plan/at-phase-map.yaml
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L0
+  - L1
+  - L2
+  - L3
+  - L4
+  - L5
+  stub: stubs/at-phase-map.yaml
+- id: C-DOC-ID-XWALK-1
+  path: docs/plan/id-crosswalk.md
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L0
+  - L1
+  - L2
+  - L3
+  - L4
+  - L5
+  stub: stubs/id-crosswalk.md
+- id: C-DOC-CP4-RULES-1
+  path: docs/build/rulesets/cp-4-contract-tags.json
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L0
+  stub: stubs/cp-4-contract-tags.json
+- id: C-DOC-DR-L3-04-1
+  path: docs/decisions/D-L3-04.md
+  version: 1
+  owner: L0
+  publishing_lane: L0
+  consuming_lanes:
+  - L3
+  stub: stubs/D-L3-04.md

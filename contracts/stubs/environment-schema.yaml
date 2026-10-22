@@ -1,0 +1,9 @@
+# STUB — placeholder for C-CFG-ENV-SCHEMA-1
+contract_id: C-CFG-ENV-SCHEMA-1
+contract_version: 1
+environment: dev
+variables:
+  - name: PORT
+    type: number
+    required: true
+stub: true

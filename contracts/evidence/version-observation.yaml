@@ -1,0 +1,18 @@
+# --- CONTRACT HEADER (frozen) ---
+contract_id: C-EV-VER-OBS-1
+contract_version: 1
+owner: L0
+publishing_lane: L0
+consuming_lanes: [L3, L4]
+spec_refs: ["Section 41.2", "Section 97.3", "D-L2-09"]
+ccr_required: true
+
+# /version observation transport contract (D-L2-09, §41.2)
+runner_label: "ubuntu-latest"
+credential_secret_name: "VERSION_OBSERVATION_TOKEN"
+targets_file: "config/version-targets.yaml"
+timeout_seconds: 30
+endpoints:
+  path: "/version"
+  method: "GET"
+  expected_content_type: "application/json"

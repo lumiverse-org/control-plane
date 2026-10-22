@@ -1,0 +1,5 @@
+# STUB — placeholder for C-CFG-SCHEMA-IDS-1
+contract_id: C-CFG-SCHEMA-IDS-1
+contract_version: 1
+urn_scheme: "urn:controlplane:<family>:<entity>:v<version>"
+stub: true

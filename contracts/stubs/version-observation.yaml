@@ -1,0 +1,7 @@
+# STUB — placeholder for C-EV-VER-OBS-1
+contract_id: C-EV-VER-OBS-1
+contract_version: 1
+runner_label: "ubuntu-latest"
+credential_secret_name: "VERSION_OBSERVATION_TOKEN"
+targets_file: "config/version-targets.yaml"
+stub: true

@@ -1,0 +1,5 @@
+# STUB — placeholder for C-DOC-AT-PHASE-1
+contract_id: C-DOC-AT-PHASE-1
+contract_version: 1
+phase_order: [Ph1, Ph2, Ph3, Ph4, Ph5, Ph6, Ph7, EH, SA, COND]
+stub: true

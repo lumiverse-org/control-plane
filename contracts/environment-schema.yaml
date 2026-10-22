@@ -1,0 +1,38 @@
+# --- CONTRACT HEADER (frozen) ---
+contract_id: C-CFG-ENV-SCHEMA-1
+contract_version: 1
+owner: L0
+publishing_lane: L0
+consuming_lanes: [L5]
+spec_refs: ["Section 99.3", "FD-014", "L0D-11"]
+ccr_required: true
+
+# Environment Parity Schema — master/09 §19 Option A (FD-014)
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: "Environment Parity Schema"
+type: object
+required:
+  - environment
+  - variables
+properties:
+  environment:
+    type: string
+    enum: [dev, staging, production]
+  variables:
+    type: array
+    items:
+      type: object
+      required:
+        - name
+        - type
+        - required
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [string, number, boolean, secret]
+        required:
+          type: boolean
+        description:
+          type: string

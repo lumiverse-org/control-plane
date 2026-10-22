@@ -1,0 +1,5 @@
+# STUB — placeholder for C-EV-11Q-1
+contract_id: C-EV-11Q-1
+contract_version: 1
+schema: eleven-question-map/v1
+stub: true

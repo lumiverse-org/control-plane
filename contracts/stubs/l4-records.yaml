@@ -1,0 +1,7 @@
+# STUB — placeholder for C-L4-RECORDS-1
+contract_id: C-L4-RECORDS-1
+contract_version: 1
+stores:
+  - store: incidents
+    path: records/incidents/
+stub: true

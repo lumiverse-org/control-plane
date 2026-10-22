@@ -1,0 +1,14 @@
+# --- CONTRACT HEADER (frozen) ---
+contract_id: C-CFG-INTEG-1
+contract_version: 1
+owner: L0
+publishing_lane: L0
+consuming_lanes: [L0]
+spec_refs: ["Section 97.3", "FD-009"]
+ccr_required: true
+
+# contracts/integration.yaml — L0-owned, frozen at Phase 0
+integration:
+  cadence: daily            # daily | weekly | monthly | paused | stopped
+  prs_per_lane_per_cycle: 3 # calibrated configuration
+  # both recalibrated from measured train throughput, per the spec's calibration discipline

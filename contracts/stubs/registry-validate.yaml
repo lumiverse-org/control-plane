@@ -1,0 +1,5 @@
+# STUB — placeholder for C-CLI-VALIDATE-1
+contract_id: C-CLI-VALIDATE-1
+contract_version: 1
+entrypoint: "validators/registry/bin/validate"
+stub: true

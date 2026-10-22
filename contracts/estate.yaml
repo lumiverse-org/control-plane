@@ -1,0 +1,31 @@
+# --- CONTRACT HEADER (frozen) ---
+contract_id: C-CFG-ESTATE-1
+contract_version: 1
+owner: L0
+publishing_lane: L0
+consuming_lanes: [L0, L2, L4, L5]
+spec_refs: ["Section 4.11", "Section 97.3", "FD-006", "FD-017"]
+ccr_required: true
+
+# The GitHub organisation and estate inventory (FD-006, FD-017)
+org: lumiverse-org
+estate:
+  control_plane: control-plane
+  records_repository: control-plane-records
+products:
+  - id: P-001
+    name: Product-1
+  - id: P-002
+    name: Product-2
+  - id: P-003
+    name: Product-3
+  - id: P-004
+    name: Product-4
+  - id: P-005
+    name: Product-5
+  - id: P-006
+    name: Product-6
+  - id: P-007
+    name: Product-7
+  - id: P-008
+    name: Product-8

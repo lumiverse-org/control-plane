@@ -1,0 +1,7 @@
+# STUB — placeholder for C-CFG-INTEG-1
+contract_id: C-CFG-INTEG-1
+contract_version: 1
+integration:
+  cadence: daily
+  prs_per_lane_per_cycle: 3
+stub: true
