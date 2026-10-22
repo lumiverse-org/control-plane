@@ -185,10 +185,9 @@
         "business_criticality": {
           "type": "string",
           "enum": [
-            "low",
-            "medium",
             "high",
-            "critical"
+            "medium",
+            "low"
           ]
         },
         "onboarding_cost_band": {

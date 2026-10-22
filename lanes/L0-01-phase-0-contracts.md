@@ -1058,7 +1058,7 @@ S = {
   "classification":{"type":"object","required":["reliability_criticality","business_criticality","onboarding_cost_band"],
    "properties":{
     "reliability_criticality":{"type":"string","enum":["low","medium","high","critical"]},
-    "business_criticality":{"type":"string","enum":["low","medium","high","critical"]},
+    "business_criticality":{"type":"string","enum":["high","medium","low"]},
     "onboarding_cost_band":{"type":"string","enum":["XS","S","M","L","XL"]}}},
   "assignments":{"type":"array","minItems":1,"items":{"type":"object",
    "required":["role","person","from"],
