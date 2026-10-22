@@ -8,33 +8,36 @@
 *                       @bendrohit-eng
 
 # --- Lane-owned trees (PARTITION.md, FROZEN) ---
-# Lane 1 (Registries, schemas, validators): primary team lead @nimesh-lead, integrator fallback @bendrohit-eng
-/schemas/registry/      @nimesh-lead @bendrohit-eng
-/schemas/product/       @nimesh-lead @bendrohit-eng
-/registries/            @nimesh-lead @bendrohit-eng
-/validators/registry/   @nimesh-lead @bendrohit-eng
+# FD-117 is still open: no team-member GitHub login below has been confirmed real and
+# belonging to the actual person. Until FD-117 closes, every lane routes to the one
+# verified, working account (@bendrohit-eng) rather than to a guessed or unverified login.
+# A prior commit on this branch (0b82ad8) populated these lines with @nimesh-lead and
+# @saumit-qa (which do not exist on GitHub at all) and @bhushan-dev / @harshal-ops (which
+# exist, but were never confirmed to belong to this project's actual team members) —
+# reverted here for exactly the reason the Founder already flagged once this session:
+# registries/people/*.yaml's github_login fields are not verified real accounts.
+/schemas/registry/      @bendrohit-eng
+/schemas/product/       @bendrohit-eng
+/registries/            @bendrohit-eng
+/validators/registry/   @bendrohit-eng
 
-# Lane 2 (CI/CD, workflows, evidence): QA @saumit-qa, senior dev @bhushan-dev, integrator fallback @bendrohit-eng
-/.github/workflows/     @saumit-qa @bhushan-dev @bendrohit-eng
-/templates/workflows/   @saumit-qa @bhushan-dev @bendrohit-eng
-/tools/evidence/        @saumit-qa @bhushan-dev @bendrohit-eng
+/.github/workflows/     @bendrohit-eng
+/templates/workflows/   @bendrohit-eng
+/tools/evidence/        @bendrohit-eng
 
-# Lane 3 (Reconciler, provisioning, drift validators) — no lane 3 assignee in registries/people/ (BE-001/FD-083 bootstrap)
 /reconciler/            @bendrohit-eng
 /tools/provision/       @bendrohit-eng
 /validators/drift/      @bendrohit-eng
 
-# Lane 4 (Records, metrics) — no lane 4 assignee in registries/people/ (BE-001/FD-083 bootstrap)
 /schemas/records/       @bendrohit-eng
 /metrics/               @bendrohit-eng
 /tools/records/         @bendrohit-eng
 
-# Lane 5 (Access, infra, ops-vm, notify, assets): devops @harshal-ops, integrator fallback @bendrohit-eng
-/access/                @harshal-ops @bendrohit-eng
-/infra/                 @harshal-ops @bendrohit-eng
-/ops-vm/                @harshal-ops @bendrohit-eng
-/notify/                @harshal-ops @bendrohit-eng
-/assets/                @harshal-ops @bendrohit-eng
+/access/                @bendrohit-eng
+/infra/                 @bendrohit-eng
+/ops-vm/                @bendrohit-eng
+/notify/                @bendrohit-eng
+/assets/                @bendrohit-eng
 
 # --- L0-exclusive (last match wins in CODEOWNERS) ---
 /contracts/             @bendrohit-eng
