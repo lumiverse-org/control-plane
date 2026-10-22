@@ -1,10 +1,13 @@
-﻿# L4 — PHASE 3 — HOW RECORDS GET WRITTEN
+# L4 — PHASE 3 — HOW RECORDS GET WRITTEN
 
 **Lane:** L4 Records, Events & Metrics (subsystems I, N)
 **Phase:** 3 — write paths
 **Phase branch:** `lane/4/03-write-paths` (one branch for the phase, one commit per task, one PR at the end — the convention the lane charter established for `lane/4/00-charter-preflight`)
 **Authority:** `C:/D_Drive/PS/MultiProduct/Code/implementation/PARTITION.md` is FROZEN and wins over this file. `C:/D_Drive/PS/MultiProduct/Code/implementation/lanes/L4-00-charter.md` is the lane charter; its §3 owned-path list, §9 decisions and §12 standing rules bind every task here.
 **Spec of record:** `C:/D_Drive/PS/MultiProduct/Research/MultiProduct_MasterSpec_v4.0.md` (10,214 lines). Every line number below was located with `grep`/`sed` and is cited, not inferred.
+
+> [!NOTE]
+> **Implementation architecture superseded per FD-131 (2026-10-22):** The shell-script design in this document (`lib/emit.sh` and shell script bodies) is superseded by Python stdlib modules (`tools/records/lib/writer.py`, `nooverwrite.py`, `eventpath.py`, `rwtoken.py`, `tools/records/record_write.py`, `event_append.py`, `rvr.py`) with dedicated pytest suites under `tools/records/tests/`. CLI frontends (`record-write`, `event-append`, `record-verification-result`) delegate to these Python modules.
 
 ---
 
@@ -760,6 +763,9 @@ action_taken: "no store invented, no identifier invented"
 
 ### L4-T305 — The emission library `tools/records/lib/emit.sh`
 
+> [!NOTE]
+> **Implementation superseded per FD-131 (2026-10-22):** The shell-script design (`emit.sh`, bash wrappers) is superseded by Python stdlib modules (`writer.py`, `nooverwrite.py`, `eventpath.py`, `record_write.py`, `event_append.py`) and pytest suites in `tools/records/tests/`. Frontends delegate to these Python modules.
+
 **Size:** L
 **Depends on:** L4-T301
 
@@ -1008,6 +1014,9 @@ action_taken: "nothing overwritten, nothing deleted, nothing pushed"
 ---
 
 ### L4-T306 — The RECORD-VERIFICATION-RESULT handler
+
+> [!NOTE]
+> **Implementation superseded per FD-131 (2026-10-22):** The shell-script handler is superseded by Python stdlib module `tools/records/rvr.py` with pytest suite `tools/records/tests/test_rvr.py`. `record-verification-result` CLI delegates to `rvr.py`.
 
 **Size:** L
 **Depends on:** L4-T304, L4-T305

@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-# tools/records/event-append — L2-facing front-end. Delegates to lib/emit.sh.
+# tools/records/event-append — L2-facing front-end. Delegates to event_append.py per FD-131.
 # Usage: event-append <event_type> <actor> <product> <subject_ref> [payload-file]
-# canonical form (FD-039): --path <path> --type <type> --title <title>
+#    or: event-append --event-type <type> --actor <actor> --product <product> --subject-ref <ref> [--payload <file>]
 set -euo pipefail
-. "$(cd "$(dirname "$0")" && pwd)/lib/emit.sh"
-emit_event "$1" "$2" "$3" "$4" "${5:--}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+PY="${L4_PY:-python3}"
+if ! command -v "$PY" >/dev/null 2>&1; then
+  PY="python"
+fi
+exec "$PY" "$HERE/event_append.py" "$@"

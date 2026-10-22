@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-# tools/records/record-write — L2-facing front-end. Delegates to lib/emit.sh.
+# tools/records/record-write — L2-facing front-end. Delegates to record_write.py per FD-131.
 # Usage: record-write <store> <id> <body-file> [schema-file]
-# canonical form (FD-039): --path <path> --type <type> --title <title>
+#    or: record-write --store <store> --id <id> --from-file <file> [--schema <schema>] [--validate-only]
 set -euo pipefail
-. "$(cd "$(dirname "$0")" && pwd)/lib/emit.sh"
-EMIT_SCHEMA="${4:-}" emit_record "$1" "$2" "$3"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+PY="${L4_PY:-python3}"
+if ! command -v "$PY" >/dev/null 2>&1; then
+  PY="python"
+fi
+exec "$PY" "$HERE/record_write.py" "$@"
