@@ -4,11 +4,898 @@ registry_version: 1
 # enforcement classification -- mechanical, policy or review-held.
 declared_count: 111
 
-# Classifying an invariant means naming the live check that enforces it. Most
-# of those checks are Lane 2 workflow contexts, Lane 3 reconciliation rows and
-# Lane 5 access enforcement; PARTITION rule 4 forbids Lane 1 discovering them
-# by reaching into those trees, and rule 2 routes cross-lane consumption
-# through contracts/. Lane 1 ships the register, the schema and rule R-INV-02;
-# classifications land as each lane publishes its check ids, at Phase G2
-# (Section 98.5). See the L1-902 and L1-505 blockers on the artifact count.
-invariants: []
+# Catalogue of 111 architectural invariants cross-referenced from Section 101
+# and protocol/03-invariant-tests.md.
+invariants:
+  - number: 1
+    text: "No product completes onboarding without a verification contract; a live product not\
+  \ yet onboarded operates only under the declared pre-onboarding pathway of Section\
+  \ 96, with its absence recorded as an accepted risk with a named deadline."
+    classification: mechanical
+    enforced_by: "Verification-contract presence check, Subsystem B; pre-onboarding pathway via AT-051"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 2
+    text: "Every production bug becomes a permanent regression test."
+    classification: policy
+    enforced_by: null
+    policy_id: null
+    review: null
+    chair: null
+  - number: 3
+    text: "An untested backup is treated as no backup."
+    classification: mechanical
+    enforced_by: "The invariant-4 CI check; `restore_tested` freshness"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 4
+    text: "Restore testing runs monthly on a rotating subset, and every product is successfully\
+  \ restore-tested within any rolling 90-day window. `classification.reliability_criticality`\
+  \ may tighten a product's cadence; it never loosens it. A `restore_tested` date\
+  \ older than the window fails CI."
+    classification: mechanical
+    enforced_by: "`restore_tested` older than window fails CI; reconciliation row `product.yaml restore_tested`\
+  \ vs `records/restore-tests/` \u2014 **Blocking**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 5
+    text: "Verification contracts are merged, never dropped, when products merge."
+    classification: mechanical
+    enforced_by: "AT-020"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 6
+    text: "Verification depth is never traded for verification throughput."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Calibration review (84.6)"
+    chair: "Team Lead"
+  - number: 7
+    text: "Every product has a Primary Owner, Cross-Reviewer, Backup Owner and Escalation path,\
+  \ recorded in the contract and matched by team membership."
+    classification: mechanical
+    enforced_by: "Referential integrity, Subsystem B; reconciliation row `product.yaml` assignments\
+  \ vs GitHub Team \u2014 **fail CI**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 8
+    text: "Every normal change receives independent review from someone other than its author."
+    classification: mechanical
+    enforced_by: "Branch protection: \u22651 approving review, Code Owner review required (11.3)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 9
+    text: "No self-approval, enforced mechanically by requiring approval of the most recent\
+  \ reviewable push."
+    classification: mechanical
+    enforced_by: "Branch protection most-recent-reviewable-push rule (11.3) + workflow-identity gate\
+  \ (27.2). **See \xA74**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 10
+    text: "The Team Lead is not the routine reviewer \u2014 *routine review* is defined once,\
+  \ in Section 23.2. Exceeding 2 routine reviews per week is an investigable signal."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Quarterly operating-system review"
+    chair: "Founder"
+  - number: 11
+    text: "Authority is evaluated against capability and assignment, never against role name\
+  \ alone."
+    classification: mechanical
+    enforced_by: "Capability check at the act (9.1); AT-091"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 12
+    text: "Production approval is never self-approved and is a separate event from Gate 2 approval."
+    classification: mechanical
+    enforced_by: "Workflow-identity gate (27.2). **See \xA74**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 13
+    text: "Reviewer-matrix and product-ownership changes \u2014 temporary and permanent \u2014\
+  \ are executed by the Team Lead under the reviewer-matrix-change capability and\
+  \ recorded as decisions. Every permanent ownership change generates a Founder-view\
+  \ notification: visibility, not approval."
+    classification: mechanical
+    enforced_by: "AT-021; capability check + decision record + closed push list (92.11)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 14
+    text: "H1 is committed, H2 is prepared, H3 is candidate."
+    classification: mechanical
+    enforced_by: "Horizon-semantics validation on board fields, Subsystem N conventions + schema"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 15
+    text: "Ready-queue misses trend to zero; the queue does not routinely reach zero for anyone."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Weekly operating picture (94); trend at the quarterly review"
+    chair: "Team Lead"
+  - number: 16
+    text: "A material requirement change on committed work triggers re-planning through Gate\
+  \ 1 when the verification path changes, the impact scope widens, the reversibility\
+  \ class worsens, the change becomes architecture-class, or the estimated scope grows\
+  \ beyond the calibrated threshold (Section 29.5). A reclassification in the benign\
+  \ direction \u2014 a narrowing scope, an improving reversibility class \u2014 is\
+  \ updated in place."
+    classification: mechanical
+    enforced_by: "Plan-checker + computed change class (24, 29.5)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 17
+    text: "Machine authority is constrained; machine output volume is not artificially throttled."
+    classification: mechanical
+    enforced_by: "Actor gate (37.3) + machine-account permissions. The no-throttle half is carried\
+  \ by the Section 37.7 interpretation rule at the Team Lead's task-class review"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 18
+    text: "The background machine layer cannot merge, approve, deploy, or reach production credentials\
+  \ or databases \u2014 enforced by permissions and, for workflow dispatch, by the\
+  \ actor gate on every privileged workflow (Section 37.3), not by policy."
+    classification: mechanical
+    enforced_by: "Machine-account permissions; human-only CODEOWNERS (11.3); actor gate (37.3); AT-109.\
+  \ **See \xA76**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 19
+    text: "Failed and rejected machine output is retained, because the failure signal is the\
+  \ input to task-class analysis."
+    classification: mechanical
+    enforced_by: "Append-only event log (97.3); records-repo ruleset blocks force-push and delete,\
+  \ no bypass actor (D107)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 20
+    text: "External or repository-provided text is data, not authority."
+    classification: mechanical
+    enforced_by: "Constitution referenced from every context file (Subsystem K check) + issue-guard\
+  \ trust envelope on every drafting job (36.2)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 21
+    text: "Unattended personal-agent runs are permitted only on branches; their output is flagged\
+  \ as unattended and never merges without the full human gate sequence."
+    classification: mechanical
+    enforced_by: "Branch protection + unattended-flag integrity check. **See \xA76.4**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 22
+    text: "The production artifact is the same digest verified in staging. Never rebuilt."
+    classification: mechanical
+    enforced_by: "Digest invariant enforced in code, Subsystem E; `verify-digest-chain`, Subsystem\
+  \ F; AT-102-class sweep. **See \xA75**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 23
+    text: "Never rebuild an artifact to work around registry unavailability."
+    classification: mechanical
+    enforced_by: "Same digest check; degraded-mode rule 46.1 \u2014 a rebuild produces a digest staging\
+  \ never verified. **See \xA75.4**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 24
+    text: "The production database is inaccessible from developer machines."
+    classification: mechanical
+    enforced_by: "`infrastructure:` block validated by contract CI; `security.production_db_access:\
+  \ ci-only` default; provider-side attestation, **Blocking past its window** (53.1).\
+  \ **See \xA77**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 25
+    text: "Production secrets are environment-scoped and never present locally."
+    classification: mechanical
+    enforced_by: "Five-tier rule (40.1); environment deployment branch/tag policy reconciliation row\
+  \ \u2014 **Blocking**; secret scanning. **See \xA77.3**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 26
+    text: "A fully compromised workstation must not yield production access."
+    classification: mechanical
+    enforced_by: "40.3 composite, executed as a drill. **See \xA77.4**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 27
+    text: "Rollback is preferred to hotfix, and requires no prior approval during a SEV-1."
+    classification: mechanical
+    enforced_by: "Dedicated rollback workflow, exempt from the production-approval gate but **not**\
+  \ from the actor gate (27.2)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 28
+    text: "Non-reversible changes require an explicit recovery strategy and never claim rollback\
+  \ capability."
+    classification: mechanical
+    enforced_by: "Plan-checker hard reject (30.2)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 29
+    text: "SEV-1 restoration takes priority over quota, fairness and scheduling rules."
+    classification: policy
+    enforced_by: null
+    policy_id: null
+    review: null
+    chair: null
+  - number: 30
+    text: "Out-of-hours work is exception-based, authorised in advance by the Founder or the\
+  \ Team Lead, quota-bound, compensated and recorded; where the Team Lead is the person\
+  \ working and the Founder is unavailable, the Acting Team Lead designate authorises,\
+  \ or the activation is self-recorded and countersigned on the Founder's return (Section\
+  \ 47.2). SEV-1 restoration needs no prior authorisation."
+    classification: mechanical
+    enforced_by: "Exception registry entry required + weekend quota counters (47)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 31
+    text: "A 24x7 support commitment cannot be accepted without funded response capacity."
+    classification: mechanical
+    enforced_by: "The 24x7-without-rota blocker, Subsystem B; AT-047"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 32
+    text: "The founder does not manage daily task assignment."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Quarterly operating-system review"
+    chair: "Founder"
+  - number: 33
+    text: "The founder does not review routine code and does not dispatch incident responders."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Quarterly operating-system review"
+    chair: "Team Lead"
+  - number: 34
+    text: "Founder absence does not halt engineering; the founder-only decision list is short\
+  \ and strategic."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Quarterly review + the AT-022 continuity drill"
+    chair: "Founder"
+  - number: 35
+    text: "An Acting Team Lead is designated in advance and holds dormant capability, so activation\
+  \ is configuration rather than a competence question."
+    classification: mechanical
+    enforced_by: "`topology.yaml` succession-block validation; AT-003"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 36
+    text: "The Team Lead operates engineering and recommends; the Founder is the final authority\
+  \ for every formal people decision."
+    classification: mechanical
+    enforced_by: "AT-071 \u2014 no code path exists; attempted configuration fails validation"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 37
+    text: "No automatic formal improvement plan, no automatic termination, no automatic promotion,\
+  \ no automatic compensation change, no automatic formal warning. Automation never\
+  \ makes personnel decisions."
+    classification: mechanical
+    enforced_by: "AT-071"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 38
+    text: "Every people signal is decision support; the Founder decides."
+    classification: mechanical
+    enforced_by: "AT-070 \u2014 bundle carries an explicit human-decision statement"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 39
+    text: "Founder continuity provisions exist with the same rigour as Team Lead succession:\
+  \ a second organisation Owner or escrowed break-glass owner credential, a current\
+  \ inventory of founder-only accounts, a pre-designated successor arrangement, and\
+  \ a standing delegation trigger."
+    classification: mechanical
+    enforced_by: "AT-022, executed as a periodic drill; second-Owner and escrow presence checks"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 40
+    text: "Humans write decisions and meaning; machines write measurable state."
+    classification: mechanical
+    enforced_by: "Records-writer credential scoped to the records repository alone (D89); human-only\
+  \ CODEOWNERS on the control plane"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 41
+    text: "GitHub remains the durable engineering source of truth."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Quarterly review against the tool register (62)"
+    chair: "Founder"
+  - number: 42
+    text: "GSD Core is replaceable workflow tooling, not the source of truth. All artifacts\
+  \ remain readable without it."
+    classification: mechanical
+    enforced_by: "AT-030"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 43
+    text: "No second workflow overlay competes with GSD. The designated work-management system\
+  \ is the operating system's own execution-truth boards."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Quarterly review"
+    chair: "Team Lead"
+  - number: 44
+    text: "Declared state is reconciled against actual platform state, and silent drift is not\
+  \ permitted."
+    classification: mechanical
+    enforced_by: "Section 53.1 comparison set + the seeded canary; AT-102. **See \xA78.5**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 45
+    text: "No artifact becomes a dumping ground; the source-of-truth hierarchy resolves every\
+  \ conflict."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Quarterly review, alongside AT-045 retirement"
+    chair: "Founder"
+  - number: 46
+    text: "Derived data is computed, never hand-maintained. Metrics derive from the canonical\
+  \ record stores of Section 97 (Records, Events and Data Conventions), never from\
+  \ hand-maintained numbers."
+    classification: mechanical
+    enforced_by: "Metric source discipline, Subsystem I \u2014 a metric whose source is not a canonical\
+  \ record store fails"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 47
+    text: "History is append-only for state, decisions, approvals and records; records are not\
+  \ deleted and state changes are recorded, not overwritten. Raw activity telemetry\
+  \ may be aggregated or discarded after its declared diagnostic window; retention\
+  \ classes are declared in the control plane and owned by the Founder."
+    classification: mechanical
+    enforced_by: "Records-repo ruleset (no force-push, no delete, **no bypass actor**), signed commits\
+  \ by the writing identity, per-run head-SHA anchoring into the protected control\
+  \ plane, object-locked export (D107)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 48
+    text: "Source extraction failure never downgrades existing verified data; historical records\
+  \ are never silently overwritten."
+    classification: mechanical
+    enforced_by: "AT-088"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 49
+    text: "Every operating-system metric has an owner and a defined response, or it is deleted."
+    classification: mechanical
+    enforced_by: "Metric-registry schema requires owner + response; AT-045 retirement"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 50
+    text: "People, roles, capabilities and assignments are separate concepts, and each is dynamic\
+  \ configuration."
+    classification: mechanical
+    enforced_by: "Schema separation; AT-002, AT-007"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 51
+    text: "People are never hard-coded into architecture logic. Current team membership is not\
+  \ architecture."
+    classification: mechanical
+    enforced_by: "Hard-coded-identity scan over dashboards, workflows and scripts; AT-002"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 52
+    text: "Product count is never hard-coded into architecture logic."
+    classification: mechanical
+    enforced_by: "Enumerate-from-registry scan; AT-001"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 53
+    text: "New products are configuration plus onboarding, never platform redesign."
+    classification: mechanical
+    enforced_by: "AT-001"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 54
+    text: "New people, new roles and new frameworks are configuration plus onboarding, never\
+  \ workflow redesign or architecture change."
+    classification: mechanical
+    enforced_by: "AT-002, AT-007, AT-014"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 55
+    text: "Ownership changes are declarative and take effect through reconciliation."
+    classification: mechanical
+    enforced_by: "Reconciliation rows; AT-021"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 56
+    text: "Role changes trigger capability, permission and assignment recalculation."
+    classification: mechanical
+    enforced_by: "AT-005"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 57
+    text: "Departures trigger orphan detection, and blocking orphans cannot be dismissed unresolved."
+    classification: mechanical
+    enforced_by: "Orphan detection at blocking severity, Subsystem C; AT-017"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 58
+    text: "Temporary assignments carry a mandatory end date and expire without human action."
+    classification: mechanical
+    enforced_by: "Schema date rule + reconciliation auto-revoke row; AT-018, AT-008, AT-036"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 59
+    text: "No permanent single-person dependency exists without visible risk. Knowledge redundancy\
+  \ is measured, not assumed."
+    classification: mechanical
+    enforced_by: "Knowledge-redundancy measurement (103.10) surfaced on the per-product panel"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 60
+    text: "Knowledge rotation is mandatory; ownership rotation is conditional."
+    classification: policy
+    enforced_by: null
+    policy_id: null
+    review: null
+    chair: null
+  - number: 61
+    text: "The performance framework is dynamic, versioned configuration; the framework in force\
+  \ is not architecture. Framework versions are explicit, and changes are not applied\
+  \ retroactively without a documented exception."
+    classification: mechanical
+    enforced_by: "AT-078, AT-014"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 62
+    text: "A Product is the business unit; a Repository is the implementation unit. A product\
+  \ may have several repositories."
+    classification: mechanical
+    enforced_by: "AT-010"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 63
+    text: "Shared services have named owners, declared consumers and versioned compatibility."
+    classification: mechanical
+    enforced_by: "Shared-service registry validation, Subsystem B"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 64
+    text: "Cross-product dependencies are declared and discoverable."
+    classification: mechanical
+    enforced_by: "Reconciliation row: declared dependency vs shared-service registry \u2014 **fail\
+  \ CI on unknown dependency**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 65
+    text: "Product split and merge preserve historical evidence."
+    classification: mechanical
+    enforced_by: "AT-019, AT-020"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 66
+    text: "Product transfer preserves operational and business continuity; secrets are rotated\
+  \ by the receiver, never transferred."
+    classification: policy
+    enforced_by: null
+    policy_id: null
+    review: null
+    chair: null
+  - number: 67
+    text: "An inbound transferred or acquired product runs full onboarding; nothing is assumed\
+  \ to meet the verification requirement."
+    classification: mechanical
+    enforced_by: "`lifecycle: active` only after contract validation passes (64.1)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 68
+    text: "Product lifecycle is explicit, and operational burden follows lifecycle."
+    classification: mechanical
+    enforced_by: "Reconciliation row: `product.yaml` lifecycle vs Renovate, monitoring and CI configuration"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 69
+    text: "Product launch readiness is distinct from engineering onboarding."
+    classification: mechanical
+    enforced_by: "Separate `launch_status` field, validated; launch-pack generator"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 70
+    text: "Business health is a first-class portfolio signal, not a downstream report."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Quarterly portfolio review"
+    chair: "Founder"
+  - number: 71
+    text: "Platform changes are versioned, impact-analysed, canaried, verified and reversible."
+    classification: mechanical
+    enforced_by: "Change-manifest schema + platform-change process; AT-026"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 72
+    text: "Portfolio-wide changes never roll out to the fleet without passing a canary first."
+    classification: mechanical
+    enforced_by: "Canary set declared in `platform.yaml`; AT-023, AT-024"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 73
+    text: "Contract schemas are versioned, and simultaneous fleet migration is never required."
+    classification: mechanical
+    enforced_by: "AT-025"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 74
+    text: "Transitional products carry a named migration owner and a deadline; transitional\
+  \ never becomes permanent."
+    classification: mechanical
+    enforced_by: "Schema requires owner + deadline; breached deadline surfaces as drift"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 75
+    text: "The control plane observes products and is never in their runtime path. A GitHub,\
+  \ registry, provider or control-plane outage does not stop products already running."
+    classification: mechanical
+    enforced_by: "The control-plane/data-plane invariant test (99.4 item 8); AT-029"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 76
+    text: "Product runtime must not depend on control-plane availability."
+    classification: mechanical
+    enforced_by: "AT-029, AT-030"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 77
+    text: "Every exception has an expiry; an exception without one is invalid and fails CI.\
+  \ An exception re-opened for the same scope after closure counts as a renewal \u2014\
+  \ a fresh ID does not reset the count."
+    classification: mechanical
+    enforced_by: "Exception-without-expiry rejection, Subsystem B; AT-036, AT-037, AT-038"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 78
+    text: "A new policy may not begin at Enforce unless it is a critical security control."
+    classification: mechanical
+    enforced_by: "`policies.yaml` stage validation (55)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 79
+    text: "New people, products and tools default to minimum privilege and draft state."
+    classification: mechanical
+    enforced_by: "Safe defaults in provisioning templates (64.1)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 80
+    text: "Every control is explicitly classified fail-closed or fail-open."
+    classification: mechanical
+    enforced_by: "Unclassified-control rejection, Subsystem B (64.2)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 81
+    text: "Auto-repair may only move the system toward the declared, stricter state."
+    classification: mechanical
+    enforced_by: "Section 53.3 rule enforced in code; AT-033. **See \xA78**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 82
+    text: "Changes to this specification and its enforcing tooling follow the platform-change\
+  \ process of Part VII: versioned, canaried, reversible."
+    classification: mechanical
+    enforced_by: "Change manifest required for control-plane changes"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 83
+    text: "Engineering tooling runs at fixed cost: free, self-hosted, or a flat per-person subscription.\
+  \ No free cloud LLM tiers, and no metered LLM APIs in engineering tooling. Metered\
+  \ inference inside a product's runtime is product COGS \u2014 permitted, budgeted\
+  \ under its `ai_runtime_dependency` block, and monitored."
+    classification: mechanical
+    enforced_by: "Approved-runtime list + the no-API-key check (40.2); local inference endpoint only\
+  \ (36.6)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 84
+    text: "API keys remain absent from developer environments."
+    classification: mechanical
+    enforced_by: "`env \\"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 85
+    text: "GSD Core is pinned to a tagged release; third-party GitHub Actions are pinned to\
+  \ full commit SHAs; reusable workflows are consumed by pinned tag."
+    classification: mechanical
+    enforced_by: "Pin check in CI + reconciliation row `platform.yaml` workflow versions vs the SHA\
+  \ each tag resolves to \u2014 **Blocking on any change**"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 86
+    text: "AI provider choice is replaceable, and an AI provider outage does not stop engineering."
+    classification: mechanical
+    enforced_by: "AT-011; fail-open classification (64.2)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 87
+    text: "Every architecture and security policy is enforced by the platform wherever the platform\
+  \ can enforce it."
+    classification: mechanical
+    enforced_by: "The Section 101 classification check itself \u2014 this table is its input; CI fails\
+  \ on a `mechanical` row naming no live check"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 88
+    text: "Every product declares an `infrastructure.monthly_budget_band`; a cost anomaly is\
+  \ a Red health signal and a classifiable incident."
+    classification: mechanical
+    enforced_by: "Contract validation; AT-050"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 89
+    text: "The operating system prices itself: it carries a standing automation-ledger entry,\
+  \ and its ritual cost is weighed against its value at the quarterly review."
+    classification: policy
+    enforced_by: null
+    policy_id: null
+    review: null
+    chair: null
+  - number: 90
+    text: "Attention hours, utilisation, Product Load Units and output volume are never individual\
+  \ performance evidence."
+    classification: mechanical
+    enforced_by: "AT-061, AT-085"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 91
+    text: "Role-specific outcome and quality evidence may inform a Founder-owned review, always\
+  \ with the mandatory context adjustment of Section 80 (Systemic Context Adjustment\
+  \ and Variance Classification)."
+    classification: mechanical
+    enforced_by: "AT-060 \u2014 every Section 80 check present and visible in the bundle"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 92
+    text: "No single metric determines any people decision."
+    classification: mechanical
+    enforced_by: "AT-061"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 93
+    text: "Systemic causes must be checked before individual attribution."
+    classification: mechanical
+    enforced_by: "AT-062, AT-057"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 94
+    text: "Performance expectations are role-specific; there is no universal performance framework."
+    classification: mechanical
+    enforced_by: "AT-058"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 95
+    text: "Team health is separate from individual performance."
+    classification: mechanical
+    enforced_by: "AT-063, AT-055"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 96
+    text: "No keystroke, screen, webcam or online-presence surveillance."
+    classification: mechanical
+    enforced_by: "AT-075 \u2014 banned measurements absent from the schema and rejected if introduced"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 97
+    text: "No AI token usage as performance."
+    classification: mechanical
+    enforced_by: "AT-075, AT-085"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 98
+    text: "No single-number productivity score, for a person or for a team. PLU is never an\
+  \ employee-ranking metric."
+    classification: mechanical
+    enforced_by: "AT-086 + schema rejection of a composite score field"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 99
+    text: "No employee ranking or leaderboard."
+    classification: mechanical
+    enforced_by: "AT-075 schema rejection"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 100
+    text: "New joiners require an evidence window; before it elapses the answer is Insufficient\
+  \ Evidence, and insufficient evidence produces no negative signal."
+    classification: mechanical
+    enforced_by: "AT-072"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 101
+    text: "Under-utilisation is diagnosed, and is never presented as underperformance."
+    classification: mechanical
+    enforced_by: "AT-056"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 102
+    text: "Rebalance is considered before permanent hiring where practical; no hire is authorised\
+  \ without a diagnosed structural constraint. Time-to-merge is a symptom, not a hiring\
+  \ trigger."
+    classification: mechanical
+    enforced_by: "AT-068, AT-067"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 103
+    text: "All formal management decisions are auditable."
+    classification: mechanical
+    enforced_by: "AT-073 + decision-record schema"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 104
+    text: "Confidence must accompany every people signal."
+    classification: mechanical
+    enforced_by: "AT-064 + mandatory confidence field"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 105
+    text: "The operating system is an evidence engine, not an HR replacement; it optimises company\
+  \ outcomes and human attention, not metric volume."
+    classification: review-held
+    enforced_by: null
+    policy_id: null
+    review: "Quarterly review"
+    chair: "Founder"
+  - number: 106
+    text: "Individual people-performance intelligence on the management surface (Layer B-M)\
+  \ is Founder-only, gated by the `people-intelligence` capability, and **not delegable**;\
+  \ the individual self-view (Layer B-S) carries one person's own evidence to that\
+  \ person and is outside this rule. At the application and datasource layers this\
+  \ is absolute. Host-level administrative access to the machine carrying the store\
+  \ is not a grant of it and never confers the capability: it is the single named,\
+  \ recorded accepted risk of Section 90.3, bounded by a stated compensating control\
+  \ and a dated review."
+    classification: mechanical
+    enforced_by: "AT-090, AT-091, AT-092 \u2014 an assignment granting `people-intelligence` fails\
+  \ validation"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 107
+    text: "The Team Lead receives only the minimum operational people data required for engineering\
+  \ execution."
+    classification: mechanical
+    enforced_by: "AT-093, AT-094"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 108
+    text: "Employees see their own evidence and feedback, not peers' private data; peers never\
+  \ receive management-performance information about colleagues."
+    classification: mechanical
+    enforced_by: "AT-095, AT-096"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 109
+    text: "General engineering dashboards never expose sensitive performance data and carry\
+  \ no per-person raw-activity drill-downs; individual activity data lives only in\
+  \ Layer B. The underlying people datasource is separately credentialed, and sensitive\
+  \ people data never enters the general engineering datasource."
+    classification: mechanical
+    enforced_by: "AT-097, AT-098 (D75)"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 110
+    text: "Conduct evidence is handled separately from performance bundles, and the conduct\
+  \ complaint path functions when the subject is the Team Lead or the Founder."
+    classification: mechanical
+    enforced_by: "AT-100"
+    policy_id: null
+    review: null
+    chair: null
+  - number: 111
+    text: "No customer data in repositories. Customer data lives in product databases, never\
+  \ in git \u2014 not in fixtures, not in support records, not in incident evidence;\
+  \ records reference customer data by identifier, never by copy. Three detectors\
+  \ enforce it: the fixture-provenance check (Section 38.3), the by-identifier construction\
+  \ of support records (22.2), and the S19 intake gate (Section 96.6). The verification\
+  \ authority owns the standing policy entry and its review cadence."
+    classification: mechanical
+    enforced_by: "Three detectors: fixture-provenance check (38.3), by-identifier support records (22.2),\
+  \ S19 intake gate (96.6). Standing `policies.yaml` entry owned by the verification\
+  \ authority. **See \xA79**"
+    policy_id: null
+    review: null
+    chair: null
