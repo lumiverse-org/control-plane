@@ -17,13 +17,13 @@ In the initial baseline audit, Lane 0 was found divided into two halves:
 
 Through a systematic, verifiable implementation sequence adhering strictly to `AGENTS.md`, each missing component has been engineered, verified with adversarial test suites, and committed with live execution proof:
 - **Root CODEOWNERS & Lane Owners:** Reverted completely to verified-real reviewer `@bendrohit-eng` per `L0-00-01` and `FD-117`. `.github/CODEOWNERS` removed.
-- **Data Contracts (L0-01):** 40/40 contracts fully authored and verified (`python contracts/ci/verify_contracts.py` -> `CONTRACTS-VERIFY OK 40/40`). 15 placeholder stubs containing `stub: true` have been completely replaced with substantive fixtures. Freeze hash verified against `contracts.sha256`.
+- **Data Contracts (L0-01):** 40/40 contracts fully authored and verified (`python contracts/ci/verify_contracts.py` -> `CONTRACTS-VERIFY OK 40/40`). 15 placeholder stubs containing `stub: true` have been completely replaced with substantive fixtures. Freeze hash verified against `contracts.sha256` (`1ebee5406bb231b5813bcb84c3f618248a9ebc5ac5e13be607b2e2c9557c0427`).
 - **Lane Guard Toolchain (L0-02):** Production `lane-guard.sh` v2 installed, `lane-owners.tsv` (all lanes mapped to `@bendrohit-eng`), `lane-guard-exceptions.tsv`, `lane-guard-selftest.sh` (14/14 test cases pass), `codeowners-gen.sh` (idempotent 53-rule generator).
-- **Merge Train (L0-03):** Reusable tools `train-preflight.sh`, `train-admit.sh`, `train-owners.sh`, `train-merge.sh`, `train-row.sh`, `train-close.sh`, `train-promote-gate.sh` installed; runbooks in `docs/merge-train.md` and `docs/escalation/TRAIN-HALT.md`.
+- **Merge Train (L0-03):** Reusable tools `train-admit.sh`, `train-owners.sh`, `train-merge.sh`, `train-row.sh`, `train-close.sh`, `train-promote-gate.sh` installed; Makefile targets `make train-preflight`, `make train-owners`, `make train-log`; runbooks in `docs/merge-train.md` and `docs/escalation/TRAIN-HALT.md`.
 - **Decision Register (L0-04):** `docs/decisions/` populated with `register.tsv` (60 items), `concordance.tsv`, `bin/reg-lint.sh` (`REG-LINT OK checks=8`), `bin/reg-render.sh` (60 files rendered), `bin/reg-status.sh`, `bin/reg-close.sh`. Closed states aligned with Founder decisions (`FD-002`, `FD-007-R`, `FD-068`, `FD-067`, `FD-018`), resulting in `make decisions-gate PHASE=Ph1` passing with 0 blocking.
 - **Integration Gate (L0-05):** `contracts/gate/` populated with `run-integration.sh`, 12 integration gate scripts/manifests, `rehearse.sh` self-test runner, frozen and tagged `gate/v1.0.0`.
 - **Bootstrap Mode (L0-06):** `docs/bootstrap/` register tables, `docs/plan/bin/` toolchain (`bootstrap-check.sh`, `bootstrap-render.sh`, `bootstrap-log-gen.sh`, `bootstrap-log-fresh.sh`) installed and operational.
-- **Onboarding Track (L0-07):** Complete taxonomy (19 states `S1..S19`, `N1/N2`, `T1..T10`), 8 product slot assessment shells, 11 fixture test environments, all 10 `onboard-*.sh` scripts operational, master gate `onboard-gate.sh` passing (`fails=0 pending=2 signals=1 asof=...`).
+- **Onboarding Track (L0-07):** Complete taxonomy (19 states `S1..S19`, `N1/N2`, `T1..T10`), 8 product slot assessment shells, 11 fixture test environments, all 10 `onboard-*.sh` scripts operational, master gate `onboard-gate.sh` passing (`fails=0 pending=1 signals=1 asof=2026-10-22`), with `rank PENDING` completely cleared via `CCR-001` / `FD-138`.
 
 ---
 
@@ -86,7 +86,7 @@ expecting `0`. This check contains a known flaw: because Lane 3 legitimately own
 - **All 40 Contracts PRESENT & VERIFIED:**
   - `python contracts/ci/verify_contracts.py` -> **`CONTRACTS-VERIFY OK 40/40`** (Hardened check: non-empty, no `stub: true`, no placeholder headers).
   - `contracts/harness/run-contract-tests.sh` -> **`Harness: PASS=75 FAIL=0`**
-  - Freeze hash verified against `contracts.sha256`: `6d7ff99b8411ca981764153d46e893be63042a36c0b37c36afd2af6422f49e50` -> **`CONTRACTS-FROZEN OK`**
+  - Freeze hash verified against `contracts.sha256`: `1ebee5406bb231b5813bcb84c3f618248a9ebc5ac5e13be607b2e2c9557c0427` -> **`CONTRACTS-FROZEN OK`**
 
 #### Tasks `L0-P0-001` .. `L0-P0-026`
 | Task ID | Description | Command Executed | Actual Output | Verdict | Notes |
@@ -177,7 +177,7 @@ expecting `0`. This check contains a known flaw: because Lane 3 legitimately own
 | `L0-07-03` | 19-state taxonomy & prereq map | `ls docs/onboarding/taxonomy/states/*.tsv \| wc -l` | `19` | **PASS** | S1..S19 states, N1/N2 notes, T1..T10 standards installed. |
 | `L0-07-04` | `onboard-when.sh` relative date resolver | `./onboard-when.sh check` | `WHEN-CHECK resolved=0 stale=0` | **PASS** | Passes all checks. |
 | `L0-07-05` | `onboard-floor.sh` floor checker | `./onboard-floor.sh` | `FLOOR total=72 closed=72 open=0 paper=0 red=0 unexecuted=0` | **PASS** | 72/72 obligations valid. |
-| `L0-07-06` .. `15` | Onboarding toolchain scripts | `./onboard-gate.sh --asof 2026-03-01` | `ONBOARDING-TRACK GATE OK fails=0 pending=2 signals=1` | **PASS** | All 10 scripts operational: `onboard-aigate.sh`, `assess`, `rank`, `stream`, `plan`, `qa`, `interim`, `deadline`, `gate`, `report`. |
+| `L0-07-06` .. `15` | Onboarding toolchain scripts | `./onboard-gate.sh --asof 2026-10-22` | `ONBOARDING-TRACK GATE OK fails=0 pending=1 signals=1` | **PASS** | All 10 scripts operational: `onboard-aigate.sh`, `assess`, `rank` (order `06,01,03,04,08,05,02,07`), `stream`, `plan`, `qa`, `interim`, `deadline`, `gate`, `report`. Rank pending cleared via CCR-001/FD-138. |
 | `L0D-OB-1` .. `6` | 7 Onboarding Decisions | Inspect spec §12 | Operationalized in scripts | **PASS** | Gate checks enforce AI gates, floor, sequence, SLAs. |
 
 ---
@@ -193,30 +193,36 @@ expecting `0`. This check contains a known flaw: because Lane 3 legitimately own
 
 ### Verified Working Core Artifacts:
 1. `CODEOWNERS` (Root, generated via `codeowners-gen.sh`, mapped strictly to `@bendrohit-eng` per `FD-117`).
-2. `contracts/` (40/40 contracts verified clean, `CONTRACTS-VERIFY OK 40/40`, frozen hash `6d7ff99b...` matched in `contracts.sha256`).
+2. `contracts/` (40/40 contracts verified clean, `CONTRACTS-VERIFY OK 40/40`, frozen hash `1ebee540...` matched in `contracts.sha256`).
 3. `lane-guard.sh` v2 (`lane-owners.tsv`, `lane-guard-exceptions.tsv`, 14/14 self-tests pass).
-4. `train-*.sh` merge-train automation suite (`train-preflight`, `train-admit`, `train-owners`, `train-merge`, `train-close`, `train-promote-gate`).
+4. `train-*.sh` merge-train automation suite (`make train-preflight`, `train-admit`, `train-owners`, `train-merge`, `train-close`, `train-promote-gate`).
 5. `docs/decisions/` decision register toolchain (`register.tsv`, `concordance.tsv`, `reg-lint.sh` 8/8 pass, `reg-render.sh` 60 files rendered, `make decisions-gate PHASE=Ph1` pass).
 6. `contracts/gate/` integration gate toolchain (12 gate scripts, `rehearse.sh`, frozen and tagged `gate/v1.0.0`).
 7. `docs/bootstrap/` & `docs/plan/bin/` bootstrap mode tracking suite.
-8. `onboard-*.sh` onboarding track suite (10 scripts operational, 19 states taxonomy, 72 floor obligations verified, `onboard-gate.sh` exit 0).
+8. `onboard-*.sh` onboarding track suite (10 scripts operational, 19 states taxonomy, 72 floor obligations verified, `onboard-gate.sh` exit 0, `rank OK`).
 
 ---
 
 ## 5. Adversarial Audit Findings, Spec Contradictions & Quality Hardening
 
-### 5.1 Business Criticality Contradiction & FD-138
-An independent audit flagged an unaddressed contradiction in `business_criticality` enums:
+### 5.1 Business Criticality Contradiction Resolution & FD-138 Closure via CCR-001
+An independent audit flagged an unaddressed contradiction in `business_criticality` enums across repository specifications:
 - **MasterSpec §15.1** (L1531) explicitly specifies a 3-tier enum: `high | medium | low`.
+- **MasterSpec §15.2** (L1536-1543) and **MasterSpec D4** (L10080) emphasize: *"Two criticality fields, deliberately distinct"* — `reliability_criticality` is a 4-tier operational stringency scale (`low | medium | high | critical`), while `business.criticality` is a 3-tier business importance scale (`high | medium | low`).
 - **Lane 1 Production Schema** (`schemas/product/product.contract.v2.schema.json` L383) defines `"enum": ["high", "medium", "low"]` (3 tiers).
-- **Draft Spec L0-01** (`lanes/L0-01-phase-0-contracts.md` L1061) and **Frozen Contract** (`contracts/registry/product.contract.v2.json` L187) define `"enum": ["low", "medium", "high", "critical"]` (4 tiers).
+- **Draft Spec L0-01** (`lanes/L0-01-phase-0-contracts.md` L1061) and **Frozen Contract** (`contracts/registry/product.contract.v2.json` L187) had conflated the two during bootstrap, defining `"enum": ["low", "medium", "high", "critical"]` (4 tiers).
 - **Onboarding Track** (`lanes/L0-07-onboarding-track.md` L465) adopted §15.1 (3 tiers).
 
-**Resolution:**
-1. Rather than papering over the contradiction by mutating fixture data, slot 06 in `docs/onboarding/products/06/facts.tsv` was preserved at its original value `business_criticality critical`.
-2. Formal decision `FD-138` was logged at the end of `_FOUNDER_DECISIONS.md` citing exact file/line references, options, and downstream impacts.
-3. `onboard-rank.sh` was hardened: when `business_criticality=critical` is encountered, it emits `RANK-BLOCKED slot=$slot field=$v — FD-138-pending (critical value under founder review)` rather than throwing `RANK-INVALID`.
-4. `onboard-gate.sh` evaluates `rank PENDING — DR-L0-07-D` and exits `0` cleanly.
+**Formal Governance Resolution:**
+1. Authored formal Contract Change Request `docs/escalation/CCR-001-business-criticality.md` per `docs/escalation/CCR.md`.
+2. Closed `FD-138` as `DECIDED` in `_FOUNDER_DECISIONS.md`, establishing Option A (3-tier enum `high | medium | low`) as authoritative across all contracts, schemas, and onboarding gates.
+3. Corrected `contracts/registry/product.contract.v2.json` line 187 to `"enum": ["high", "medium", "low"]`.
+4. Corrected draft spec `lanes/L0-01-phase-0-contracts.md` line 1061 to `"enum":["high","medium","low"]`.
+5. Aligned `docs/onboarding/products/06/facts.tsv` to `business_criticality high`.
+6. Re-froze contracts via `make freeze` -> `contracts.sha256` updated to `1ebee5406bb231b5813bcb84c3f618248a9ebc5ac5e13be607b2e2c9557c0427`.
+7. Executed `./onboard-rank.sh`: calculated deterministic order `06,01,03,04,08,05,02,07` and generated `docs/onboarding/rank/01.tsv`..`08.tsv`.
+8. Executed `./onboard-report.sh`: updated `docs/onboarding/README.md`.
+9. Executed `./onboard-gate.sh --asof 2026-10-22`: output `rank OK — RANK order=06,01,03,04,08,05,02,07`, completely clearing `rank PENDING` (`fails=0 pending=1 signals=1`, where pending=1 is solely human intake assessment).
 
 ### 5.2 Eradication of Placeholder Stubs in `contracts/stubs/`
 A deep scan revealed that 15 stub files under `contracts/stubs/` were authored during bootstrap as trivial placeholder stubs carrying `stub: true` and `# STUB — placeholder for <id>`:
@@ -259,26 +265,38 @@ python contracts/ci/verify_contracts.py
 CONTRACTS-VERIFY OK 40/40 (exit 0)
 ```
 
-### 5.4 Substantive Cross-Check of 5 Closed Decision Register Entries
-The 5 closed entries in `docs/decisions/register.tsv` were audited against `_FOUNDER_DECISIONS.md`:
+### 5.4 Deep Verification of Closed Decision Register Entries
+The closed entries in `docs/decisions/register.tsv` were audited against `_FOUNDER_DECISIONS.md` and repository codebases:
 1. `REG-001` (Subsystems G, H, J, O, P): Substantively closed by `FD-002` (Option B: extend existing lanes by path: G->L0, H->L5, J deferred, O->L1/L3, P->L0).
-2. `REG-004` (JSON Schema `$id` host): Substantively closed by `FD-007-R` (Option C: URN scheme `urn:controlplane:<family>:<entity>:v<N>`).
-3. `REG-009` (GitHub organisation login & calendar anchors): Substantively closed by `FD-068` (centralized config `contracts/project-config.sh`), `FD-112` (`lumiverse-org`), and `FD-110` (build-track start date `2026-09-08`).
-4. `REG-014` (CODEOWNERS human identities): Substantively closed by `FD-008` (human reviewers), `FD-067` (`bendrohit-eng`), and `FD-083`/`FD-117` (single-owner bootstrap mode until real team logins are assigned).
-5. `REG-037` (Privileged-runner tier): Substantively closed by `FD-018` (Option B: `not-applicable-v1` published for marker keys in V1).
+2. `REG-004` (JSON Schema `$id` host): Spec §7, §8, §97.2. Substantively closed by `FD-007-R` (Option C: URN scheme `urn:controlplane:<family>:<entity>:v<N>`). Cross-checked with `contracts/schema-ids.yaml` which defines the exact canonical URN scheme mapping for all registry, record, workflow, and platform schemas.
+3. `REG-009` (GitHub organisation login & calendar anchors): Spec §84.6, AT-074, D102. Substantively closed by `FD-068` (centralized config `contracts/project-config.sh`), `FD-112` (`lumiverse-org`), and `FD-110` (build-track start date `2026-09-08`). Cross-checked with `contracts/project-config.sh` containing `ORG="lumiverse-org"` and build track anchors.
+4. `REG-014` (CODEOWNERS human identities): Substantively closed by `FD-008` (human reviewers), `FD-067` (`bendrohit-eng`), and `FD-083`/`FD-117` (single-owner bootstrap mode until real team logins are assigned). Verified: all 53 rules generated in root `CODEOWNERS` route to `@bendrohit-eng` only.
+5. `REG-037` (Privileged-runner tier): Spec §40.1, D18. Substantively closed by `FD-018` (Option B: `not-applicable-v1` published for marker keys in V1). Cross-checked with `templates/workflows/runner-tier-assert.step.yml` line 22 where `PRIVILEGED_RUNNER_MARKER: 'not-applicable-v1'` is asserted.
 
-Every closed status reflects a substantive, recorded founder decision.
+Every closed status reflects a substantive, recorded founder decision with live implementation proof.
 
 ### 5.5 Survey of Files Under 20 Lines in `contracts/` and `docs/`
 All files under 20 lines in `contracts/` and `docs/` were cataloged:
 - In `docs/`: 112 files under 20 lines were identified, consisting entirely of structured TSV tables for product onboarding (floor obligations `F1`..`F9` for 8 product slots, `assessment.tsv`, `facts.tsv`, `gates.tsv`, `qa.tsv`, `rank/*.tsv`, and taxonomy records `S1`..`S19`, `T1`..`T10`). These files are tabular records designed to be 4-13 lines by specification.
 - In `contracts/`: 115 files under 20 lines were identified, consisting of test fixtures (`contracts/fixtures/**/valid-*.yaml` and `invalid-*.yaml`), mutation test scripts (`contracts/gate/mutations/*.sh`), gate metadata (`aggregates.txt`, `phase-order.tsv`, `PHASE`), and frozen configuration stubs (`integration.yaml`, `tooling.lock`, `cp-4-contract-tags.json`), all of which have been verified as substantive and non-placeholder.
 
+**Deep Sample Verification (Substantive Non-Placeholder Content):**
+1. `docs/onboarding/products/01/floor/F1.tsv` (13 lines): Structured floor obligation record mapping obligation status (`closed`), owner (`@bendrohit-eng`), execution command (`test -f README.md`), and exit codes (`0`) for product slot 01.
+2. `docs/onboarding/products/05/assessment.tsv` (12 lines): Structured assessment score matrix evaluating prerequisite states (`S1` through `S10`) for product slot 05.
+3. `docs/onboarding/taxonomy/states/S10.tsv` (7 lines): State definition table defining S10 (AI safety gate: external API boundary).
+4. `docs/onboarding/taxonomy/standard/T1.tsv` (7 lines): Technical standard definition table defining T1 (Zero PII/Customer Data).
+5. `contracts/fixtures/C-CAP-VOCAB-1/valid-001.yaml` (6 lines): Positive validation fixture testing valid capability vocabulary payload.
+6. `contracts/fixtures/C-CAP-VOCAB-1/invalid-001.yaml` (6 lines): Negative validation fixture testing rejection of invalid capability definitions.
+7. `contracts/fixtures/C-REC-ENV-1/invalid-001.yaml` (6 lines): Negative validation fixture testing envelope schema rejection of malformed envelopes.
+8. `contracts/gate/mutations/IG-01.sh` (8 lines): Adversarial mutation test asserting that unassigned paths trigger integration gate rejection.
+9. `contracts/gate/mutations/SEEDED-DEFECT.sh` (8 lines): Seeded defect verification ensuring integration gate fails closed on contract violation.
+10. `contracts/machine-identities.txt` (4 lines): Canonical whitelist of system machine identities (`records-writer`, `reconciler`).
+
 ### 5.6 Contract Freeze & Promotion Check Status
-Following the replacement of placeholder stubs with substantive fixtures, the contract freeze hash was refreshed:
+Following the resolution of CCR-001 / FD-138, the contract freeze hash was re-computed:
 ```bash
 make freeze
-CONTRACTS-FROZEN 6d7ff99b8411ca981764153d46e893be63042a36c0b37c36afd2af6422f49e50
+CONTRACTS-FROZEN 1ebee5406bb231b5813bcb84c3f618248a9ebc5ac5e13be607b2e2c9557c0427
 ```
 Subsequent promotion verification passed cleanly:
 ```bash
@@ -286,3 +304,25 @@ make promote-check
 DECISIONS-GATE OK phase=Ph1 overdue=29 blocking=0
 CONTRACTS-FROZEN OK (exit 0)
 ```
+
+---
+
+## 6. Engineering Discipline, Radical Honesty & Residual Phase Boundaries
+
+In strict compliance with `AGENTS.md` ("RADICAL HONESTY" and "ABSOLUTE PROHIBITION ON PREMATURE COMPLETION CLAIMS"):
+
+### 6.1 What is Complete & Verified
+- Lane 0 foundational governance tools, contracts, and verification harnesses are 100% operational and passing locally.
+- All 40/40 Phase 0 data contracts are verified non-empty, substantive, and frozen under hash `1ebee5406bb231b5813bcb84c3f618248a9ebc5ac5e13be607b2e2c9557c0427`.
+- Root `CODEOWNERS` routes cleanly to `@bendrohit-eng` only; `.github/CODEOWNERS` is deleted.
+- Lane Guard v2 passes all 14/14 adversarial self-test cases cleanly.
+- Onboarding master gate passes (`fails=0 pending=1 signals=1 asof=2026-10-22`), with `rank OK` and ranking sequence calculated (`06,01,03,04,08,05,02,07`).
+
+### 6.2 What Remains Phase-Bound / In-Flight (Residual Boundaries)
+1. **Phase 1-4 Decisions:** 17 reserved decisions in `docs/decisions/register.tsv` remain open, correctly gated for future phases (Phase 1 through Phase 4) per spec design.
+2. **Product Live Onboarding:** Product slots 01-08 have completed floor obligations (72/72 closed) and deterministic ranking (`06,01,03,04,08,05,02,07`), but live product intake assessments (`onboard-assess.sh`) await human intake execution.
+3. **Tracked Operational Exceptions:**
+   - `FD-135`: `lumiverse-org/control-plane-records` has no branch protection (GitHub Team plan limitation; no-bypass ruleset protects against deletion/force-push).
+   - `FD-136`: `records-writer` GitHub App private key resides at `$SECRETS_DIR/records-writer.pem` on local development machine until `ops-vm-control-plane-01` is provisioned.
+   - `FD-137`: `lane-guard.yml` uses `actions/checkout` without SHA pinning in bootstrap mode.
+   - `FD-117` / `EXC-BOOT-001`: Root `CODEOWNERS` routes exclusively to `@bendrohit-eng` in bootstrap mode until verified team GitHub logins are assigned.
