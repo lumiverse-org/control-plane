@@ -1,0 +1,10 @@
+id: DEP-2026-09-20-002
+product: demo
+digest: sha256:2222222222222222222222222222222222222222222222222222222222222222
+approved_by: person-approver
+approval_event: https://example.invalid/run/2
+staging_verified: true
+smoke_result: pass
+rollback_of: null
+timestamp: 2026-09-20T10:00:00Z
+migration_applied: true
