@@ -539,7 +539,7 @@ Work top to bottom. `Deps` are task ids that must be **merged to `integration`**
 | 113 | L4-P7-20 | 7 | Attention-ledger measures | `metrics/compute/attention_measures.py` | L4-P6-15, L4-P7-02 | M | `bash metrics/register/validate-sources.sh --compute attention_measures` |
 | 114 | L4-P8-01 | 8 | Write-freshness proved end to end from git commit timestamps | `tools/records/test-freshness-e2e.sh` | L4-P3-04, L4-P4-05 | M | `bash tools/records/test-freshness-e2e.sh` |
 | 115 | L4-P8-02 | 8 | DoD matrix runner — all 20 charter rows in one command | `tools/records/run-dod-matrix.sh` | every task above | M | `bash tools/records/run-dod-matrix.sh` |
-| 116 | L4-P8-03 | 8 | Lane handoff manifest | `metrics/HANDOFF.md` | L4-P8-02 | S | `bash tools/records/run-dod-matrix.sh --handoff` |
+| 116 | L4-P8-03 | 8 | Lane handoff manifest | `tools/records/HANDOFF.md` | L4-P8-02 | S | `bash tools/records/run-dod-matrix.sh --handoff` |
 | 117 | L4-P8-04 | 8 | Final rebase and lane PR to `integration` | none (git only) | L4-P8-03 | S | `gh pr view --json state --jq .state` |
 
 ---
@@ -710,7 +710,7 @@ Each row below is the complete acceptance criterion for its task. Every criterio
 | --- | --- | --- |
 | L4-P8-01 | Freshness is computed from real git commit timestamps on a real store path, proved for one Amber store and one Blocking store, and proved to still compute when every other health input is removed. | §97.2 line 8873 |
 | L4-P8-02 | All **20** DoD rows of `L4-00-charter.md` §7 are executed in one run and all pass. Any row that cannot execute exits 3, never 0. | `L4-00-charter.md` §7 |
-| L4-P8-03 | `HANDOFF.md` names, per consumer lane, the exact artifact paths L2, L3, L1 and L0 consume, with no artifact left unnamed. | `L4-00-charter.md` §5 |
+| L4-P8-03 | `tools/records/HANDOFF.md` (harmonized per FD-134) names, per consumer lane, the exact artifact paths L2, L3, L1 and L0 consume, with no artifact left unnamed. | `L4-00-charter.md` §5; FD-134 |
 | L4-P8-04 | The final lane PR to `integration` is open, the lane-guard check is green, and no file outside the three owned roots appears in the diff. | `PARTITION.md` rule 1, line 25 |
 
 ---
