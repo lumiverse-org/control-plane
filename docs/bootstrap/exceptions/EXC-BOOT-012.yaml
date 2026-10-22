@@ -1,0 +1,24 @@
+# EXC-BOOT-012 — RENDERED by docs/plan/bin/bootstrap-render.sh from docs/bootstrap/gate-register.tsv.
+# DO NOT HAND-EDIT. Edit the register and re-render; docs/plan/bin/bootstrap-check.sh compares.
+# Fields: MasterSpec v4.0 Section 54.1 (spec L4752-4785). Bootstrap shape: Section 95.2 (spec L8648-8672).
+# Gate source: spec L2497. Threshold: T2W (docs/bootstrap/activation-checklist.tsv).
+- id: EXC-BOOT-012
+  type: bootstrap
+  scope: gate-1-plan-approval
+  affected:
+    repositories: [control-plane, product-template]
+  policy: no-self-approval
+  reason: no second context-holding human holds Write on these repositories during the solo build
+  risk_accepted: a plan is approved by its own author on the named repositories
+  compensating_control: full CI verification contract on every push; append-only history, nothing rewritten; production deploys still require the explicit approval event; Section 26.1 L2497 names Gate 2 independent review as the compensating control; Gate 2 is itself relaxed by EXC-BOOT-001 during bootstrap - the control actually in force is the CI verification contract and the Section 26.4 authority-delta gate, pending the L0 ruling recorded as DECISION REQUIRED 2 in implementation/lanes/L0-06-bootstrap-mode.md
+  compensating_control_record: CI run history on the named repositories
+  compensating_control_cadence: per-push
+  requester: founder
+  authority: founder
+  owner: founder
+  start: 2026-10-22
+  expiry: 2027-01-21
+  review_date: 2026-12-22
+  renewals: 0
+  deactivation_trigger: a second holder of plan-approval who is not the plan author
+  closure: null

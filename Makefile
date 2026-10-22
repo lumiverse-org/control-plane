@@ -167,4 +167,17 @@ decisions-gate:
 	 fi; \
 	 echo "DECISIONS-GATE OK phase=$(PHASE) overdue=$$n blocking=0"
 
+# --- L0-06: bootstrap mode ---
+.PHONY: bootstrap-render bootstrap-check bootstrap-log bootstrap-fresh
 
+bootstrap-render:
+	@CP=$(CURDIR) sh docs/plan/bin/bootstrap-render.sh
+
+bootstrap-check:
+	@CP=$(CURDIR) sh docs/plan/bin/bootstrap-check.sh
+
+bootstrap-log:
+	@CP=$(CURDIR) sh docs/plan/bin/bootstrap-log-gen.sh
+
+bootstrap-fresh:
+	@CP=$(CURDIR) sh docs/plan/bin/bootstrap-log-fresh.sh

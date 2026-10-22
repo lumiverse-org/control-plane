@@ -1,0 +1,24 @@
+# EXC-BOOT-008 — RENDERED by docs/plan/bin/bootstrap-render.sh from docs/bootstrap/gate-register.tsv.
+# DO NOT HAND-EDIT. Edit the register and re-render; docs/plan/bin/bootstrap-check.sh compares.
+# Fields: MasterSpec v4.0 Section 54.1 (spec L4752-4785). Bootstrap shape: Section 95.2 (spec L8648-8672).
+# Gate source: spec L8705. Threshold: TQA (docs/bootstrap/activation-checklist.tsv).
+- id: EXC-BOOT-008
+  type: bootstrap
+  scope: uat-ownership
+  affected:
+    repositories: [control-plane, product-template]
+  policy: verification-authority
+  reason: no second context-holding human holds Write on these repositories during the solo build
+  risk_accepted: UAT is owned by the author of the change under test
+  compensating_control: full CI verification contract on every push; append-only history, nothing rewritten; production deploys still require the explicit approval event
+  compensating_control_record: CI run history on the named repositories
+  compensating_control_cadence: per-push
+  requester: founder
+  authority: founder
+  owner: founder
+  start: 2026-10-22
+  expiry: 2027-01-21
+  review_date: 2026-12-22
+  renewals: 0
+  deactivation_trigger: the QA role is filled
+  closure: null

@@ -1,0 +1,20 @@
+# arming-matrix.tsv — L0-owned. The unarmed configuration recorded BESIDE the armed one,
+# per MasterSpec v4.0 Section 95.2 (spec L8680), so arming is a flip and not a project.
+# D101 (spec L10194) fixes the ORDER: Teams grant Write BEFORE branch protection is armed.
+# Format: <n><TAB><setting><TAB><unarmed><TAB><armed><TAB><arms_at><TAB><spec_line><TAB><declared_by>
+# arms_at: day-one | T2W | T3H | per-phase. declared_by names the L5 artifact that renders it.
+# L0 NEVER edits access/**. This file is the governance record, not the payload.
+1	organisation_base_permission	Read	Read	day-one	L9017	L5 access/org (L5-01-03)
+2	teams_grant_write	granted from the interim assignment set	granted from the registry-derived set at Phase 3	day-one	L9017 D101 L10194	L5 access/teams (L5-01-05)
+3	require_pull_request	true	true	day-one	L8680 L862	L5 access/branch-protection (L5-01-07)
+4	block_direct_push_to_default	true	true	day-one	L8680 L869	L5 access/branch-protection (L5-01-07)
+5	required_approving_review_count	0	1	T2W	L8680 L863	L5 access/branch-protection (L5-01-07)
+6	require_code_owner_review	inert while count is 0	true	T2W	L9017 L864	L5 access/branch-protection (L5-01-07)
+7	require_approval_of_most_recent_push	true	true	day-one	L865 L8687	L5 access/branch-protection (L5-01-07)
+8	dismiss_stale_approvals	true	true	day-one	L866 L8687	L5 access/branch-protection (L5-01-07)
+9	required_status_checks	EMPTY LIST per repository	one context added per phase as each check comes into existence	per-phase	L9018	L5 access/branch-protection (L5-01-07); a lane adding one is F-07
+10	require_branches_up_to_date	true	true	day-one	L867 L8687	L5 access/branch-protection (L5-01-07)
+11	block_force_push_and_deletion	true	true	day-one	L869 L8687	L5 access/branch-protection (L5-01-07)
+12	enforce_admins	true	true	day-one	L870 L8687	L5 access/branch-protection (L5-01-07)
+13	deployment_branch_and_tag_policy	applied from the template on every environment	applied from the template on every environment	day-one	L871 L9024	L5 access/environments (L5-01-08)
+14	workflow_identity_gate_production	not enforcing	active on production deploys	T3H	L8680 L2571	L5 access/branch-protection (L5-01-07); Section 27.2

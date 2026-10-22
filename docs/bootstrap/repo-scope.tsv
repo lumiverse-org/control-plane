@@ -1,0 +1,8 @@
+# repo-scope.tsv — L0-owned (L0D-19). Machine-readable form of MasterSpec v4.0 Section 95.1.
+# Format: <repository><TAB><mode><TAB><basis>.  Modes: bootstrap | armed | no-review-gates.
+# THE DEFAULT IS armed. A repository absent from this file is armed and may never appear in a
+# bootstrap exception (Section 95.2, spec L8678). Product repositories are never listed by name:
+# Section 11 forbids hard-coded repository names.
+control-plane	bootstrap	Section 95.1 L8642 - no second context-holding human holds Write during the solo build
+product-template	bootstrap	Section 95.1 L8642 - operating-system tooling repository (os-tooling in the Section 95.2 exhibit, spec L8654)
+control-plane-records	no-review-gates	D107 L10205 - no review protection by design; no-bypass ruleset armed day one; no review gate is relaxed so no exception covers it
