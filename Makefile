@@ -192,3 +192,23 @@ gate-integration:
 
 gate-integration-dry:
 	@GATE_DRY=1 ./contracts/gate/run-integration.sh "$(CYCLE)"
+
+# --- lane-guard (L0-02) ---
+.PHONY: lane-guard-selftest codeowners guard-verify
+
+lane-guard-selftest:
+	@sh ./lane-guard-selftest.sh
+
+codeowners:
+	@sh ./codeowners-gen.sh
+
+# The full pre-merge-train assertion the integrator runs before every train.
+guard-verify:
+	@sh -n lane-guard.sh          && echo "guard-syntax OK"
+	@sh ./lane-guard-selftest.sh  | tail -1
+	@sh ./codeowners-gen.sh       | tail -1
+	@git diff --quiet CODEOWNERS  && echo "codeowners STABLE" || { echo "codeowners DRIFTED"; exit 1; }
+	@cmp -s contracts/ci/lane-guard.yml.frozen .github/workflows/lane-guard.yml \
+	  && echo "workflow IDENTICAL" || { echo "workflow TAMPERED"; exit 1; }
+	@$(MAKE) --no-print-directory promote-check
+

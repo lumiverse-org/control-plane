@@ -1,0 +1,17 @@
+# lane-guard-exceptions.tsv — L0-owned root file. THE ONLY OVERRIDE PATH.
+# id <TAB> lane <TAB> path <TAB> pr <TAB> expiry <TAB> owner <TAB> deactivation_trigger <TAB> reason
+#
+# Rules, enforced by lane-guard.sh (exit 2 if any is broken):
+#   id      EXC-LG-NNN
+#   lane    1..5
+#   path    ONE literal path. No globs. Never a guard-critical path.
+#   pr      the exact pull-request number this row unblocks. One PR, one row.
+#   expiry  YYYY-MM-DD, mandatory (MasterSpec v4.0 §54.2). Inclusive.
+#   owner   @github-login of the L0 human accountable for the compensating control.
+#   deactivation_trigger  mandatory; the event that closes this row.
+#   reason  one line, no tabs.
+#
+# Adding a row is an L0 act performed on `integration` directly. It is never
+# merged from a lane branch: PARTITION.md rule 1 makes that impossible.
+#
+# The register starts empty. It should usually be empty.

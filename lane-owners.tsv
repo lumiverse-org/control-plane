@@ -1,0 +1,10 @@
+# lane-owners.tsv — L0-owned. lane <TAB> @github-login <TAB> display name.
+# HUMAN IDENTITIES ONLY. A machine account here would let a machine approval
+# satisfy branch protection; the Phase 1 completion check tests this
+# negatively (MasterSpec v4.0 §98.2; §11.3; D53).
+0	@bendrohit-eng	L0 Integrator
+1	@bendrohit-eng	L1 Registries & Contracts
+2	@bendrohit-eng	L2 Pipeline & Evidence
+3	@bendrohit-eng	L3 Reconciler & Provisioning
+4	@bendrohit-eng	L4 Records, Events & Metrics
+5	@bendrohit-eng	L5 Access, Infra & Ops
