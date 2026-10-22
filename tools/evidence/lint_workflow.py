@@ -66,7 +66,9 @@ def lint_file(path: str, violations: list) -> int:
     try:
         with open(path, 'r', encoding='utf-8') as f:
             raw = f.read()
-        wf = yaml.safe_load(raw)
+        # Pre-process template tokens like {{TOKEN}} to avoid PyYAML flow-mapping syntax errors
+        clean_raw = re.sub(r'\{\{[A-Za-z0-9_]+\}\}', 'placeholder', raw)
+        wf = yaml.safe_load(clean_raw)
     except Exception as e:
         print(f"ERROR reading {path}: {e}", file=sys.stderr)
         violations.append(('ERROR', path, str(e)))
@@ -74,6 +76,12 @@ def lint_file(path: str, violations: list) -> int:
 
     if not isinstance(wf, dict):
         return 0
+
+    # A GitHub Actions workflow must have top-level 'on' (or boolean True) and 'jobs' mapping
+    has_on = 'on' in wf or True in wf
+    has_jobs = 'jobs' in wf and isinstance(wf.get('jobs'), dict)
+    if not (has_on and has_jobs):
+        return 0  # not a workflow file (e.g. template metadata or fragment)
 
     # LW-03: no paths: or paths-ignore: at any level
     if re.search(r'^\s+paths(-ignore)?:', raw, re.MULTILINE):
