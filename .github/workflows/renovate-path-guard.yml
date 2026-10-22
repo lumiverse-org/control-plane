@@ -21,6 +21,10 @@ jobs:
   renovate-path-guard:
     name: renovate-path-guard
     runs-on: ubuntu-22.04
+    # FD-123: this check is required only once Renovate actually activates (Phase 2).
+    # Until then it must not block ordinary PRs — a non-Renovate PR exits cleanly
+    # without running the authorship/path checks below, rather than failing them.
+    if: github.event.pull_request.user.login == 'renovate[bot]'
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262

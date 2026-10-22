@@ -14,7 +14,7 @@
 | Lane 5 (branch protection) | the required-status-check context names (15 contexts in 3 groups) | `templates/workflows/required-checks.yaml` |
 | Lane 3 (`create-product`) | the workflow templates, their placeholders and their rendering conditions | `templates/workflows/MANIFEST.yaml`, `templates/workflows/PLACEHOLDERS.yaml` |
 | Lane 3 (reconciler, §53.1) | the consumed reusable-workflow tag and its resolved commit SHA | the `publish-workflow-tag.yml` run output |
-| Lane 4 (records) | the record and event kinds Lane 2 writes (deployment, uat, restore-test, eval, events/) | `tools/evidence/HANDOFF.md` (this file) |
+| Lane 4 (records) | the record and event kinds Lane 2 writes (deployment, uat, restore-test, eval, events/) | this document |
 | L0 | the eight open decisions and their current state | `L2-05-tasks.md` §1 |
 
 ---

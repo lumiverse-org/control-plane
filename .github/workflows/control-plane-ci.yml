@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@0a5c61591373683505ea898e09a6004b80576f52 # v5.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # matches the pin already in use and verified working by renovate-path-guard.yml
         with:
           python-version: '3.12'
 
