@@ -107,3 +107,36 @@ schedule-check:
 
 ready-queue:
 	bash scripts/l4/ready-queue.sh --check
+
+# --- merge train (L0-03) ---
+.PHONY: train-preflight train-log train-owners promote-gate
+
+train-preflight:
+	@git fetch --prune origin >/dev/null 2>&1
+	@test -z "$$(git status --porcelain)" || { echo "PREFLIGHT FAIL: working tree dirty"; exit 1; }
+	@test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/integration)" \
+	  || { echo "PREFLIGHT FAIL: not on integration tip"; exit 1; }
+	@$(MAKE) --no-print-directory promote-check
+	@echo "PREFLIGHT OK"
+
+train-owners:
+	@./train-owners.sh $(BASE) $(HEAD)
+
+train-log:
+	@test -f docs/merge-train.md || { echo "TRAIN-LOG FAIL: runbook missing"; exit 1; }
+	@grep -q '<!-- CYCLE-LOG:BEGIN -->' docs/merge-train.md \
+	  || { echo "TRAIN-LOG FAIL: BEGIN marker missing"; exit 1; }
+	@{ awk '{print} /<!-- CYCLE-LOG:BEGIN -->/{exit}' docs/merge-train.md; \
+	   printf '| cycle | date | L1 | L4 | L2 | L3 | L5 | promoted | notes |\n'; \
+	   printf '|---|---|---|---|---|---|---|---|---|\n'; \
+	   for f in $$(ls docs/merge-train/cycles/cycle-*.tsv 2>/dev/null | LC_ALL=C sort); do \
+	     ./train-row.sh "$$f"; \
+	   done; \
+	   awk '/<!-- CYCLE-LOG:END -->/{f=1} f{print}' docs/merge-train.md; \
+	 } > docs/merge-train.md.new
+	@mv docs/merge-train.md.new docs/merge-train.md
+	@echo "TRAIN-LOG OK"
+
+promote-gate:
+	@./train-promote-gate.sh $(CYCLE)
+

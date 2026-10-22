@@ -20,6 +20,7 @@ Promotion `integration → main` (L0D-09) happens only when `make promote-check`
 
 ## Cycle Log
 
+<!-- CYCLE-LOG:BEGIN -->
 | cycle | date | L1 | L4 | L2 | L3 | L5 | promoted | notes |
 |---|---|---|---|---|---|---|---|---|
-| 00 | 2026-10-22 | NONE | NONE | NONE | NONE | NONE | NONE | Baseline cycle log initialized |
+<!-- CYCLE-LOG:END -->
