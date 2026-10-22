@@ -1,3 +1,46 @@
-# CODEOWNERS
-# L0 owns contracts — no lane edits contracts/** without L0 review.
-/contracts/ @lumiverse-org/bendrohit-eng
+# CODEOWNERS — owned by L0 (integrator). Human identities only.
+# Machine accounts must never appear here: an approval from a machine account
+# does not satisfy branch protection, and the check is executed negatively.
+# Reference: MasterSpec v4.0 Section 98.2, Phase 1 completion check.
+# Spec: lanes/L0-00-charter.md task L0-00-01; FD-083; registries/people/
+#
+# Default owner: the integrator.
+*                       @bendrohit-eng
+
+# --- Lane-owned trees (PARTITION.md, FROZEN) ---
+# Lane 1 (Registries, schemas, validators): primary team lead @nimesh-lead, integrator fallback @bendrohit-eng
+/schemas/registry/      @nimesh-lead @bendrohit-eng
+/schemas/product/       @nimesh-lead @bendrohit-eng
+/registries/            @nimesh-lead @bendrohit-eng
+/validators/registry/   @nimesh-lead @bendrohit-eng
+
+# Lane 2 (CI/CD, workflows, evidence): QA @saumit-qa, senior dev @bhushan-dev, integrator fallback @bendrohit-eng
+/.github/workflows/     @saumit-qa @bhushan-dev @bendrohit-eng
+/templates/workflows/   @saumit-qa @bhushan-dev @bendrohit-eng
+/tools/evidence/        @saumit-qa @bhushan-dev @bendrohit-eng
+
+# Lane 3 (Reconciler, provisioning, drift validators) — no lane 3 assignee in registries/people/ (BE-001/FD-083 bootstrap)
+/reconciler/            @bendrohit-eng
+/tools/provision/       @bendrohit-eng
+/validators/drift/      @bendrohit-eng
+
+# Lane 4 (Records, metrics) — no lane 4 assignee in registries/people/ (BE-001/FD-083 bootstrap)
+/schemas/records/       @bendrohit-eng
+/metrics/               @bendrohit-eng
+/tools/records/         @bendrohit-eng
+
+# Lane 5 (Access, infra, ops-vm, notify, assets): devops @harshal-ops, integrator fallback @bendrohit-eng
+/access/                @harshal-ops @bendrohit-eng
+/infra/                 @harshal-ops @bendrohit-eng
+/ops-vm/                @harshal-ops @bendrohit-eng
+/notify/                @harshal-ops @bendrohit-eng
+/assets/                @harshal-ops @bendrohit-eng
+
+# --- L0-exclusive (last match wins in CODEOWNERS) ---
+/contracts/             @bendrohit-eng
+/docs/                  @bendrohit-eng
+/CODEOWNERS             @bendrohit-eng
+/Makefile               @bendrohit-eng
+/lane-paths.tsv         @bendrohit-eng
+/lane-guard.sh          @bendrohit-eng
+/contracts.sha256       @bendrohit-eng
