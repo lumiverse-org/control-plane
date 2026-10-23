@@ -182,13 +182,13 @@ These are the only judgment calls in Lane 1. Each is either (a) applied on a sta
 | 11 | L1-106 | L1.1 Identity | `platform.yaml` schema (§60.1, §97.3 enum carrier) | `schemas/registry/platform.v1.schema.json`, `validators/registry/tests/test_platform_schema.py`, `validators/registry/fixtures/platform/**` | L1-101 | M | `python -m pytest validators/registry/tests/test_platform_schema.py -q` → `12 passed` |
 | 12 | L1-107 | L1.1 Identity | `registries/platform.yaml` seeded | `registries/platform.yaml` | L1-106 | S | `python -m validators.registry.cli --root . --as-of $(date +%Y-%m-%d) --records-root . --format json → `OK: 1 file(s) validated, 0 error(s)` |
 | 13 | L1-108 | L1.1 Identity | Week-one minimal `exceptions.yaml` validator (§54.5, Phase-1 completion check) | `schemas/registry/exceptions.v1.minimal.schema.json`, `registries/exceptions.yaml`, `validators/registry/rules/r_exc_min.py`, `validators/registry/tests/test_exceptions_minimal.py`, `validators/registry/fixtures/exceptions/**` | L1-101, L1-005 | M | `python -m pytest validators/registry/tests/test_exceptions_minimal.py -q` → `9 passed` |
-| 14 | L1-201 | L1.2 Integrity | R-CAP-01 undefined capability rejected (§9.1, inv 11) | `validators/registry/rules/r_cap_01.py`, `validators/registry/tests/test_r_cap_01.py`, fixtures | L1-103, L1-105 | M | `python -m pytest validators/registry/tests/test_r_cap_01.py -q` → `7 passed` |
+| 14 | L1-201 | L1.2 Integrity | R-CAP-01 undefined capability rejected (§9.1, inv 11) | `validators/registry/rules/r_cap_01.py`, `validators/registry/tests/test_r_cap_01.py`, fixtures | L1-103, L1-105 (vacuous / target superseded by FD-119; satisfied no-op) | M | `python -m pytest validators/registry/tests/test_r_cap_01.py -q` → `7 passed` |
 | 15 | L1-202 | L1.2 Integrity | R-CAP-02 dangerous capability in a role default rejected (D106, inv 79) | `validators/registry/rules/r_cap_02.py`, `validators/registry/tests/test_r_cap_02.py`, fixtures | L1-201 | M | `python -m pytest validators/registry/tests/test_r_cap_02.py -q` → `11 passed` |
 | 16 | L1-203 | L1.2 Integrity | R-PPL-01 non-employee `end_date` mandatory (§7.1, inv 58) | `validators/registry/rules/r_ppl_01.py`, tests, fixtures | L1-201 | S | `python -m pytest validators/registry/tests/test_r_ppl_01.py -q` → `8 passed` |
 | 17 | L1-204 | L1.2 Integrity | R-PPL-02 `availability` × `access_status` pair legality (§7.1) | `validators/registry/rules/r_ppl_02.py`, tests, fixtures | L1-201 | M | `python -m pytest validators/registry/tests/test_r_ppl_02.py -q` → `16 passed` |
 | 18 | L1-205 | L1.2 Integrity | R-PPL-03 id and `github_login` uniqueness; id never reused (§7.1) | `validators/registry/rules/r_ppl_03.py`, tests, fixtures | L1-201 | S | `python -m pytest validators/registry/tests/test_r_ppl_03.py -q` → `6 passed` |
 | 19 | L1-206 | L1.2 Integrity | R-PPL-04 `people.role` resolves in `roles.yaml` (inv 50) | `validators/registry/rules/r_ppl_04.py`, tests, fixtures | L1-201 | S | `python -m pytest validators/registry/tests/test_r_ppl_04.py -q` → `5 passed` |
-| 20 | L1-207 | L1.2 Integrity | R-PPL-05 `work_arrangement` rules: IANA tz, `fte` bounds, schedule shape (§7.3) | `validators/registry/rules/r_ppl_05.py`, tests, fixtures | L1-104 | M | `python -m pytest validators/registry/tests/test_r_ppl_05.py -q` → `13 passed` |
+| 20 | L1-207 | L1.2 Integrity | R-PPL-05 `work_arrangement` rules: IANA tz, `fte` bounds, schedule shape (§7.3) | `validators/registry/rules/r_ppl_05.py`, tests, fixtures | L1-104 (vacuous / target superseded by FD-119; satisfied no-op) | M | `python -m pytest validators/registry/tests/test_r_ppl_05.py -q` → `13 passed` |
 | 21 | L1-301 | L1.3 Product | `product.yaml` v2 schema — envelope, `identity`, `classification` | `schemas/product/product.contract.v2.schema.json`, tests, fixtures | L1-101 | M | `python -m pytest validators/registry/tests/test_product_envelope.py -q` → `14 passed` |
 | 22 | L1-302 | L1.3 Product | `assignments` sub-schema — all 17 types (§10.1) | `schemas/registry/common/assignments.v1.schema.json`, tests, fixtures | L1-301 | L | `python -m pytest validators/registry/tests/test_assignments_schema.py -q` → `24 passed` |
 | 23 | L1-303 | L1.3 Product | `code`, `verification`, `environments`, `deployment` blocks | edits `product.contract.v2.schema.json`, tests, fixtures | L1-302 | L | `python -m pytest validators/registry/tests/test_product_delivery_blocks.py -q` → `18 passed` |
@@ -1037,7 +1037,7 @@ Spec anchor: §99.2 subsystem B — "referential integrity (assignments name exi
 
 ### L1-201 — R-CAP-01: undefined capability rejected
 
-**PHASE:** L1.2 · **SIZE:** M · **DEPENDS:** L1-103, L1-105 · **SPEC:** §9.1 ("A capability appearing in a `roles.yaml` default, in a `people.yaml` grant, or in any assignment type without a row in this table fails control-plane CI validation"); invariant 11; §64.1
+**PHASE:** L1.2 · **SIZE:** M · **DEPENDS:** L1-103, L1-105 (vacuous / satisfied no-op; target superseded by FD-119) · **SPEC:** §9.1 ("A capability appearing in a `roles.yaml` default, in a `people.yaml` grant, or in any assignment type without a row in this table fails control-plane CI validation"); invariant 11; §64.1
 **FILES:** `validators/registry/rules/r_cap_01.py`, `validators/registry/tests/test_r_cap_01.py`, `validators/registry/fixtures/cap01/**`
 
 `RULE_ID = "R-CAP-01"`, `SPEC = "Section 9.1"`, `APPLIES_TO = ["roles", "people"]`.
@@ -1314,7 +1314,7 @@ EXIT=0
 
 ### L1-207 — R-PPL-05: `work_arrangement` rules
 
-**PHASE:** L1.2 · **SIZE:** M · **DEPENDS:** L1-104 · **SPEC:** §7.3 (D111) — timezone, fte, schedule, arrangement rules
+**PHASE:** L1.2 · **SIZE:** M · **DEPENDS:** L1-104 (vacuous / satisfied no-op; target superseded by FD-119) · **SPEC:** §7.3 (D111) — timezone, fte, schedule, arrangement rules
 **FILES:** `validators/registry/rules/r_ppl_05.py`, `validators/registry/tests/test_r_ppl_05.py`, `validators/registry/fixtures/ppl05/**`
 
 The JSON Schema of L1-104 already rejects malformed shapes. These rules cover what schema cannot express. Each id in its own module file:
