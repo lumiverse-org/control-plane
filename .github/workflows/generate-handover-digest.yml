@@ -1,0 +1,70 @@
+# generate-handover-digest.yml — Pre-leave handover digest generator.
+# Spec §13.2 line 1185, §94.7, §99.2 (Subsystem N, P).
+# One-write-path rule: Hermes proposes via workflow_dispatch; platform disposes (D71, D72).
+
+name: generate-handover-digest
+
+on:
+  workflow_dispatch:
+    inputs:
+      person_id:
+        description: "Person ID taking leave (e.g. bendrohit-eng)"
+        required: true
+        default: "bendrohit-eng"
+      role:
+        description: "Role held during leave window"
+        required: true
+        default: "team-lead"
+      leave_start_date:
+        description: "Leave start date (YYYY-MM-DD)"
+        required: true
+        default: "2026-11-01"
+      leave_end_date:
+        description: "Leave end date (YYYY-MM-DD)"
+        required: true
+        default: "2026-11-15"
+      proposal_source:
+        description: "Caller proposing the generation (D71)"
+        required: false
+        default: "hermes-background-worker"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: generate-handover-digest-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  generate-digest:
+    name: generate-digest
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
+        with:
+          python-version: '3.11'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Generate pre-leave handover digest (D71 / D72)
+        run: |
+          mkdir -p records/digests
+          python tools/digests/generate_handover_digest.py \
+            --person-id "${{ inputs.person_id }}" \
+            --role "${{ inputs.role }}" \
+            --leave-start "${{ inputs.leave_start_date }}" \
+            --leave-end "${{ inputs.leave_end_date }}" \
+            --proposal-source "${{ inputs.proposal_source }}" \
+            --output "records/digests/handover-${{ inputs.person_id }}-${{ inputs.leave_start_date }}.md"
+
+      - name: Upload digest artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.1
+        with:
+          name: handover-digest-${{ inputs.person_id }}
+          path: records/digests/handover-*.md
+          retention-days: 90
