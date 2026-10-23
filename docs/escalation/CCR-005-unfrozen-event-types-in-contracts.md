@@ -21,7 +21,12 @@ WHAT THE TASK REQUIRES
 In commit `d4dcc0dbf71af72b62b0aa5d92b959100153b608` (FD-138), `contracts.sha256` was frozen with checksum `1ebee5406bb231b5813bcb84c3f618248a9ebc5ac5e13be607b2e2c9557c0427`.
 
 THE GAP, STATED AS A FACT
-In commit `e836afacb64be059e50a7cccdc96d5e143b1d92e` ("fix(notify): align event taxonomy in platform registry with notification routes"), 8 new event type identifiers (`delegation_expiry_warning_issued`, `plan_submitted_to_approver_notification_sent`, `launch_sign_off_requested`, `pending_decision_opened`, `support_first_touch_breach`, `temporary_person_expiry_warning_issued`, `verification_blocked`, `verification_unblocked`) were added directly to `contracts/event-types.yaml` without an authorized Contract Change Request or re-freezing `contracts.sha256`. This caused `contracts.sha256` checksum verification to fail against the current repository state (recorded `1ebee5406bb231b5813bcb84c3f618248a9ebc5ac5e13be607b2e2c9557c0427`, recomputed `5ca0e8f105df387bde234f9eb6cb0215252a92dc9c826c65995416061cd23aa9` in POSIX environment / `6393fa7f886b8e8a5c9cfcd35b0271ba17c7f7481180bbe0af37444f398657bc` with local CRLF).
+In commit `e836afacb64be059e50a7cccdc96d5e143b1d92e` ("fix(notify): align event taxonomy in platform registry with notification routes"), 8 new event type identifiers (`delegation_expiry_warning_issued`, `plan_submitted_to_approver_notification_sent`, `launch_sign_off_requested`, `pending_decision_opened`, `support_first_touch_breach`, `temporary_person_expiry_warning_issued`, `verification_blocked`, `verification_unblocked`) were added directly to `contracts/event-types.yaml` without an authorized Contract Change Request or re-freezing `contracts.sha256`. This caused `contracts.sha256` checksum verification to fail against the repository state.
+Recipe (`make promote-check` / `make freeze`):
+  `find contracts -type f -not -path 'contracts/gate/*' -not -path 'contracts/ci/*' | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1`
+- Recorded in `contracts.sha256` (commit `d4dcc0db` / FD-138): `1ebee5406bb231b5813bcb84c3f618248a9ebc5ac5e13be607b2e2c9557c0427`
+- Recomputed at commit `0e21095` (with 8 new event types in `contracts/event-types.yaml`): `b9a5f4225335be13f65a38b6dc1f8ba5ec75bb86e149b7f51af118277974e77e`
+- Recomputed at current `HEAD` (with FD-115 `pilot_products` addition to `contracts/v1-scope.yaml` in commit `d098bf2`): `f60b583cde54fba9f26f85f68072c2511c543c31d9a9df18b30db11cdf54d6aa`
 
 BLAST RADIUS I CAN OBSERVE
 - contracts/event-types.yaml (canonical contract modified from 111 to 119 identifiers)
