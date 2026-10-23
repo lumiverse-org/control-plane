@@ -5,7 +5,7 @@
 # here as a NEW ROW with version: 2 and schema: schemas/records/v2/<name>.schema.json;
 # the version-1 row and its flat file stay exactly where they are. Nothing moves, ever.
 #
-# Nineteen rows: the seventeen canonical record stores of this file's section 2.2, plus events/, plus bootstrap/. 19 per FD-059 (bootstrap/ counts as a store).
+# Eighteen rows: the seventeen canonical record stores of this file's section 2.2, plus events/. (18 store definitions).
 # exceptions.yaml, policies.yaml and patterns.yaml appear in the Section 97.2 table but are
 # control-plane registry files owned by L1 (PARTITION.md line 17) and appear in no L4 file.
 store_map_version: 1

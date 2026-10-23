@@ -38,9 +38,9 @@ This document catalogs all 44 items from `_gravity-handoff/batch-3/pool.json` th
 ## 2. Lane 4 Residual Contradictions & External Boundaries
 
 ### `control-plane-records/PROTECTION-REQUEST.md` (satisfies L4-T003)
-> **Status (2026-10-23):** CORRECTLY NOT BUILT — withdrawn per lanes/L4-00-charter.md line 323 and external repo boundary; branch protection gap accepted temporarily per FD-135; remains out of scope.
+> **Status (2026-10-23):** CORRECTLY NOT BUILT — withdrawn per lanes/L4-06-tasks.md line 557 (citing L4-00-charter.md:323) and external repo boundary; branch protection gap accepted temporarily per FD-135; remains out of scope.
 - **Pool Item:** 24 (`control-plane-records/PROTECTION-REQUEST.md`)
-- **Evidence:** Explicitly WITHDRAWN in `lanes/L4-00-charter.md` line 323 ("WITHDRAWN: PROTECTION-REQUEST.md is superseded by D107 ruleset configuration").
+- **Evidence:** Explicitly WITHDRAWN in `lanes/L4-06-tasks.md:557` ("**WITHDRAWN** — superseded by D107 ruleset configuration (see `L4-00-charter.md` line 323). Not built, not pending.").
 - **Decision Required:** Formal deletion of Item 24 from the active task backlog.
 
 ---
@@ -56,15 +56,15 @@ This document catalogs all 44 items from `_gravity-handoff/batch-3/pool.json` th
 ### `schemas/records/defs/flags.schema.json` (satisfies L4-P2-23)
 > **Status (2026-10-23):** CORRECTLY NOT BUILT — retired as redundant per FD-130 (resolves RD-01); store-specific field typing stands (`incident.schema.json` strict enum, `support.schema.json` open string per §97.2 line 8873); remains out of scope.
 - **Pool Item:** 28 (`schemas/records/defs/flags.schema.json`)
-- **Evidence:** `lanes/L4-CONCORDANCE.md` line 256 flags this as "A design conflict, not just a gap: L0 must rule." `L4-02` specifies flag definitions in `schemas/records/defs/flags.schema.json`, whereas the canonical records schema (`schemas/records/versions.yaml` and `event-envelope.schema.json`) already embeds flag enums without referencing an external `defs/flags.schema.json`.
+- **Evidence:** `lanes/L4-CONCORDANCE.md` line 267 formally records `L4-P2-23` (`schemas/records/defs/flags.schema.json`) as "RETIRED per FD-130. Redundant; not built." Store-specific field typing was confirmed per §97.2 line 8873 ("include" not "are"), where `incident` enforces a strict enum and `support` permits an open string, rendering an external `defs/flags.schema.json` redundant.
 - **Decision Required:** L0 ruling on whether `flags.schema.json` should be created as a shared `$ref` target or retired as redundant with `event-envelope.schema.json`.
 
 ---
 
 ### `tools/records/store-inventory.yaml` (satisfies L4-P2-25)
-> **Status (2026-10-23):** CORRECTLY NOT BUILT — struck by Decision D21 in lanes/L4-99-review.md line 409 in favor of `schemas/records/store-map.yaml` (which exists and has 19 store definitions, verified 2026-10-23); remains out of scope.
+> **Status (2026-10-23):** CORRECTLY NOT BUILT — struck by Decision D21 in lanes/L4-99-review.md line 409 in favor of `schemas/records/store-map.yaml` (which exists and has 18 store definitions, verified 2026-10-23); remains out of scope.
 - **Pool Item:** 29 (`tools/records/store-inventory.yaml`)
-- **Evidence:** Explicitly STRUCK by Decision D21 in `lanes/L4-99-review.md` line 409: "store-inventory.yaml is struck; schemas/records/store-map.yaml is the single authoritative store deliverable." `schemas/records/store-map.yaml` was verified and already exists with 19 rows.
+- **Evidence:** Explicitly STRUCK by Decision D21 in `lanes/L4-99-review.md` line 409: "store-inventory.yaml is struck; schemas/records/store-map.yaml is the single authoritative store deliverable." `schemas/records/store-map.yaml` was verified and already exists with 18 rows.
 - **Decision Required:** Mark Item 29 as obsolete/superseded by `store-map.yaml`.
 
 ---
@@ -112,7 +112,7 @@ Furthermore, `lanes/L5-98-DEEP-REVIEW.md` Blocker **B-01** and **B-02** explicit
 All 33 remaining Lane 5 items in `pool.json` were extracted directly from the retired `L5-06-tasks.md` task bodies. Building them would duplicate and break the existing, authoritative implementations already present in the repository:
 
 ### Group A: Assisted & Credential Isolation Tasks
-- **`access/tools/check_org_evidence.py` (Item 43, L5-T15):** Explicitly marked `[ASSISTED — L0 EXECUTES]`. Requires an authenticated GitHub organisation-owner console session. `L5-06-tasks.md` line 1269 states: *"A low-cost agent must not hold, be handed, or type an organisation-owner credential."*
+- **`access/tools/check_org_evidence.py` (Item 43, L5-T15):** Explicitly marked `[ASSISTED — L0 EXECUTES]`. Requires an authenticated GitHub organisation-owner console session. `L5-06-tasks.md` line 1273 states: *"A low-cost agent must not hold, be handed, or type an organisation-owner credential."*
   > **Status (2026-10-23):** CORRECTLY NOT BUILT — retired per FD-047; superseded by authoritative Phase file L5-01 (access/model/organisation.yaml); requires L0 org-owner credentials and remains out of agent scope.
 - **`access/acceptance/at110_probe.py` (Item 75, L5-T56):** Explicitly marked `[ASSISTED — L0 EXECUTES]`. Requires live execution of six credential-bound attempts against protected API endpoints.
   > **Status (2026-10-23):** CORRECTLY NOT BUILT — retired per FD-047; superseded by authoritative Phase file L5-07 implementation at access/tests/at-110-reconciler-bounds.sh; live reconciler probe requires L0 human execution.
@@ -177,5 +177,5 @@ All 33 remaining Lane 5 items in `pool.json` were extracted directly from the re
 ### Decision Required for Lane 5
 In accordance with **FD-047**, the Founder / L0 Integrator has confirmed that:
 1. `pool.json` items 43 through 75 are formally retired, as they derive from the superseded `L5-06-tasks.md` atomic task list.
-2. The authoritative implementation of Lane 5 remains governed by the phase files (`L5-01` through `L5-05`, `L5-07`), which are already 81% green (13/16 gates passing in `infra/tools/readiness.sh`).
+2. The authoritative implementation of Lane 5 remains governed by the phase files (`L5-01` through `L5-05`, `L5-07`), which are 81.25% green (13/16 gates passing in `infra/tools/readiness.sh`: failing gates are `owned-roots`, `test-coverage`, `layerb-post-patch`; verified live 2026-10-23, exit 1).
 3. Future Lane 5 task pools must be generated from the concordance in `lanes/L5-CONCORDANCE.md` §7.2 rather than the retired `L5-06` task bodies.

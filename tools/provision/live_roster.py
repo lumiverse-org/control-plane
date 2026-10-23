@@ -4,19 +4,25 @@ Reads the actual onboarded products from `docs/onboarding/products/<slot>/facts.
 Pure local file reads: zero network calls, zero shell commands, zero writes.
 
 Exclusion of slot 06:
-Slot 06 (Product-6) is a known test fixture/placeholder rather than an onboarded
-real product, as established across the repository:
-- CCR-002 (docs/escalation/CCR-002-business-criticality-data-provenance.md):
-  "Each onboarded real product (Product-01 through Product-08, excluding placeholder fixture Product-06)..."
-- FD-138 (_FOUNDER_DECISIONS.md): notes Product-06 is a fixture with synthetic fields.
-All real product roster counts in the platform (e.g. 7 real products) explicitly exclude slot 06.
+Slot 06 (Product-6) is excluded from the active roster of onboarded products:
+- In escalation docs, CCR-001 (docs/escalation/CCR-001-business-criticality.md line 25)
+  classifies `docs/onboarding/products/06/facts.tsv` as a "product intake fixture",
+  and CCR-002 (docs/escalation/CCR-002-business-criticality-data-provenance.md lines 11 & 14)
+  identifies the 7 real onboarded products (slots 01, 02, 03, 04, 05, 07, 08) and
+  characterizes Product-06 as a placeholder fixture.
+- In `_FOUNDER_DECISIONS.md`, FD-138 resolved the 3-tier vs 4-tier business_criticality enum
+  contradiction and aligned slot 06 facts.tsv for the deterministic onboard-rank calculation,
+  without establishing Product-6 as a live production product.
+- There is no Founder Decision defining Product-6 as an active production service;
+  the live repository estate consists of 7 real onboarded products (Product-1 through Product-8,
+  excluding Product-6).
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-# Established exclusion: slot 06 / Product-6 is a placeholder fixture (CCR-002, FD-138).
+# Slot 06 / Product-6 is excluded from the active product roster (CCR-001, CCR-002).
 EXCLUDED_SLOTS = frozenset({"06"})
 EXCLUDED_PRODUCT_IDS = frozenset({"Product-6"})
 
@@ -29,7 +35,7 @@ def live_registered_product_ids(onboarding_root: Path | None = None) -> tuple[st
     """Return the sorted tuple of real product IDs from docs/onboarding/products/<slot>/facts.tsv.
 
     Reads each slot's facts.tsv, extracts the `product_id` field, and explicitly
-    excludes slot 06 (Product-6) per CCR-002 and FD-138.
+    excludes slot 06 (Product-6) per CCR-001 and CCR-002.
     """
     root = onboarding_root if onboarding_root is not None else _DEFAULT_ONBOARDING_ROOT
     if not root.is_dir():
