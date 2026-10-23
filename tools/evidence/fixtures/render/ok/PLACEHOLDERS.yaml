@@ -1,0 +1,3 @@
+tokens:
+  - "{{PRODUCT_NAME}}"
+  - "{{CONTROL_PLANE_REPO}}"

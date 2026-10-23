@@ -1,0 +1,147 @@
+name: canary-exercise
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: "Product name (canary subject)"
+        required: true
+        type: string
+      change_manifest_ref:
+        description: "Git ref of the change manifest to record against"
+        required: true
+        type: string
+      product_repo:
+        description: "Full repo slug (org/repo) of the canary product"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: write
+  checks: write
+
+jobs:
+  canary-ci-leg:
+    name: CANARY_LEG_CI
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Dispatch ci.yml for canary product
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          RUN_ID=$(gh workflow run ci.yml \
+            --repo "${{ inputs.product_repo }}" \
+            --ref "${{ inputs.change_manifest_ref }}" \
+            --field canary=true \
+            --json runId --jq '.runId' 2>/dev/null || echo "")
+          if [ -z "$RUN_ID" ]; then
+            echo "UNEXERCISED_CANARY: ci.yml dispatch did not return a run id" >&2
+            exit 1
+          fi
+          # Poll until conclusion
+          for i in $(seq 1 60); do
+            CONCLUSION=$(gh run view "$RUN_ID" --repo "${{ inputs.product_repo }}" \
+              --json conclusion --jq '.conclusion' 2>/dev/null || echo "pending")
+            if [ "$CONCLUSION" != "pending" ] && [ "$CONCLUSION" != "null" ] && [ -n "$CONCLUSION" ]; then
+              break
+            fi
+            sleep 10
+          done
+          if [ "$CONCLUSION" != "success" ]; then
+            echo "ci run concluded with $CONCLUSION" >&2
+            exit 1
+          fi
+          echo "LEG_CI=passed" >> "$GITHUB_ENV"
+
+      - name: Record CI leg on change manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh api \
+            --method PATCH \
+            "repos/${{ inputs.product_repo }}/git/refs/heads/${{ inputs.change_manifest_ref }}" \
+            --input - <<JSON
+          {"canary_ci_leg": "passed", "run_id": "$GITHUB_RUN_ID"}
+          JSON
+          echo "MANIFEST_CI_UPDATED=1"
+
+  canary-build-leg:
+    name: CANARY_LEG_BUILD
+    needs: canary-ci-leg
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Dispatch build.yml for canary product
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          RUN_ID=$(gh workflow run build.yml \
+            --repo "${{ inputs.product_repo }}" \
+            --ref "${{ inputs.change_manifest_ref }}" \
+            --field canary=true \
+            --json runId --jq '.runId' 2>/dev/null || echo "")
+          if [ -z "$RUN_ID" ]; then
+            echo "build.yml dispatch did not return a run id" >&2
+            exit 1
+          fi
+          for i in $(seq 1 60); do
+            CONCLUSION=$(gh run view "$RUN_ID" --repo "${{ inputs.product_repo }}" \
+              --json conclusion --jq '.conclusion' 2>/dev/null || echo "pending")
+            if [ "$CONCLUSION" != "pending" ] && [ "$CONCLUSION" != "null" ] && [ -n "$CONCLUSION" ]; then
+              break
+            fi
+            sleep 10
+          done
+          if [ "$CONCLUSION" != "success" ]; then
+            echo "build concluded with $CONCLUSION" >&2
+            exit 1
+          fi
+          echo "LEG_BUILD=passed" >> "$GITHUB_ENV"
+
+      - name: Record build leg on change manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "MANIFEST_BUILD_UPDATED=1"
+
+  canary-staging-deploy-leg:
+    name: CANARY_LEG_STAGING_DEPLOY
+    needs: canary-build-leg
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Dispatch deploy-staging.yml for canary product
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          RUN_ID=$(gh workflow run deploy-staging.yml \
+            --repo "${{ inputs.product_repo }}" \
+            --ref "${{ inputs.change_manifest_ref }}" \
+            --field canary=true \
+            --json runId --jq '.runId' 2>/dev/null || echo "")
+          if [ -z "$RUN_ID" ]; then
+            echo "deploy-staging.yml dispatch did not return a run id" >&2
+            exit 1
+          fi
+          for i in $(seq 1 90); do
+            CONCLUSION=$(gh run view "$RUN_ID" --repo "${{ inputs.product_repo }}" \
+              --json conclusion --jq '.conclusion' 2>/dev/null || echo "pending")
+            if [ "$CONCLUSION" != "pending" ] && [ "$CONCLUSION" != "null" ] && [ -n "$CONCLUSION" ]; then
+              break
+            fi
+            sleep 10
+          done
+          if [ "$CONCLUSION" != "success" ]; then
+            echo "staging deploy concluded with $CONCLUSION" >&2
+            exit 1
+          fi
+          echo "LEG_STAGING_DEPLOY=passed" >> "$GITHUB_ENV"
+
+      - name: Record staging-deploy leg on change manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "MANIFEST_STAGING_UPDATED=1"

@@ -12,6 +12,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   release:
     name: Release ${{ inputs.product_id }} @ ${{ inputs.tag }}

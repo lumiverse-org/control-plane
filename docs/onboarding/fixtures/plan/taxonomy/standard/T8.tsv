@@ -1,0 +1,4 @@
+id	T8
+standard	CI-only migrations backward-compatible one cycle
+defined_in	Section 34.3
+spec_line	L8785-L8798

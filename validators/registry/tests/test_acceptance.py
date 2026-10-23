@@ -125,7 +125,16 @@ def test_at008_contractor_scoped_dated_capability_limited():
     temporary_contributor assignment validates; end_date: null fails
     R-PPL-01 (Section 7.1)."""
     from validators.registry.rules import r_ppl_01  # L1-203
-    raise NotImplementedError("L1-203 (r_ppl_01) not yet built -- see impl spec HARD PREREQUISITES")
+
+    case = os.path.join(FIXTURES_DIR, "at008_contractor")
+    valid_doc = yaml.safe_load(open(os.path.join(case, "valid", "people.yaml"), encoding="utf-8"))
+    findings = r_ppl_01.check(valid_doc, as_of="2026-08-27")
+    assert findings == []
+
+    invalid_doc = yaml.safe_load(open(os.path.join(case, "end_date_null", "people.yaml"), encoding="utf-8"))
+    findings = r_ppl_01.check(invalid_doc, as_of="2026-08-27")
+    assert any(f.startswith("R-PPL-01") for f in findings)
+
 
 
 def test_at009_conformance_profile_equivalent_evidence():
@@ -184,7 +193,12 @@ def test_at016_topology_only_change():
     workflows or dashboards are edited. Escalation resolves through
     topology." -- the byte-identical product.yaml pair from L1-503."""
     from validators.registry.rules import r_top_01  # L1-503
-    raise NotImplementedError("L1-503 (r_top_01) not yet built -- see impl spec HARD PREREQUISITES")
+    dormant = os.path.join(os.path.dirname(__file__), "..", "fixtures", "top01", "valid", "at016_dormant", "product.yaml")
+    activated = os.path.join(os.path.dirname(__file__), "..", "fixtures", "top01", "valid", "at016_activated", "product.yaml")
+    import hashlib
+    h1 = hashlib.sha256(open(dormant, "rb").read()).hexdigest()
+    h2 = hashlib.sha256(open(activated, "rb").read()).hexdigest()
+    assert h1 == h2, "product.yaml was edited to activate domains -- exactly the AT-016 failure"
 
 
 def test_at025_both_versions_one_run():
@@ -192,7 +206,15 @@ def test_at025_both_versions_one_run():
     supported simultaneously" -- the two-document single-run case from
     L1-701 (contract_version 1 and 2 validated together)."""
     from validators.registry import versioning  # L1-701
-    raise NotImplementedError("L1-701 (versioning.py) not yet built -- see impl spec HARD PREREQUISITES")
+
+    fixtures_dir = os.path.join(os.path.dirname(__file__), "..", "fixtures", "versioning", "valid", "both_versions_one_run")
+    v1_doc = yaml.safe_load(open(os.path.join(fixtures_dir, "product-v1.yaml"), encoding="utf-8"))
+    v2_doc = yaml.safe_load(open(os.path.join(fixtures_dir, "product-v2.yaml"), encoding="utf-8"))
+
+    assert versioning.document_version("product", v1_doc) == 1
+    assert versioning.document_version("product", v2_doc) == 2
+    assert versioning.select_schema("product", v1_doc) == "schemas/product/product.contract.v1.schema.json"
+    assert versioning.select_schema("product", v2_doc) == "schemas/product/product.contract.v2.schema.json"
 
 
 def test_at034_governance_layerability():

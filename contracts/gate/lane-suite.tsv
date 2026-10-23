@@ -1,0 +1,6 @@
+# lane<TAB>suite-command
+1	make -C validators/registry test && make -C schemas test
+2	make -C tools/evidence test && bash templates/workflows/test/run.sh
+3	make -C reconciler test && make -C validators/drift test
+4	make -C tools/records test && make -C metrics test
+5	make -C access test && make -C infra test && make -C ops-vm test

@@ -1,0 +1,5 @@
+id	S9
+state	Repository on a personal account or outside host
+spec_line	L8816
+ai_gate	no
+prereq	repo-in-org

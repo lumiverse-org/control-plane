@@ -1,0 +1,30 @@
+# key<TAB>declared<TAB>source<TAB>kind
+# D44: "every stated count is true". A row is added only when a document states
+# the number literally. Nothing here is inferred, rounded or estimated.
+at	110	MasterSpec v4.0 Section 100 preamble ("The catalogue contains 110 tests")	spec
+inv	111	MasterSpec v4.0 Section 101 preamble ("The catalogue contains 111 invariants")	spec
+ec	112	MasterSpec v4.0 Section 102 preamble ("The catalogue contains 112 cases")	spec
+subsystems	18	MasterSpec v4.0 Section 99.2 subsystem table, rows A..R	spec
+evidence_questions	11	MasterSpec v4.0 Section 32 ("the system answers eleven questions")	spec
+orphan_types	16	MasterSpec v4.0 Section 7 ("Orphan detection - what the system surfaces (16 orphan types)")	spec
+recon_levels	5	MasterSpec v4.0 D43 ("reconciliation Levels 1-5")	spec
+event_types	86	L0-01-phase-0-contracts.md D-L0-03 (one per Section 97.3 taxonomy entry)	plan
+frozen_contracts	23	L0-01-phase-0-contracts.md Section 2 ("Twenty-three frozen contracts")	plan
+lanes	5	PARTITION.md "The five build lanes"	plan
+train_order	5	PARTITION.md "Merge train: L1 -> L4 -> L2 -> L3 -> L5"	plan
+subsystems_assigned	13	PARTITION.md subsystem column (A,B,C,D,E,F,I,K,L,M,N,Q,R)	plan
+subsystems_unassigned	5	PARTITION.md vs Section 99.2 (G,H,J,O,P) - protocol/02 Section 2	plan
+lane_checks	12	protocol/05-merge-gate.md Section 3 (LG-01..LG-12)	plan
+integration_checks	12	protocol/05-merge-gate.md Section 4 (IG-01..IG-12)	plan
+checks	24	protocol/05-merge-gate.md Section 8, contracts/gate/expected-checks.txt	plan
+ct_pairs_p00	10	protocol/00-test-strategy.md Section 5 T2 (CT-01..CT-10)	plan
+ct_pairs_p01	12	protocol/01-contract-tests.md Section 3 (C-01..C-12)	plan
+nt_register	32	protocol/04-negative-tests.md Section 3 (NT-01..NT-32)	plan
+at_in_scope	37	protocol/02-acceptance-mapping.md Section 9.1	plan
+at_governance_gated	23	protocol/02-acceptance-mapping.md Section 9.1	plan
+at_people_gated	50	protocol/02-acceptance-mapping.md Section 9.1	plan
+at_twins	33	protocol/02-acceptance-mapping.md Section 10	plan
+e2e_positive_floor	118	protocol/08-smoke-and-e2e.md Section 7	plan
+e2e_negative_floor	28	protocol/08-smoke-and-e2e.md Section 7	plan
+canaries	14	protocol/11-definition-of-done.md DI-06	plan
+decisions	112	MasterSpec v4.0 Appendix A	spec

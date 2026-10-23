@@ -1,0 +1,5 @@
+id	S19
+state	Customer data committed in the repository
+spec_line	L8825-8826
+ai_gate	yes
+prereq	s19-gate

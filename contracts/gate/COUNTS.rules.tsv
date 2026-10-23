@@ -1,0 +1,4 @@
+# rule-id<TAB>total-key<TAB>addend-keys (comma separated)<TAB>what it protects
+SUM-01	at	at_in_scope,at_governance_gated,at_people_gated	The five-lane build proves 37 of 110. A partition that quietly re-scopes shows up as a broken sum, not as a smaller denominator on a slide
+SUM-02	subsystems	subsystems_assigned,subsystems_unassigned	G, H, J, O and P are unassigned in PARTITION v1. If this sum starts holding with unassigned=0, a subsystem was claimed without an L0 decision
+SUM-03	checks	lane_checks,integration_checks	L0D-IG-2. The gate cannot grow a check without breaking its own register

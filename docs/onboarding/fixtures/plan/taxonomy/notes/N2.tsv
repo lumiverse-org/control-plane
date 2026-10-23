@@ -1,0 +1,4 @@
+id	N2
+note	A production database shared between two products is declared at intake and backup and restore ownership is assigned to a named product then - never left implicit between the two
+spec_line	L8828
+prereq	shared-db-ownership

@@ -35,3 +35,4 @@ checks:
   - {check_id: AT-108, spec_clause: "Section 100.6", test_file: ops-vm/tests/at-108-console-readonly.sh, mode: ASSISTED, revalidate_after_days: 90}
   - {check_id: AT-109, spec_clause: "Section 100.6", test_file: infra/tests/at-109-egress-wall.sh, mode: ASSISTED, revalidate_after_days: 90}
   - {check_id: AT-110, spec_clause: "Section 100.6", test_file: access/tests/at-110-reconciler-bounds.sh, mode: ASSISTED, revalidate_after_days: 90}
+  - {check_id: L5-04-07, spec_clause: "Section 51.2 and 51.5", test_file: ops-vm/tests/test_reconcile_daemon.sh, mode: AUTO, revalidate_after_days: 30}

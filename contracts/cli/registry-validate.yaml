@@ -1,0 +1,38 @@
+# --- CONTRACT HEADER (frozen) ---
+contract_id: C-CLI-VALIDATE-1
+contract_version: 1
+owner: L0
+publishing_lane: L0
+consuming_lanes: [L0]
+spec_refs: ["Section 97.3", "L0D-18"]
+ccr_required: true
+
+# CLI Registry Validator Interface Contract (L0D-18)
+entrypoint: "validators/registry/bin/validate"
+command: "python -m validators.registry.cli"
+exit_codes:
+  success: 0
+  invalid: 1
+  config_error: 2
+  unresolved: 3
+
+output_format: "json-lines"
+finding_schema:
+  type: object
+  required:
+    - rule_id
+    - severity
+    - file
+    - pointer
+  properties:
+    rule_id:
+      type: string
+    severity:
+      type: string
+      enum: [error, warning, info]
+    file:
+      type: string
+    pointer:
+      type: string
+    message:
+      type: string

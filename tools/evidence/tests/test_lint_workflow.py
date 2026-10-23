@@ -83,3 +83,30 @@ def test_stdout_carries_only_summary_line():
     res = run_tool("--path", str(FIXTURES_DIR), "--summary")
     # exactly one line of stdout: the summary line itself
     assert res.stdout.strip().splitlines() == ["FAIL lint_workflow checked=6 failed=5"]
+
+
+def test_non_workflow_files_are_skipped(tmp_path):
+    # A config/metadata file without on: and jobs: must not be flagged for missing permissions
+    meta = tmp_path / "MANIFEST.yaml"
+    meta.write_text("templates:\n  - template: ci.yml\n    destination: .github/workflows/ci.yml\n")
+    res = run_tool("--path", str(meta), "--summary")
+    assert res.returncode == 0
+    assert "OK lint_workflow checked=1 failed=0" in res.stdout
+
+
+def test_templated_workflow_with_placeholders_passes(tmp_path):
+    wf = tmp_path / "build.yml"
+    wf.write_text(
+        "name: Build\n"
+        "on:\n"
+        "  push:\n"
+        "permissions:\n"
+        "  contents: read\n"
+        "jobs:\n"
+        "  build:\n"
+        "    runs-on: ubuntu-latest\n"
+        "    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/build.yml@{{WORKFLOWS_TAG}}\n"
+    )
+    res = run_tool("--path", str(wf), "--summary")
+    assert res.returncode == 0
+    assert "OK lint_workflow checked=1 failed=0" in res.stdout

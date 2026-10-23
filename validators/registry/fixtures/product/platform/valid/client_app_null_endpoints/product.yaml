@@ -1,5 +1,6 @@
 contract_version: 2
 platform_compatibility: supported
+platform_migration: null
 conformance_profile: client-app
 identity:
   id: checkout-svc

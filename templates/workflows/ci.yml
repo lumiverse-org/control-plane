@@ -1,0 +1,137 @@
+# templates/workflows/ci.yml — Per-product caller template.
+# Spec §33.2 L2854-2869, §33.3 L2870-2886 (consumption by pinned tag).
+# Substituted by: create-product (Lane 3). Lane 2 never renders this into a product.
+# Placeholder syntax: double-brace UPPER_SNAKE_CASE — see PLACEHOLDERS.yaml.
+#
+# RULES (all binding):
+#   - No token inside ${{ }} expression
+#   - No if:, no path filter on any job
+#   - Every uses: of the control plane is pinned to {{WORKFLOWS_TAG}} (never a branch)
+#   - "no work was needed is an explicit recorded success, never a skip" (§33.2)
+
+name: ci
+
+on:
+  push:
+    branches: ['{{DEFAULT_BRANCH}}']
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-{{PRODUCT_NAME}}-${{ github.ref }}
+  cancel-in-progress: true
+
+# --- Phase 4 contexts ---
+
+jobs:
+  unit-tests:
+    name: unit-tests
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: unit-tests
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+  integration-tests:
+    name: integration-tests
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: integration-tests
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+  build:
+    name: build
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: build
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+  security-scan:
+    name: security-scan
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: security-scan
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+  licence-scan:
+    name: licence-scan
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: licence-scan
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+  slopsquat-check:
+    name: slopsquat-check
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: slopsquat-check
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+  contract-validation:
+    name: contract-validation
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: contract-validation
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+  registry-validation:
+    name: registry-validation
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: registry-validation
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+  parity-check:
+    name: parity-check
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: parity-check
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+# --- Phase 5 contexts ---
+# These callers are written now. The reusable jobs they call (verification-contract
+# and seeded-defect-case) are added to ci.yml at L2-T138.
+# The phase-5 contexts must be published before branch protection can list them (§98.2).
+# Deferring or guarding them with if: would violate §33.2 and §0.6 rule 4.
+
+  verification-contract:
+    name: verification-contract
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: verification-contract
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+  seeded-defect-case:
+    name: seeded-defect-case
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/ci.yml@{{WORKFLOWS_TAG}}
+    with:
+      job: seeded-defect-case
+      product_name: "{{PRODUCT_NAME}}"
+      conformance_profile: "{{CONFORMANCE_PROFILE}}"
+    secrets: inherit
+
+# --- Phase 6 contexts (artifact-digest-recorded, sbom-emitted) ---
+# These are emitted by templates/workflows/build.yml, not by this file.
+# They are absent here and are added by L2-T302.

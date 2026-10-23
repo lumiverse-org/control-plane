@@ -4,11 +4,10 @@
 name: product-P8
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "records/products/P8/**"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   ci:

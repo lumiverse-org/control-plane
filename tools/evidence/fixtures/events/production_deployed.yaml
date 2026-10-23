@@ -1,0 +1,9 @@
+event_id: "evt-20260906-001"
+event_type: "production_deployed"
+occurred_at: "2026-09-06T09:30:00Z"
+actor: "dev-1"
+environment: "production"
+product: "myapp"
+artifact_digest: "sha256:aaaa0000"
+run_id: 99001
+correlation_id: "deploy-2026-09-06-001"

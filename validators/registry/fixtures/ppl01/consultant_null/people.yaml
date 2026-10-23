@@ -1,0 +1,13 @@
+registry_version: 1
+people:
+  - id: cns-1
+    display_name: "Consultant One"
+    github_login: cns-1
+    role: developer
+    employment_type: consultant
+    capabilities: [code-review]
+    ai_runtime: null
+    availability: active
+    access_status: provisioned
+    start_date: "2025-06-01"
+    end_date: null

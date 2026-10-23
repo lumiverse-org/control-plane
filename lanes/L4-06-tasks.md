@@ -426,7 +426,7 @@ Work top to bottom. `Deps` are task ids that must be **merged to `integration`**
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | L4-T001 | 0 | Preflight and lane branch | none (branch only) | D-L4-TL-5A | S | `gh api "/orgs/${ORG}" --jq .login` |
 | 2 | L4-T002 **WITHDRAWN** | 0 | Records repository skeleton | `control-plane-records` (whole repo) | L4-T001, D-L4-TL-3 | M | *(superseded by `L4-P1-T02`)* |
-| 3 | L4-T003 | 0 | Protection requirement declared for L0 | `PROTECTION-REQUEST.md` (records repo) | L4-T002, D-L4-TL-6 | S | `gh api "/repos/${RECORDS_SLUG}/contents/PROTECTION-REQUEST.md" --jq .name` |
+| 3 | L4-T003 **WITHDRAWN** | 0 | Protection requirement declared for L0 | `PROTECTION-REQUEST.md` (records repo) | L4-T002, D-L4-TL-6 | S | *(withdrawn per `L4-00-charter.md` line 323 / superseded by D107 ruleset)* |
 | 4 | L4-T004 | 0 | Scaffold the three owned control-plane directories | `schemas/records/.gitkeep`, `metrics/.gitkeep`, `tools/records/.gitkeep` | L4-T001 | S | `ls -1d schemas/records metrics tools/records | wc -l` |
 | 5 | L4-T005 | 0 | Lane path-ownership self-check script | `tools/records/lane-selfcheck.sh` | L4-T004 | M | `bash tools/records/lane-selfcheck.sh --paths` |
 | 6 | L4-T006 | 0 | Machine-readable spec-coverage manifest | `metrics/register/l4-spec-coverage.csv` | L4-T004 | M | `bash tools/records/lane-selfcheck.sh --coverage` |
@@ -434,21 +434,21 @@ Work top to bottom. `Deps` are task ids that must be **merged to `integration`**
 | 8 | L4-P1-T01 | 1 | Preflight and parameter binding | none (read-only) | L4-T001 | S | `gh api "/orgs/${ORG}/memberships/$(gh api user --jq .login)" --jq .role` |
 | 9 | L4-P1-T02 | 1 | Create the `control-plane-records` repository | the repository `${RECORDS_SLUG}` | L4-P1-T01 | S | `gh api "/repos/${RECORDS_SLUG}" --jq .private` |
 | 10 | L4-P1-T03 | 1 | Build the directory-per-item skeleton | `records/**/.gitkeep`, `events/.gitkeep`, `bootstrap/.gitkeep` | L4-P1-T02 | M | `gh api "/repos/${RECORDS_SLUG}/git/trees/main?recursive=1" --jq '[.tree[]\|select(.path\|endswith(".gitkeep"))]\|length'` |
-| 11 | L4-P1-T04 | 1 | Root documents: `README.md`, `CONVENTIONS.md`, `.gitignore` | `README.md`, `CONVENTIONS.md`, `.gitignore` | L4-P1-T03 | M | `gh api "/repos/${RECORDS_SLUG}/contents/CONVENTIONS.md" --jq .name` |
+| 11 | L4-P1-T04 **EXTERNAL REPO** | 1 | Root documents: `README.md`, `CONVENTIONS.md`, `.gitignore` | `README.md`, `CONVENTIONS.md`, `.gitignore` | L4-P1-T03 | M | *(external repo boundary per `PARTITION.md` line 8 / D89)* |
 | 12 | L4-P1-T05 | 1 | Arm the no-bypass **branch** ruleset (force-push + deletion) | ruleset on `${RECORDS_SLUG}` | L4-P1-T04 | M | `gh api "/repos/${RECORDS_SLUG}/rulesets/${BRANCH_RS_ID}" --jq -c '[.rules[].type]\|sort'` |
 | 13 | L4-P1-T06 | 1 | Arm the no-bypass **tag** ruleset (tag deletion) | ruleset on `${RECORDS_SLUG}` | L4-P1-T02 | S | `gh api "/repos/${RECORDS_SLUG}/rulesets/${TAG_RS_ID}" --jq -c '[.rules[].type]\|sort'` |
 | 14 | L4-P1-T07 | 1 | Prove rewriting blocked, appending permitted | one commit under `bootstrap/` | L4-P1-T05, L4-P1-T06 | M | `git push --force origin HEAD:main; echo "push_exit=$?"` |
 | 15 | L4-P1-T08 | 1 | Add `required_signatures` and prove it | the branch ruleset; one API commit under `bootstrap/` | L4-P1-T07 | M | `gh api "/repos/${RECORDS_SLUG}/commits/main" --jq .commit.verification.verified` |
-| 16 | L4-P1-T09 | 1 | Create the `records-writer` GitHub App | GitHub App in `${ORG}`; `${SECRETS_DIR}/records-writer.pem` | L4-P1-T02 | M | `gh api "/apps/${APP_SLUG}" --jq -c .permissions` |
-| 17 | L4-P1-T10 | 1 | Install and scope the App to `control-plane-records` alone | App installation; `tools/records/rw-token.sh` (uncommitted) | L4-P1-T09 | M | `gh api "/orgs/${ORG}/installations" --jq '.installations[]\|select(.app_slug=="'"${APP_SLUG}"'")\|.repository_selection'` |
-| 18 | L4-P1-T11 | 1 | Prove the App appends here and reaches no registry | two commits under `bootstrap/`, written by the App | L4-P1-T10, L4-P1-T08 | M | `curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${RW_TOKEN}" "https://api.github.com/repos/${CP_SLUG}/contents/README.md"` |
-| 19 | L4-P1-T12 | 1 | Store ruleset and credential shape as code | `tools/records/rulesets/*.json`, `tools/records/rw-token.sh`, `tools/records/CREDENTIAL.md` | L4-P1-T05, L4-P1-T06, L4-P1-T08, L4-P1-T10 | M | `bash tools/records/lane-selfcheck.sh --paths` |
+| 16 | L4-P1-T09 **DONE** | 1 | Create the `records-writer` GitHub App | GitHub App in `${ORG}`; `${SECRETS_DIR}/records-writer.pem` | L4-P1-T02 | M | *(DONE per FD-136; verified: `gh api "/apps/records-writer-lumiverse-org" --jq -c .permissions` -> `{"contents":"write","metadata":"read"}`)* |
+| 17 | L4-P1-T10 **DONE** | 1 | Install and scope the App to `control-plane-records` alone | App installation; `tools/records/rw-token.sh` (uncommitted) | L4-P1-T09 | M | *(DONE per FD-136; verified: `repository_selection` -> `selected`, 1 repository `lumiverse-org/control-plane-records`)* |
+| 18 | L4-P1-T11 **DONE** | 1 | Prove the App appends here and reaches no registry | two commits under `bootstrap/`, written by the App | L4-P1-T10, L4-P1-T08 | M | *(DONE; commits `24f56de1` / `c3de6b43` written by `records-writer-lumiverse-org[bot]`, verified: true; `control-plane` read: 404, write: 403)* |
+| 19 | L4-P1-T12 **DONE** | 1 | Store ruleset and credential shape as code | `tools/records/rulesets/*.json`, `tools/records/rw-token.sh`, `tools/records/CREDENTIAL.md` | L4-P1-T05, L4-P1-T06, L4-P1-T08, L4-P1-T10 | M | *(DONE; verified: `bash tools/records/lane-selfcheck.sh --paths` -> `PATHS OK`)* |
 | 20 | L4-P2-01 | 2 | Check dispatcher and the deterministic output contract | `tools/records/check.sh`, `tools/records/CONTRACT.md` | L4-T005 | S | `bash tools/records/check.sh L4-P2-01` |
 | 21 | L4-P2-02 | 2 | Schema toolchain, pinned deps, `validate-schemas.sh` skeleton | `tools/records/requirements.txt`, `tools/records/validate-schemas.sh`, `tools/records/lib/schemaload.py` | L4-P2-01, D-L4-TL-1 | M | `bash tools/records/validate-schemas.sh --selftest` |
 | 22 | L4-P2-03 | 2 | UTC-with-offset timestamp definition and its negative cases | `schemas/records/defs/timestamp.schema.json` | L4-P2-02 | S | `bash tools/records/validate-schemas.sh --time` |
 | 23 | L4-P2-04 | 2 | Record envelope base schema | `schemas/records/record.envelope.schema.json` | L4-P2-03, D-L4-TL-5B | M | `bash tools/records/validate-schemas.sh --only record.envelope` |
 | 24 | L4-P2-05 | 2 | Event envelope schema — the nine binding fields | `schemas/records/event.envelope.schema.json` | L4-P2-03, D-L4-TL-5B | M | `bash tools/records/validate-schemas.sh --only event.envelope` |
-| 25 | L4-P2-06 | 2 | Store inventory manifest — the 17 record store paths | `schemas/records/store-inventory.yaml` | L4-P2-04 | M | `bash tools/records/lane-selfcheck.sh --stores` |
+| 25 | L4-P2-06 **SUPERSEDED** | 2 | Store inventory manifest — the 17 record store paths | `schemas/records/store-inventory.yaml` | L4-P2-04 | M | *(struck by D21 in favor of `schemas/records/store-map.yaml`)* |
 | 26 | L4-P2-07 | 2 | `incident` record schema | `schemas/records/incident.schema.json` | L4-P2-06 | M | `bash tools/records/validate-schemas.sh --only incident` |
 | 27 | L4-P2-08 | 2 | `postmortem` record schema | `schemas/records/postmortem.schema.json` | L4-P2-06 | M | `bash tools/records/validate-schemas.sh --only postmortem` |
 | 28 | L4-P2-09 | 2 | `uat` record schema | `schemas/records/uat.schema.json` | L4-P2-06 | M | `bash tools/records/validate-schemas.sh --only uat` |
@@ -465,7 +465,7 @@ Work top to bottom. `Deps` are task ids that must be **merged to `integration`**
 | 39 | L4-P2-20 | 2 | `support` record schema — `detection_source`, received-timestamp anchor | `schemas/records/support.schema.json` | L4-P2-06 | M | `bash tools/records/validate-schemas.sh --only support` |
 | 40 | L4-P2-21 | 2 | `onboarding` record schema | `schemas/records/onboarding.schema.json` | L4-P2-06 | M | `bash tools/records/validate-schemas.sh --only onboarding` |
 | 41 | L4-P2-22 | 2 | `leave` record schema — working calendar and operating timezone | `schemas/records/leave.schema.json` | L4-P2-06 | M | `bash tools/records/validate-schemas.sh --only leave` |
-| 42 | L4-P2-23 | 2 | Shared flag definitions: `agent_authored`, `detection_source`, `pre_onboarding` | `schemas/records/defs/flags.schema.json` | L4-P2-07, L4-P2-20 | S | `bash tools/records/validate-schemas.sh --fields` |
+| 42 | L4-P2-23 **RETIRED** | 2 | Shared flag definitions: `agent_authored`, `detection_source`, `pre_onboarding` | `schemas/records/defs/flags.schema.json` | L4-P2-07, L4-P2-20 | S | *(retired per FD-130 — store-specific typing confirmed)* |
 | 43 | L4-P2-24 | 2 | AT-105 conformance assertion on `deletion-request` | `tools/records/asserts/at105.py` | L4-P2-15 | S | `bash tools/records/validate-schemas.sh --at105` |
 | 44 | L4-P2-25 | 2 | Security-review conformance assertion (unfixed-finding linkage) | `tools/records/asserts/secreview.py` | L4-P2-16 | S | `bash tools/records/validate-schemas.sh --at046-secreview` |
 | 45 | L4-P2-26 | 2 | Golden valid fixtures — one file per store | `tools/records/fixtures/valid/**` | L4-P2-22 | M | `bash tools/records/validate-schemas.sh --fixtures valid` |
@@ -539,7 +539,7 @@ Work top to bottom. `Deps` are task ids that must be **merged to `integration`**
 | 113 | L4-P7-20 | 7 | Attention-ledger measures | `metrics/compute/attention_measures.py` | L4-P6-15, L4-P7-02 | M | `bash metrics/register/validate-sources.sh --compute attention_measures` |
 | 114 | L4-P8-01 | 8 | Write-freshness proved end to end from git commit timestamps | `tools/records/test-freshness-e2e.sh` | L4-P3-04, L4-P4-05 | M | `bash tools/records/test-freshness-e2e.sh` |
 | 115 | L4-P8-02 | 8 | DoD matrix runner — all 20 charter rows in one command | `tools/records/run-dod-matrix.sh` | every task above | M | `bash tools/records/run-dod-matrix.sh` |
-| 116 | L4-P8-03 | 8 | Lane handoff manifest | `metrics/HANDOFF.md` | L4-P8-02 | S | `bash tools/records/run-dod-matrix.sh --handoff` |
+| 116 | L4-P8-03 | 8 | Lane handoff manifest | `tools/records/HANDOFF.md` | L4-P8-02 | S | `bash tools/records/run-dod-matrix.sh --handoff` |
 | 117 | L4-P8-04 | 8 | Final rebase and lane PR to `integration` | none (git only) | L4-P8-03 | S | `gh pr view --json state --jq .state` |
 
 ---
@@ -554,7 +554,7 @@ Each row below is the complete acceptance criterion for its task. Every criterio
 | --- | --- | --- |
 | L4-T001 | `ORG` is bound to a real organisation login; you hold `admin` on it; `gh`, `git`, `jq`, `openssl`, `curl` all respond to `--version`; branch `lane/4/p0-preflight` exists. | `PARTITION.md` line 34 |
 | L4-T002 | **WITHDRAWN** — superseded by `L4-P1-T02`. | §40.1 lines 3668–3671 |
-| L4-T003 | `PROTECTION-REQUEST.md` exists at the records-repo root and states: no review protection; a no-bypass ruleset blocking force-push, branch deletion and tag deletion; **zero bypass actors**. **Blocked by D-L4-TL-6.** | §40.1 line 3677 (D107); `PARTITION.md` line 8 |
+| L4-T003 | **WITHDRAWN** — superseded by D107 ruleset configuration (see `L4-00-charter.md` line 323). Not built, not pending. | §40.1 line 3677 (D107); `PARTITION.md` line 8 |
 | L4-T004 | The three owned roots exist in `control-plane` and contain nothing but `.gitkeep`. | `PARTITION.md` line 20 |
 | L4-T005 | `lane-selfcheck.sh --paths` exits 0 on a clean tree and exits 1 when a file is staged outside the three owned roots (the negative case is part of the task). | `PARTITION.md` rule 1, line 25 |
 | L4-T006 | Every spec section in `L4-00-charter.md` §8 appears as one CSV row carrying section, line range, obligation and owned path. No row is blank; no row cites a section that does not exist at that line. | `L4-00-charter.md` §8 |
@@ -567,15 +567,15 @@ Each row below is the complete acceptance criterion for its task. Every criterio
 | L4-P1-T01 | Organisation reachable; caller role is `admin`; `control-plane` has an `integration` branch. | `PARTITION.md` line 33 |
 | L4-P1-T02 | Repository `control-plane-records` exists, is private, and has **no** branch-protection object on `main`. | §40.1 line 3671 |
 | L4-P1-T03 | Exactly **19** `.gitkeep` files exist: the 17 record store paths of §97.2, plus `events/`, plus `bootstrap/`. | §97.2 lines 8857–8875; §97.3 line 8942 |
-| L4-P1-T04 | `README.md`, `CONVENTIONS.md` and `.gitignore` exist at the root. `CONVENTIONS.md` states directory-per-item, never-edit-in-place, UTC-with-offset, the envelope, the split write path, signed commits and retention. `.gitignore` excludes every credential form. | §97.1 lines 8850–8853; §97.2 line 8888 |
+| L4-P1-T04 | **EXTERNAL REPOSITORY BOUNDARY** — belongs to `control-plane-records` repository per `PARTITION.md` line 8 and Decision D89 (§40.1); not built in control-plane repo, not pending. | §97.1 lines 8850–8853; §97.2 line 8888 |
 | L4-P1-T05 | The branch ruleset on `main` carries exactly the rule types `deletion` and `non_fast_forward`, with **zero** bypass actors. | §40.1 line 3677 |
 | L4-P1-T06 | The tag ruleset carries exactly `deletion` and `non_fast_forward`, with **zero** bypass actors. | §40.1 line 3677 |
 | L4-P1-T07 | A fast-forward append to `main` succeeds. A force push to `main` is rejected. A delete of `main` is rejected. All three are executed, not asserted. | §40.1 line 3677 |
 | L4-P1-T08 | The branch ruleset additionally carries `required_signatures`; the head commit on `main` reports `verification.verified == true`; an unsigned local commit is rejected. **Blocked by `L4-01-records-repo.md` D-L4-02.** | §40.1 line 3680 |
-| L4-P1-T09 | The `records-writer` App exists with permissions **exactly** `{"contents":"write","metadata":"read"}`. The private key is outside every git working tree, mode 700 directory. | §40.1 line 3671; D89 line 3664 |
-| L4-P1-T10 | Installation `repository_selection` is `selected`; the installation reaches exactly **1** repository. | §40.1 line 3671 |
-| L4-P1-T11 | The App appends a record-shaped file and an event-shaped file under a date partition. The App **cannot read** `control-plane` (HTTP 404), **cannot write** it, and **cannot approve** anything. All five attempts are executed. | §40.1 lines 3664, 3671; §97.1 line 8853 |
-| L4-P1-T12 | Both ruleset JSONs and the credential shape are committed under `tools/records/`; `rw-token.sh` is present and executable; nothing outside `tools/records/` is staged. | `PARTITION.md` line 20 |
+| L4-P1-T09 | **DONE per FD-136.** The `records-writer` App exists (`records-writer-lumiverse-org`, App ID 5422825) with permissions **exactly** `{"contents":"write","metadata":"read"}`. Host-custody exception tracked per FD-136. | §40.1 line 3671; D89 line 3664; FD-136 |
+| L4-P1-T10 | **DONE per FD-136.** Installation 174038206 `repository_selection` is `selected`; the installation reaches exactly **1** repository (`lumiverse-org/control-plane-records`). | §40.1 line 3671; FD-136 |
+| L4-P1-T11 | **DONE.** Two commits appended to `bootstrap/` in `control-plane-records` (`24f56de1`, `c3de6b43`) by App `records-writer-lumiverse-org[bot]` (`verified: true`). Token is denied on `control-plane` (READ: 404, WRITE: 403). | §40.1 lines 3664, 3671; §97.1 line 8853 |
+| L4-P1-T12 | **DONE.** Both ruleset JSONs and the credential shape are committed under `tools/records/`; `rw-token.sh` is present and executable; `tools/records/CREDENTIAL.md` documents credential and host-custody exception (FD-136). `bash tools/records/lane-selfcheck.sh --paths` verified `PATHS OK`. | `PARTITION.md` line 20; FD-135; FD-136 |
 
 ### Phase 2 — record and event schemas
 
@@ -586,7 +586,7 @@ Each row below is the complete acceptance criterion for its task. Every criterio
 | L4-P2-03 | The timestamp definition accepts UTC-with-offset and rejects: a naive local time, a date-only value, an offset-free `Z`-less string, and a value carrying a non-UTC offset without an explicit offset field. Four negative cases, all executed. | §97.1 line 8851 |
 | L4-P2-04 | The record envelope **requires** `record_schema_version`, `id`, `product`, `timestamp`. An absent `record_schema_version` reads as version 1. Records never edit in place — the schema forbids a `supersedes_in_place` style field and the check asserts its absence. **Blocked by D-L4-TL-5B.** | §97.2 lines 8888–8890 |
 | L4-P2-05 | The event envelope **requires** all nine fields: `event_schema_version`, `event_id`, `event_type`, `occurred_at`, `recorded_at`, `actor`, `product`, `subject_ref`, `payload`. An event missing any one is rejected. `event_type` is constrained to an identifier pattern, never free text. **Blocked by D-L4-TL-5B.** | §97.3 lines 8944–8960 |
-| L4-P2-06 | `store-inventory.yaml` lists exactly the 17 record store paths of the §97.2 table: `records/incidents/`, `records/postmortems/`, `records/uat/`, `records/estimates/`, `records/deployments/`, `records/restore-tests/`, `records/decisions/`, `records/decisions/pending/`, `records/breaches/`, `records/deletion-requests/`, `records/security-reviews/`, `records/eval/`, `records/launches/`, `records/demos/`, `records/support/`, `records/onboarding/`, `records/leave/`. Each row names its writer and what it generates, transcribed from the table. | §97.2 lines 8857–8875 |
+| L4-P2-06 | **SUPERSEDED** — struck by Decision D21 (`lanes/L4-99-review.md` line 409) in favor of authoritative `schemas/records/store-map.yaml`. Not built, not pending. | §97.2 lines 8857–8875 |
 | L4-P2-07 | `incident.schema.json` extends the record envelope and requires `severity`, `detected`, `detection_source` (enum exactly `alert`, `customer`, `internal`, `support_intake`), `responded`, `resolved`, `customer_impact`, `resolution`, `postmortem`, `pre_onboarding`. | §97.2 lines 8894–8905 |
 | L4-P2-08 | `postmortem.schema.json` carries generated learning-loop items each with an open/closed state and a link to a regression-test item where the incident was a production bug. | §58.4 lines 5026–5056; §52.2 line 4577 |
 | L4-P2-09 | `uat.schema.json` carries the executed result, the `verification/uat.md` reference, and whether the result arrived by CI or by the RECORD-VERIFICATION-RESULT dispatch. | §97.2 lines 8861, 8884 |
@@ -603,7 +603,7 @@ Each row below is the complete acceptance criterion for its task. Every criterio
 | L4-P2-20 | `support.schema.json` requires `detection_source` whose enum **includes** `founder_direct` and `customer` alongside the intake channels, and a `received_at` field distinct from the ingest timestamp, so the first-response clock anchors to the message's received timestamp. | §97.2 line 8888; §103.4 (D80 note); AT-104 line 9387 |
 | L4-P2-21 | `onboarding.schema.json` carries the phase completed, whether it was machine- or human-written, and the first-accepted-PR reference where the phase produces one. | §97.2 line 8874 |
 | L4-P2-22 | `leave.schema.json` carries the declared working calendar and operating timezone that every business-day rule resolves against, and the calendar **version**. | §6.4 lines 446–454; §97.1 line 8851 |
-| L4-P2-23 | `agent_authored` is a required boolean on change records and PR records. `detection_source` is defined once and referenced, never redeclared per store. | §97.2 line 8886 |
+| L4-P2-23 | **RETIRED per FD-130.** Redundant; not built. Store-specific field typing confirmed correct as-is matching §97.2 line 8873 "include" wording. | §97.2 line 8873, 8886; FD-130 |
 | L4-P2-24 | A deletion-request record missing any one of the four timestamps, the executor, the checklist, or the carve-out statement is rejected. Six negative cases. | AT-105 line 9388 |
 | L4-P2-25 | A security-review record carrying an `unfixed` finding with no owner or no date is rejected. | §97.2 line 8882 |
 | L4-P2-26 | Exactly one valid golden fixture exists per store in `store-inventory.yaml`, and every one validates. | §0.8 rule 3 |
@@ -624,6 +624,9 @@ Each row below is the complete acceptance criterion for its task. Every criterio
 | L4-P3-07 | Every store declares a retention class. Canonical records — state, decisions, approvals — declare append-only permanence with effective dating. Raw activity telemetry declares a diagnostic window after which it may be aggregated or discarded. No store is unclassified. | §97.6 lines 9001–9004; §101 invariants 47–48, lines 9527–9529 |
 
 ### Phase 4 — writers and the dispatch handler
+
+> **NOTE ON RUNTIME CLI (`metrics/cli.py` / L4-P4): SUPERSEDED BY V1-SCOPE EXCLUSION — NOT BUILT, NOT PENDING**
+> Operational CLI runners for live metrics stores (`metrics/cli.py` satisfying L4-P4) are deferred to Phase 4 (Environments & Parity) per `master/06-v1-scope.md` §9.4 and `master/04-phase-map.md`.
 
 | ID | Acceptance criteria | Spec anchor |
 | --- | --- | --- |
@@ -707,7 +710,7 @@ Each row below is the complete acceptance criterion for its task. Every criterio
 | --- | --- | --- |
 | L4-P8-01 | Freshness is computed from real git commit timestamps on a real store path, proved for one Amber store and one Blocking store, and proved to still compute when every other health input is removed. | §97.2 line 8873 |
 | L4-P8-02 | All **20** DoD rows of `L4-00-charter.md` §7 are executed in one run and all pass. Any row that cannot execute exits 3, never 0. | `L4-00-charter.md` §7 |
-| L4-P8-03 | `HANDOFF.md` names, per consumer lane, the exact artifact paths L2, L3, L1 and L0 consume, with no artifact left unnamed. | `L4-00-charter.md` §5 |
+| L4-P8-03 | `tools/records/HANDOFF.md` (harmonized per FD-134) names, per consumer lane, the exact artifact paths L2, L3, L1 and L0 consume, with no artifact left unnamed. | `L4-00-charter.md` §5; FD-134 |
 | L4-P8-04 | The final lane PR to `integration` is open, the lane-guard check is green, and no file outside the three owned roots appears in the diff. | `PARTITION.md` rule 1, line 25 |
 
 ---

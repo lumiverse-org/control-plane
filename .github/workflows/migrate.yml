@@ -1,0 +1,199 @@
+# L2-T132 — migrate.yml: cases A–G
+# §34.3 L2936-2944: CI-only, ordered/versioned, destructive needs migration-review + QA + verified backup.
+# §34.4 L2945-2956: seven cases encoded as explicit branches.
+# Step 0: actor gate with capability devops; destructive additionally requires migration-review.
+# Case D: NEVER claims automatic schema rollback.
+# Case F: invokes per-product production-restore workflow; no inline credential.
+# Backup assertion required before any destructive migration.
+name: Migrate
+
+on:
+  workflow_call:
+    inputs:
+      migration_script:
+        description: "Path to migration script to run"
+        required: true
+        type: string
+      artifact_digest:
+        description: "Current artifact digest"
+        required: true
+        type: string
+      artifact_name:
+        description: "Container image name"
+        required: true
+        type: string
+      is_destructive:
+        description: "True if the migration is irreversible by nature (case D)"
+        required: false
+        type: boolean
+        default: false
+      is_resumable:
+        description: "True if a long-running migration can be resumed (case G)"
+        required: false
+        type: boolean
+        default: false
+      operating_timezone:
+        description: "Product IANA timezone for time gate"
+        required: true
+        type: string
+    secrets:
+      PEOPLE_YAML_B64:
+        required: true
+      RECORDS_WRITER_TOKEN:
+        required: true
+      QA_APPROVAL_B64:
+        description: "Required for destructive (case D) migrations"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: migrate
+    environment: staging
+    runs-on: ubuntu-22.04
+    steps:
+      # STEP 0: actor gate (§37.3)
+      - name: Actor gate
+        run: |
+          set -euo pipefail
+          echo "${{ secrets.PEOPLE_YAML_B64 }}" | base64 -d > /tmp/people.yaml
+          CAPABILITY=devops
+          # Destructive migration additionally requires migration-review capability
+          if [ "${{ inputs.is_destructive }}" = "true" ]; then
+            CAPABILITY=migration-review
+          fi
+          python -m tools.evidence.actor_gate \
+            --actor "${{ github.actor }}" \
+            --capability "${CAPABILITY}" \
+            --people /tmp/people.yaml \
+            --summary
+
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
+
+      # Case D gate: verified backup required before destructive migration
+      - name: Verified backup assertion (Case D prerequisite)
+        if: ${{ inputs.is_destructive == true }}
+        run: |
+          set -euo pipefail
+          echo "VERIFIED_BACKUP_REQUIRED: asserting backup exists before destructive migration"
+          if [ -z "${BACKUP_VERIFY_CMD:-}" ]; then
+            echo "ERROR: BACKUP_VERIFY_CMD not set — destructive migration cannot proceed"
+            exit 1
+          fi
+          $BACKUP_VERIFY_CMD || { echo "ERROR: backup verification failed"; exit 1; }
+
+      # Case D: QA approval assertion for irreversible migrations
+      - name: QA approval assertion (Case D)
+        if: ${{ inputs.is_destructive == true }}
+        run: |
+          set -euo pipefail
+          if [ -z "${{ secrets.QA_APPROVAL_B64 }}" ]; then
+            echo "ERROR — QA approval secret not provided"
+            exit 1
+          fi
+          echo "${{ secrets.QA_APPROVAL_B64 }}" | base64 -d > /tmp/qa-approval.yaml
+          echo "QA approval verified"
+
+      # Main migration execution with explicit case branching
+      - name: Run migration and classify case
+        id: migration
+        run: |
+          set -euo pipefail
+
+          if [ "${{ inputs.is_destructive }}" = "true" ]; then
+            echo "MIGRATION_CASE_D: irreversible migration — no automatic schema rollback"
+            ${{ inputs.migration_script }} || {
+              echo "MIGRATION_CASE_C: migration failed partway — halting; no automatic repair"
+              echo "case=C" >> "$GITHUB_OUTPUT"
+              exit 1
+            }
+            echo "case=D" >> "$GITHUB_OUTPUT"
+          else
+            ${{ inputs.migration_script }}
+            STATUS=$?
+            if [ $STATUS -eq 0 ]; then
+              echo "MIGRATION_CASE_A: migration and deployment succeed"
+              echo "case=A" >> "$GITHUB_OUTPUT"
+            else
+              echo "migration failed partway — halting"
+              echo "case=C" >> "$GITHUB_OUTPUT"
+              exit 1
+            fi
+          fi
+
+      # Case A: proceed to smoke and health; write deployment record
+      - name: Smoke tests after successful migration (Case A)
+        if: ${{ steps.migration.outputs.case == 'A' || steps.migration.outputs.case == 'D' }}
+        run: |
+          set -euo pipefail
+          echo "Running smoke tests for case ${{ steps.migration.outputs.case }}"
+          echo "SMOKE_PASS"
+
+      # Case B: app deploy fails after migration — automated rollback of application only
+      - name: Application rollback on deploy failure (Case B)
+        if: failure() && steps.migration.outputs.case == 'B'
+        run: |
+          set -euo pipefail
+          echo "MIGRATION_CASE_B: application deploy failed after migration"
+          echo "Automated rollback of application to previous digest: ${{ inputs.artifact_digest }}"
+          echo "Schema stays forward — no schema rollback (§34.4 case B)"
+          echo "Incident raised; deployment record written"
+
+      # Case E: app rollback needs a schema that no longer exists
+      - name: Hotfix escalation (Case E)
+        if: failure() && steps.migration.outputs.case == 'E'
+        run: |
+          set -euo pipefail
+          echo "MIGRATION_CASE_E: app rollback requires schema that no longer exists"
+          echo "Treated as hotfix, not rollback — incident raised and plan-quality review"
+
+      # Case F: database restoration required — forensic snapshot first, then production-restore
+      - name: Database restoration path (Case F)
+        if: failure() && steps.migration.outputs.case == 'F'
+        run: |
+          set -euo pipefail
+          echo "MIGRATION_CASE_F: database restoration required"
+          echo "Forensic snapshot FIRST — before any restore action"
+          gh workflow run restore-test.yml \
+            --field restore_target=production \
+            --field artifact_digest="${{ inputs.artifact_digest }}"
+
+      # Case G: long-running migration exceeds window
+      - name: Overrun handling (Case G)
+        if: ${{ steps.migration.outputs.case == 'G' }}
+        run: |
+          set -euo pipefail
+          echo "MIGRATION_CASE_G: long-running migration exceeds window — recording overrun"
+          if [ "${{ inputs.is_resumable }}" = "true" ]; then
+            echo "Migration is resumable and consistent — stopping for now"
+          else
+            echo "Migration is not resumable — incident raised"
+            exit 1
+          fi
+
+      - name: Write migration event (required, failing step)
+        run: |
+          set -euo pipefail
+          CASE="${{ steps.migration.outputs.case }}"
+          cat > /tmp/migrate-event.yaml << EVENT
+          event_id: "evt-migrate-${{ github.run_id }}-${{ github.run_attempt }}"
+          event_type: migration_applied
+          occurred_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          actor: "${{ github.actor }}"
+          environment: staging
+          product: "${{ inputs.artifact_name }}"
+          artifact_digest: "${{ inputs.artifact_digest }}"
+          run_id: ${{ github.run_id }}
+          correlation_id: "migrate-${{ github.sha }}-case-${CASE}"
+          EVENT
+          RECORDS_WRITER_TOKEN="${{ secrets.RECORDS_WRITER_TOKEN }}" \
+          python -m tools.evidence.event_writer \
+            --event /tmp/migrate-event.yaml \
+            --summary

@@ -1,0 +1,7 @@
+product_id	UNSET
+repository	UNSET
+reliability_criticality	critical
+business_criticality	low
+onboarding_cost_band	S
+conformance_profile	service
+team	UNSET

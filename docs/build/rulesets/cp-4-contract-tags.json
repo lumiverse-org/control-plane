@@ -1,0 +1,25 @@
+{
+  "x-contract": {
+    "contract_id": "C-DOC-CP4-RULES-1",
+    "contract_version": 1,
+    "owner": "L0",
+    "publishing_lane": "L0",
+    "consuming_lanes": ["L0"],
+    "spec_refs": ["Section 10.5", "FD-013"],
+    "ccr_required": true
+  },
+  "name": "control-plane-contract-tags",
+  "target": "tag",
+  "enforcement": "active",
+  "bypass_actors": [],
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/tags/contracts/*"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" }
+  ]
+}

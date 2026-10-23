@@ -1,0 +1,8 @@
+# activation-checklist.tsv — L0-owned. MasterSpec v4.0 Section 95.4 table (spec L8701-L8706),
+# transcribed. Row FCC is not from that table: its source is Section 95.2 (spec L8681).
+# Format: <threshold_id><TAB><headcount reached><TAB><gates armed><TAB><verification><TAB><verbatim><TAB><spec_line>
+T2W	2 humans with Write	No self-approval; Gate 2 independent review; most-recent-push approval	A self-approved PR fails branch protection; a Read-only approval does not satisfy it; a Write-holding cross-reviewer approval does	yes	L8703
+T3H	3 humans	Production approver != deploying actor; cross-review matrix with real routing	A deploy attempted by its approver is rejected; the review-routing table resolves to a person who is not the author	yes	L8704
+TQA	QA role filled	Independent verification authority; release readiness sign-off; UAT ownership	A release blocked by QA stays blocked; verification contracts reviewed and owned by QA	yes	L8705
+T4P	4+ humans	Backup Owner coverage; knowledge-redundancy floor; responder rotation	Orphan detection reports zero blocking orphans; every product has a non-author reviewer and a backup	yes	L8706
+FCC	each corresponding role filled	Founder operational-capability holding	Each capability is shed as its role fills and the shedding is recorded in people.yaml	no	L8681

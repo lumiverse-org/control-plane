@@ -1,0 +1,54 @@
+# Write-Freshness Declarations — §97.2
+# Left-hand side of the §53.1 drift row.
+# L3 reconciler reads this file to compare declared vs. actual write cadence.
+# Exactly THREE stores must be blocking (events/, records/deployments/, records/uat/).
+# Generated: see L4-04-M02
+version: "1"
+stores:
+  - path: "events/"
+    description: "Event log — all system and user events"
+    max_interval_hours: 1
+    blocking: true
+    breach_action: "Halt promotion gate; page L0 and on-call lead"
+
+  - path: "records/deployments/"
+    description: "Deployment records — one entry per deploy run"
+    max_interval_hours: 24
+    blocking: true
+    breach_action: "Block deploy gate; open P1 incident"
+
+  - path: "records/uat/"
+    description: "UAT sign-off records"
+    max_interval_hours: 48
+    blocking: true
+    breach_action: "Block release gate; escalate to L0"
+
+  - path: "records/eval/"
+    description: "AI-eval regression records (SIG-42)"
+    max_interval_hours: 72
+    blocking: false
+    breach_action: "Raise SIG-42 drift warning; notify AI-eval owner"
+
+  - path: "records/security-reviews/"
+    description: "Security audit-log review records (SIG-46)"
+    max_interval_hours: 168
+    blocking: false
+    breach_action: "Raise SIG-46 drift warning; notify security owner"
+
+  - path: "records/restore-tests/"
+    description: "Restore-test execution records (SIG-17)"
+    max_interval_hours: 168
+    blocking: false
+    breach_action: "Raise SIG-17 drift warning; notify infra owner"
+
+  - path: "records/support-intake/"
+    description: "Support intake log (SIG-41)"
+    max_interval_hours: 24
+    blocking: false
+    breach_action: "Raise SIG-41 drift warning; notify support lead"
+
+  - path: "records/board-automation/"
+    description: "Board automation records — Ready-queue misses (SIG-06)"
+    max_interval_hours: 24
+    blocking: false
+    breach_action: "Raise SIG-06 drift warning; notify PM"

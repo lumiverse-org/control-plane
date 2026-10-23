@@ -1,0 +1,23 @@
+# gate-register.tsv — L0-owned (L0D-19). THE source of truth for bootstrap exceptions.
+# docs/bootstrap/exceptions/*.yaml are RENDERED from this file; never hand-edit them.
+# 14 tab-separated fields, in this order:
+#  1 id  2 threshold  3 scope  4 policy  5 risk_accepted  6 compensating_extra
+#  7 deactivation_trigger  8 start  9 expiry  10 review_date  11 renewals  12 closure
+#  13 closed_on  14 spec_line
+# expiry is MANDATORY (invariant 77, spec L9554; Section 54.2 L4789).
+# deactivation_trigger is MANDATORY (Section 95.2, spec L8676).
+# closure and closed_on are "-" while the exception is open. Records are never deleted
+# (Section 54.2, spec L4796); a closed row stays here with closure: trigger_satisfied.
+EXC-BOOT-001	T2W	gate-2-independent-review	no-self-approval	unreviewed changes reach the default branches of the named repositories	-	second context-holding engineer with Write onboarded to the named repositories	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8650-8671
+EXC-BOOT-002	T2W	no-self-approval	no-self-approval	an author's own approval satisfies the merge gate on the named repositories	-	a second human with Write who can approve on the named repositories	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8703
+EXC-BOOT-003	T2W	most-recent-push-approval	no-self-approval	commits pushed after an approval reach the default branch without re-approval	-	a second human with Write who can approve the most recent reviewable push	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8703
+EXC-BOOT-004	T3H	production-approver-not-deploying-actor	production-approval-separation	the approving identity and the deploying identity are the same person	the explicit production-approval event remains a distinct recorded event (Section 95.3 L8695)	a third human holding production-approval who is not the deploying actor	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8704
+EXC-BOOT-005	T3H	cross-review-matrix-real-routing	reviewer-matrix	the review-routing table resolves to the author of the change	-	a third human, so the routing table resolves to a person who is not the author	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8704
+EXC-BOOT-006	TQA	independent-verification-authority	verification-authority	verification judgments are exercised by the author of the change under test	the Founder exercises QA-judgment calls under this record (Section 95.2 L8683)	the QA role is filled	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8705
+EXC-BOOT-007	TQA	release-readiness-signoff	verification-authority	release readiness is signed off by the releasing party	-	the QA role is filled	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8705
+EXC-BOOT-008	TQA	uat-ownership	verification-authority	UAT is owned by the author of the change under test	-	the QA role is filled	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8705
+EXC-BOOT-009	T4P	backup-owner-coverage	ownership-slot-orphan-checks	products carry an empty Backup Owner slot	the empty slots are declared, not silent (Section 95.2 L8682)	a fourth human, so every product has a backup owner	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8682
+EXC-BOOT-010	T4P	knowledge-redundancy-floor	ownership-slot-orphan-checks	single-person knowledge dependencies exist with no measured floor	-	a fourth human, so the knowledge-redundancy floor is measurable	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8706
+EXC-BOOT-011	T4P	responder-rotation	ownership-slot-orphan-checks	one person is the responder for every product	-	a fourth human, so a responder rotation exists	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8706
+EXC-BOOT-012	T2W	gate-1-plan-approval	no-self-approval	a plan is approved by its own author on the named repositories	Section 26.1 L2497 names Gate 2 independent review as the compensating control; Gate 2 is itself relaxed by EXC-BOOT-001 during bootstrap - the control actually in force is the CI verification contract and the Section 26.4 authority-delta gate, pending the L0 ruling recorded as DECISION REQUIRED 2 in implementation/lanes/L0-06-bootstrap-mode.md	a second holder of plan-approval who is not the plan author	2026-10-22	2027-01-21	2026-12-22	0	-	-	L2497
+EXC-BOOT-013	FCC	founder-operational-capability-holding	capability-concentration	one person holds plan-approval, code-review, production-approval, incident-response and verification judgment on the named repositories	each capability is shed as the corresponding role fills, recorded in people.yaml and in the weekly bootstrap log (Section 95.2 L8681)	every listed operational capability is held by a role-holder other than the Founder	2026-10-22	2027-01-21	2026-12-22	0	-	-	L8681

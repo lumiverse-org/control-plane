@@ -1,0 +1,64 @@
+name: version-monitor
+
+on:
+  # Scheduled sweep — version monitoring for §32 item 11 (§41.2 L3717-3729)
+  schedule:
+    - cron: '*/30 * * * *'
+
+# This workflow emits no required status context.
+# Telemetry and status endpoints are NOT scraped here — that is ops-vm/** (Lane 5, §41.2, §51.4).
+
+permissions:
+  contents: read
+
+concurrency:
+  group: version-monitor
+  cancel-in-progress: true
+
+jobs:
+  version-monitor:
+    name: version-monitor-sweep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
+        with:
+          python-version: '3.12'
+
+      - name: Install evidence toolchain
+        run: pip install -r tools/evidence/requirements.txt
+
+      - name: Monitor /version across estate
+        id: monitor
+        run: |
+          set -euo pipefail
+          # version_monitor is invoked; its exit code fails the run
+          FAILED=0
+          while IFS= read -r fixture_file; do
+            python -m tools.evidence.version_monitor \
+              --fixture "${fixture_file}" \
+              --summary || FAILED=1
+          done < <(find records/version-observations -name "*.json" 2>/dev/null)
+          exit "${FAILED}"
+
+      - name: Write mismatch event and fail run
+        if: failure()
+        run: |
+          set -euo pipefail
+          python -m tools.evidence.event_writer \
+            --dry-run \
+            --event - <<'EVENT'
+          event_type: version_digest_mismatch
+          product: estate-wide
+          actor: ${{ github.actor }}
+          timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          sig: P0
+          detail: /version monitor detected digest mismatch — P0 investigation required
+          source: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          run_id: ${{ github.run_id }}
+          environment: production
+          EVENT
+          exit 1

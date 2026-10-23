@@ -5,9 +5,11 @@
 #        --at046-secreview | --selftest | --all
 # Fail-closed: anything unreadable is a failure, never a skip (Section 40.1 line 3671).
 set -eu
-CP_ROOT="${CP_ROOT:?CP_ROOT must be set}"
-L4_PY="${L4_PY:?L4_PY must be set}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+CP_ROOT="${CP_ROOT:-$(cd "$HERE/../.." && pwd)}"
+L4_PY="${L4_PY:-python}"
 MODE="${1:---all}"
+TARGET="${2:-}"
 
 run_py() {
   "$L4_PY" - "$CP_ROOT" "$1" <<'PY'
@@ -127,19 +129,16 @@ case "$MODE" in
   --time)     run_py --time ;;
   --fields)   CP_ROOT="$CP_ROOT" L4_PY="$L4_PY" bash "$CP_ROOT/tools/records/validate-no-names.sh" --schemas ;;
   --negative)
-    # DoD-3: verify invalid records are rejected by the schema validator
+    # DoD-3: verify invalid records/events are rejected by the schema validator
     FAILED=0; TOTAL=0
     for invalid in "$CP_ROOT/tools/records/fixtures/invalid"/*.json; do
       [ -e "$invalid" ] || continue
+      [[ "$invalid" == *".schema.json" ]] && continue
       TOTAL=$((TOTAL+1))
-      "$L4_PY" -c "import jsonschema, json, sys
-schema=json.load(open('$CP_ROOT/contracts/records/record.envelope.v1.json'))
-data=json.load(open('$invalid'))
-try:
-  jsonschema.validate(data, schema)
-  print('UNEXPECTED PASS: $invalid'); sys.exit(1)
-except jsonschema.ValidationError:
-  pass" || FAILED=$((FAILED+1))
+      if "$L4_PY" "$CP_ROOT/tools/records/lib/validate.py" "$CP_ROOT/schemas/records/event.envelope.schema.json" "$invalid" >/dev/null 2>&1; then
+        echo "UNEXPECTED PASS: $invalid"
+        FAILED=$((FAILED+1))
+      fi
     done
     [ "$FAILED" -eq 0 ] && echo "NEGATIVE OK ${TOTAL}/${TOTAL}" || { echo "NEGATIVE FAIL ${FAILED}/${TOTAL}"; exit 1; }
     ;;
@@ -192,5 +191,143 @@ PYEOF
     CP_ROOT="$CP_ROOT" L4_PY="$L4_PY" bash "$CP_ROOT/tools/records/validate-taxonomy.sh"
     echo "SCHEMAS GATE PASS"
     ;;
-  *) echo "usage: validate-schemas.sh --coverage|--lint|--fields|--time|--negative|--at105|--at046-secreview|--selftest|--all"; exit 1 ;;
+  --only)
+    [ -n "$TARGET" ] || { echo "ONLY ERROR missing target schema"; exit 1; }
+    SCHEMA=""
+    if [ "$TARGET" = "record.envelope" ]; then
+      if [ -f "$CP_ROOT/schemas/records/record.envelope.schema.json" ]; then
+        SCHEMA="$CP_ROOT/schemas/records/record.envelope.schema.json"
+      else
+        SCHEMA="$CP_ROOT/schemas/records/record.base.schema.json"
+      fi
+    elif [ "$TARGET" = "event.envelope" ]; then
+      SCHEMA="$CP_ROOT/schemas/records/event.envelope.schema.json"
+    elif [ "$TARGET" = "records-head-anchor" ]; then
+      SCHEMA="$CP_ROOT/metrics/anchor/records-head-anchor.schema.json"
+    elif [ -f "$CP_ROOT/schemas/records/${TARGET}.schema.json" ]; then
+      SCHEMA="$CP_ROOT/schemas/records/${TARGET}.schema.json"
+    elif [ -f "$CP_ROOT/${TARGET}" ]; then
+      SCHEMA="$CP_ROOT/${TARGET}"
+    fi
+    if [ -z "$SCHEMA" ] || [ ! -f "$SCHEMA" ]; then
+      echo "SCHEMA FAIL missing $TARGET"
+      exit 1
+    fi
+    "$L4_PY" "$CP_ROOT/tools/records/lib/schemaload.py" "$SCHEMA" >/dev/null || { echo "SCHEMA FAIL $TARGET"; exit 1; }
+    if [ "$TARGET" = "records-head-anchor" ]; then
+      echo "ANCHOR-SCHEMA OK"
+    fi
+    echo "SCHEMA OK $TARGET"
+    ;;
+  --anchor)
+    SCHEMA="$CP_ROOT/metrics/anchor/records-head-anchor.schema.json"
+    if [ ! -f "$SCHEMA" ]; then
+      echo "ERROR: anchor schema not found at $SCHEMA" >&2
+      exit 1
+    fi
+    "$L4_PY" "$CP_ROOT/tools/records/lib/schemaload.py" "$SCHEMA" >/dev/null || { echo "FAIL: anchor schema invalid" >&2; exit 1; }
+    echo "ANCHOR-SCHEMA OK"
+    ;;
+  --fixtures)
+    SUBMODE="${TARGET:-valid}"
+    if [ "$SUBMODE" != "valid" ]; then
+      echo "FIXTURES ERROR unknown submode: $SUBMODE"
+      exit 3
+    fi
+    "$L4_PY" - "$CP_ROOT" <<'PY'
+import json, pathlib, sys, warnings, yaml
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+from jsonschema import Draft202012Validator, RefResolver
+
+cp_root = pathlib.Path(sys.argv[1])
+map_path = cp_root / "schemas" / "records" / "store-map.yaml"
+rows = yaml.safe_load(map_path.read_text(encoding="utf-8"))["stores"]
+record_rows = [r for r in rows if r["kind"] == "record"]
+valid_dir = cp_root / "tools" / "records" / "fixtures" / "valid"
+
+store = {}
+schemas_dir = cp_root / "schemas" / "records"
+for sibling in schemas_dir.glob("*.json"):
+    try:
+        doc = json.loads(sibling.read_text(encoding="utf-8"))
+        store[sibling.as_uri()] = doc
+        store[sibling.name] = doc
+    except Exception:
+        pass
+
+class _NoDate(yaml.SafeLoader):
+    pass
+_NoDate.yaml_implicit_resolvers = {
+    k: [(t, reg) for t, reg in v if t != "tag:yaml.org,2002:timestamp"]
+    for k, v in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
+
+failed = 0
+validated = 0
+for r in record_rows:
+    schema_path = cp_root / r["schema"]
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    name = schema_path.name.replace(".schema.json", "")
+    fixture_path = valid_dir / (name + ".yaml")
+    if not fixture_path.is_file():
+        print(f"FIXTURES FAIL missing fixture {fixture_path.name}")
+        failed += 1
+        continue
+    data = yaml.load(fixture_path.read_text(encoding="utf-8"), Loader=_NoDate)
+    base = schema_path.parent.as_uri() + "/"
+    resolver = RefResolver(base_uri=base, referrer=schema, store=store)
+    val = Draft202012Validator(schema, resolver=resolver)
+    errors = list(val.iter_errors(data))
+    if errors:
+        print(f"FIXTURES FAIL {name}: {errors[0].message}")
+        failed += 1
+    else:
+        validated += 1
+
+if failed > 0:
+    print(f"FIXTURES VALID FAIL {failed}/{len(record_rows)}")
+    sys.exit(1)
+print(f"FIXTURES VALID OK {validated}/{len(record_rows)}")
+sys.exit(0)
+PY
+    ;;
+  --versions)
+    "$L4_PY" - "$CP_ROOT" <<'PY'
+import pathlib, sys, yaml
+
+cp_root = pathlib.Path(sys.argv[1])
+v_yaml = cp_root / "schemas" / "records" / "versions.yaml"
+v_md = cp_root / "schemas" / "records" / "VERSIONS.md"
+
+if not v_yaml.is_file():
+    print("VERSIONS FAIL missing schemas/records/versions.yaml")
+    sys.exit(1)
+if not v_md.is_file():
+    print("VERSIONS FAIL missing schemas/records/VERSIONS.md")
+    sys.exit(1)
+
+try:
+    doc = yaml.safe_load(v_yaml.read_text(encoding="utf-8"))
+    entries = doc.get("schemas", [])
+except Exception as exc:
+    print(f"VERSIONS FAIL unreadable versions.yaml: {exc}")
+    sys.exit(1)
+
+reg_files = {e["file"] for e in entries if "file" in e}
+schemas_dir = cp_root / "schemas" / "records"
+missing = []
+for p in schemas_dir.glob("*.schema.json"):
+    rel = f"schemas/records/{p.name}"
+    if rel not in reg_files:
+        missing.append(rel)
+
+if missing:
+    print(f"VERSIONS FAIL schemas not in versions.yaml: {missing}")
+    sys.exit(1)
+
+print(f"VERSIONS OK {len(entries)}")
+sys.exit(0)
+PY
+    ;;
+  *) echo "usage: validate-schemas.sh --coverage|--lint|--fields|--time|--negative|--at105|--at046-secreview|--selftest|--only <name>|--anchor|--fixtures valid|--versions|--all"; exit 1 ;;
 esac

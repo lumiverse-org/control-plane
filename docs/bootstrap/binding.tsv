@@ -1,0 +1,12 @@
+# binding.tsv — L0-owned. MasterSpec v4.0 Section 95.3 (spec L8687-L8695), transcribed.
+# Format: <id><TAB><item><TAB><spec_line><TAB><invariants><TAB><proof>
+# Bootstrap relaxes INDEPENDENCE REQUIREMENTS ONLY. Every row below holds from day one.
+# Invariant numbers are quoted from Section 101. Inventing one is forbidden action F-18.
+BIND-01	Digest immutability - the artifact deployed is the artifact verified	L8689	22,23	L2 tools/evidence: production deploy rejected when digest differs from the staging-verified digest
+BIND-02	Verification contracts; pre-onboarding products carry the Section 96 accepted-risk record instead	L8690	1	L1 product contract validation; Section 98.2 Phase 5 completion check
+BIND-03	Secrets tiers and the API-key-free environment	L8691	25,84	env | grep -i api_key returns empty on every machine (Section 98.2 Phase 1)
+BIND-04	Append-only history and effective dating on every registry and record	L8692	47	D107 no-bypass ruleset on control-plane-records; L4 record write paths
+BIND-05	The constitution and the untrusted-input rule for all AI runtime use	L8693	20,21	constitution file authored at Section 98.2 Phase 3; unattended runs branch-only
+BIND-06	Safe defaults and fail-closed classification in every provisioning template	L8694	79,80	L3 tools/provision templates; fail-closed classification L0D-18
+BIND-07	The explicit production-approval event even where approver and deployer are one person	L8695	12	L4 records: a production-approval record exists per deploy; Section 32 evidence chain answerable
+BIND-08	The registry-change lane staged apply and the authority-delta gate	L8695	-	Section 26.4 L2533 and D93 L10186: authority delta fails CI without a linked decision record id in the same commit

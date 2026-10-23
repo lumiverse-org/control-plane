@@ -1,0 +1,11 @@
+# id	verdict	evidence_or_gap	disposition
+T1	met	branch protection from template	-
+T2	met	product.yaml valid	-
+T3	gap	four of eight make targets missing	scheduled-step
+T4	gap	no /metrics endpoint	scheduled-step
+T5	gap	no staging	accepted-risk
+T6	gap	no automated suite	scheduled-step
+T7	gap	no digest chain	scheduled-step
+T8	met	migrations run in CI	-
+T9	met	restore recorded 2026-01-04	-
+T10	gap	board not the execution surface	scheduled-step

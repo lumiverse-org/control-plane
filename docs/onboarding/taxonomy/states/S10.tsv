@@ -1,0 +1,5 @@
+id	S10
+state	Secrets committed in the repository or dotenv files
+spec_line	L8817
+ai_gate	yes
+prereq	s10-gate

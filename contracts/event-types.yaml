@@ -116,3 +116,11 @@ event_types:
   - support_loop_closure
   - deletion_request_recorded
   - work_item_closed
+  - delegation_expiry_warning_issued
+  - plan_submitted_to_approver_notification_sent
+  - launch_sign_off_requested
+  - pending_decision_opened
+  - support_first_touch_breach
+  - temporary_person_expiry_warning_issued
+  - verification_blocked
+  - verification_unblocked

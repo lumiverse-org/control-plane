@@ -69,6 +69,7 @@ operations:
   triager: null
   weekend_exception_eligible: false
 platform_compatibility: supported
+platform_migration: null
 reversibility_default: fully-reversible
 security:
   production_db_access: break-glass-only

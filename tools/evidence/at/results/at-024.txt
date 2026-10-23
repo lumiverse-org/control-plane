@@ -1,0 +1,4 @@
+AT-024 LEG 1 PASS: affected: block present on change manifest before canary selection
+AT-024 LEG 2 PASS: canary-exercise.yml failed as expected on the broken workflow tag
+AT-024 LEG 3 PASS: platform rollback reverted the workflow tag; canary returned to green
+AT-024 LEG 4 PASS: unmigrated product remained green throughout — pinned-tag consumption confirmed

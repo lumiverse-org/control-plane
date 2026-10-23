@@ -1,0 +1,10 @@
+registry_version: 1
+domains_active: true
+succession:
+  team_lead:
+    acting: dev-a
+activation_triggers: []
+domains:
+  - id: commerce
+    products: [product-1]
+    lead: dev-a

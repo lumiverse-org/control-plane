@@ -46,7 +46,7 @@ body_ids(){ case $1 in
        grep -hoE '^### TASK `L4-P5-[0-9]{2}'  "$L/L4-05-pipeline-and-boards.md"
        grep -hoE '^#{2,4} .*`L4-P7-T[0-9]{2}' "$L/L4-07-tests-and-runbook.md"
        grep -hoE '^### L4-P[0-9]+-[0-9]{2}'   "$L/L4-03-metric-register.md"; };;
- L5) { awk 'NR<=4928' "$L/L5-06-tasks.md" | grep -oE '^### L5-T[0-9]{2}'
+ L5) { awk 'NR<=5064' "$L/L5-06-tasks.md" | grep -oE '^### L5-T[0-9]{2}'
        grep -hoE '^### L5-00-[0-9]{2}'   "$L/L5-00-charter.md"
        grep -hoE '^## L5-01-[0-9]{2}'    "$L/L5-01-org-and-access.md"
        grep -hoE '^## L5-02-[0-9]{2}'    "$L/L5-02-secrets-and-boundaries.md"
@@ -63,6 +63,15 @@ esac | grep -oE '(T-)?L[0-9]-[A-Za-z0-9-]+' | sort -u; }
 # "### L1-100", colliding with the real L1-100 heading; sort -u then silently
 # collapsed the two into one, undercounting by exactly 1. Widened to
 # [0-9]{3,4} so L1-1001 is captured in full. True body count is 157.
+# L5 ghost (2026-10-22): body_ids() L5 case scanned only NR<=4928 of
+# L5-06-tasks.md, a cutoff meant to stop just before L5-T60 begins (T60+ is
+# out of this concordance's T01..T59 scope per the file's own purpose line).
+# Today's FD-047 "SUPERSEDED" annotations across L5-06-tasks.md pushed every
+# heading after them down by ~40 lines, moving L5-T59's own heading (and its
+# full task body) past the stale cutoff, so the real body was no longer
+# counted -- the alias file still correctly claimed it, producing a ghost.
+# Moved the cutoff to NR<=5064, immediately before L5-T60's real heading at
+# line 5065, so T01..T59 are captured in full and T60+ stays excluded.
 #      lane index bodies residue
 EXPECT="L1 61 157 0
 L2 113 138 0

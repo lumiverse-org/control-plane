@@ -1,0 +1,17 @@
+products:
+  - name: product-alpha
+    classification:
+      reliability_criticality: critical
+    # restore_tested derived from records; not declared here
+  - name: product-beta
+    classification:
+      reliability_criticality: critical
+    # restore_tested derived from records; not declared here
+  - name: product-gamma
+    classification:
+      reliability_criticality: standard
+    # restore_tested derived from records; not declared here
+  - name: product-delta
+    classification:
+      reliability_criticality: standard
+    restore_tested: "2026-08-26"  # hand-edited date — differs from derived record → drift

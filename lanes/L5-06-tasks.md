@@ -1,4 +1,4 @@
-﻿<!-- CONCORDANCE INDEX ONLY — FD-047 2026-09-06
+<!-- CONCORDANCE INDEX ONLY — FD-047 2026-09-06
      Phase files L5-01..L5-05 are authoritative.
      Do NOT execute task bodies from this file.
      Use this file to locate canonical task bodies in L5-01..L5-05. -->
@@ -1263,6 +1263,10 @@ L5-T14 SELF-VERIFY PASS
 ---
 
 ### L5-T15 — Org-settings arming and evidence capture  **[ASSISTED — L0 EXECUTES]**
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047 (phase files L5-01..L5-05 are authoritative; L5-06 task bodies do not execute). Assisted console task executed by L0 Lead per spec §11.2, §100.
+
 **Phase** P1 · **Size** M · **Mode** ASSISTED · **Deps** L5-T05, L5-T06, L5-T07 · **Spec** §11.2, §11.3, §39.5 condition 6 and runner posture, §98.2 Phase 1 completion check
 **Files:** `access/assisted/org-settings-checklist.md`, `access/assisted/evidence/README.md`, `access/tools/check_org_evidence.py` (new)
 
@@ -1336,6 +1340,10 @@ Spec anchors: §45.4 Control-plane rebuild · §51.2 Platform SLOs · §51.4 Con
 ---
 
 ### L5-T16 — Ops-VM image and version lock  **[ASSISTED — L0 EXECUTES]**
+
+> **NOTE: SUPERSEDED BY FD-047 & FD-112 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047; DevLake deferred from V1 per FD-112. Assisted task reserved for L0 Lead.
+
 **Phase** P2 · **Size** S · **Mode** ASSISTED · **Deps** L5-T02 · **Spec** §99.5 (DevLake database engine and version confirmed before install), §51.4, invariant 85
 **Files:** `ops-vm/compose/versions.lock`, `ops-vm/assisted/version-lock-request.md`, `ops-vm/tools/check_versions_lock.py` (all new)
 
@@ -1487,6 +1495,10 @@ The count of 11 is: seven empty `digest` values, one empty `image` value (`devla
 ---
 
 ### L5-T17 — Compose stack rendered from the lock
+
+> **NOTE: SUPERSEDED BY FD-047 & FD-112 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047; DevLake deferred from V1 per FD-112. Authoritative Ops-VM stack in L5-04 (30-stack-up.sh).
+
 **Phase** P2 · **Size** M · **Mode** LANE · **Deps** L5-T16 · **Spec** §51.4 (private path, every surface behind SSO), §51.5, §99.5, invariant 85, D75
 **Files:** `ops-vm/compose/docker-compose.yml`, `ops-vm/tools/render_compose.py` (new)
 
@@ -1553,6 +1565,10 @@ COMPOSE IN SYNC
 ---
 
 ### L5-T18 — Host provisioning and fifth-tier credential isolation
+
+> **NOTE: SUPERSEDED BY FD-047 & FD-112 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047; DevLake deferred per FD-112. Authoritative host provisioning in L5-04 (ops-vm/provision/30-stack-up.sh).
+
 **Phase** P2 · **Size** M · **Mode** LANE · **Deps** L5-T08, L5-T17 · **Spec** §51.4 (remote access, private path, SSO), §51.5 (what the VM holds and does not hold), §40.1 fifth tier, D95
 **Files:** `ops-vm/provision/provision.sh`, `ops-vm/provision/hardening.yaml`, `ops-vm/tests/test_hardening.py` (new)
 
@@ -1750,6 +1766,10 @@ SLO REGISTER OK: 9 objectives
 ---
 
 ### L5-T20 — Patch cadence and post-patch smoke checklist (§51.4)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative smoke checks in ops-vm/checks/post-patch-smoke.sh and access/layer-b/check-post-patch.sh per L5-04/05.
+
 **Phase** P2 · **Size** M · **Mode** LANE · **Deps** L5-T17, L5-T19 · **Spec** §51.4 (spec lines 4487–4499), §90.4, §61 (singleton change shape)
 **Files:** `ops-vm/patching/patch-cadence.yaml`, `ops-vm/tools/post_patch_smoke.py` (new)
 
@@ -1839,6 +1859,10 @@ rc=1
 ---
 
 ### L5-T21 — Off-VM detection leg (§51.5, D94)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative implementation in ops-vm/deadman/ per L5-04.
+
 **Phase** P2 · **Size** M · **Mode** LANE · **Deps** L5-T19 · **Spec** §51.5 (spec lines 4500–4509), §42.2, §92.11, D94, invariant 52
 **Files:** `ops-vm/offvm/deadman.yaml`, `ops-vm/offvm/uptime-checks.yaml`, `ops-vm/tools/deadman_heartbeat.py` (new)
 
@@ -2120,6 +2144,10 @@ Spec anchors: §35.1 Required runtime capabilities · §35.2 Approved runtime li
 ---
 
 ### L5-T24 — Runtime capability and vendor checklist config (§35.1, §35.6)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative AI toolchain in access/ai-toolchain/ per L5-05 (validate_toolchain.py).
+
 **Phase** P3 · **Size** M · **Mode** LANE · **Deps** L5-T12 · **Spec** §35.1 (spec lines 3057–3070), §35.2, §35.6 (spec lines 3135–3154), §36.3 (spec lines 3178–3208), D69
 **Files:** `access/ai-runtime/runtime-contract.yaml`, `access/ai-runtime/vendor-checklist.yaml`, `access/ai-runtime/tools/validate_runtime_contract.py` (new)
 
@@ -2233,6 +2261,10 @@ RUNTIME CONTRACT OK: 7 capabilities, 6 runtimes, 7 vendor checks
 ---
 
 ### L5-T25 — No-API-keys check (§36.6, invariant 84)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative check in access/ai-toolchain/checks/ per L5-05.
+
 **Phase** P3 · **Size** M · **Mode** LANE · **Deps** L5-T24 · **Spec** §36.6 (spec lines 3232–3238), invariant 84
 **Files:** `access/ai-runtime/tools/check_no_api_keys.py`, `access/tests/test_no_api_keys.py`, `access/tests/fixtures/env-clean.txt`, `access/tests/fixtures/env-poisoned.txt` (new)
 
@@ -2299,6 +2331,10 @@ rc=1
 ---
 
 ### L5-T26 — Extension and MCP-server pin checker (§36.3, invariant 85)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative pin checker in access/ai-toolchain/checks/ per L5-05.
+
 **Phase** P3 · **Size** M · **Mode** LANE · **Deps** L5-T24 · **Spec** §36.3 (spec lines 3178–3208), invariant 85, D69, D80
 **Files:** `access/ai-runtime/tools/check_extension_pins.py`, `access/tests/test_extension_pins.py` (new)
 
@@ -2364,6 +2400,10 @@ rc=1
 ---
 
 ### L5-T27 — Constitution-reference checker (§36.1)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative constitution reference check in access/ai-toolchain/checks/ per L5-05.
+
 **Phase** P3 · **Size** S · **Mode** LANE · **Deps** L5-T24 · **Spec** §36.1 (spec lines 3155–3164), invariant 20
 **Files:** `access/ai-runtime/tools/check_constitution_reference.py` (new)
 
@@ -2424,6 +2464,10 @@ rc=1
 ---
 
 ### L5-T28 — Pre-flight secret-strip wrapper (§36.6)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative secret stripping in access/ai-toolchain/ per L5-05.
+
 **Phase** P3 · **Size** M · **Mode** LANE · **Deps** L5-T24 · **Spec** §36.6 (spec lines 3232–3238), §96.6 S10
 **Files:** `access/ai-runtime/tools/preflight_secret_strip.py`, `access/ai-runtime/preflight.yaml` (new)
 
@@ -2506,6 +2550,10 @@ rc=1
 ---
 
 ### L5-T29 — Per-product AI-restriction checker (§36.4)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative AI restriction checks in access/ai-toolchain/ per L5-05.
+
 **Phase** P3 · **Size** M · **Mode** LANE · **Deps** L5-T24 · **Spec** §36.4 (spec lines 3209–3222), §53
 **Files:** `access/ai-runtime/tools/check_ai_restrictions.py`, `access/tests/test_ai_restrictions.py` (new)
 
@@ -2570,6 +2618,10 @@ rc=1
 ---
 
 ### L5-T30 — AI-eval scheduled runner and SIG-42 emission (§38.3, AT-107)
+
+> **NOTE: SUPERSEDED BY FD-047 & V1-SCOPE EXCLUSION — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047; AT-107 and scheduled eval regression runner are excluded from V1 per master/06-v1-scope.md §8.3; workflows in .github/workflows/ violate PARTITION.md line 18.
+
 **Phase** P3 · **Size** M · **Mode** LANE · **Deps** L5-T24 · **Spec** §38.3 (spec lines 3426–3471), §52.2 arming discipline (D77), AT-107, SIG-42
 **Files:** `access/ai-runtime/tools/eval_runner.py`, `access/ai-runtime/eval-runner.yaml`, `access/tests/test_eval_runner.py` (new)
 
@@ -2662,6 +2714,10 @@ Expected output (exact, five lines):
 ---
 
 ### L5-T31 — Model-regression benchmark record template (§35.5)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative toolchain in access/ai-toolchain/ per L5-05.
+
 **Phase** P3 · **Size** S · **Mode** LANE · **Deps** L5-T24 · **Spec** §35.5 (spec lines 3109–3134), §91
 **Files:** `access/ai-runtime/benchmark/benchmark-record.template.yaml`, `access/ai-runtime/tools/validate_benchmark_record.py` (new)
 
@@ -2757,6 +2813,10 @@ rc=1
 ---
 
 ### L5-T32 — Quarterly workstation check bundle (§36.3, §36.6)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative workstation checks in access/ai-toolchain/ per L5-05.
+
 **Phase** P3 · **Size** S · **Mode** LANE · **Deps** L5-T25, L5-T26, L5-T27 · **Spec** §36.3 (quarterly workstation check), §36.6, invariants 84 and 85
 **Files:** `access/ai-runtime/tools/workstation_check.sh`, `access/ai-runtime/workstation-check.yaml` (new)
 
@@ -2848,6 +2908,10 @@ Spec anchors: §49.1 Expiry-tracked assets (spec lines 4338–4354) · §49.2 Th
 ---
 
 ### L5-T33 — Asset inventory schema (§49.1)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task bodies for L5-T33..T35 retired per FD-047. Authoritative asset validation in assets/validate_assets.py per L5-05.
+
 **Phase** P4 · **Size** M · **Mode** LANE · **Deps** L5-T02 · **Spec** §49.1 (spec lines 4338–4354), §49.2, §40.1, §45.3
 **Files:** `assets/schema/asset-inventory.schema.json`, `assets/tools/validate_inventory.py` (new — `--schema-only` mode only; L5-T35 adds the entry-validation path and the test suite)
 
@@ -3096,6 +3160,10 @@ rc=1
 ---
 
 ### L5-T36 — Deadline watch job (§49.1, §49.2)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative deadline validation in assets/validate_deadlines.py per L5-05.
+
 **Phase** P4 · **Size** M · **Mode** LANE · **Deps** L5-T34, L5-T35 · **Spec** §49.1, §49.2, §92.6, §92.11, §53.1
 **Files:** `assets/tools/deadline_watch.py`, `assets/tests/test_deadline_watch.py` (new)
 
@@ -3159,6 +3227,10 @@ DEADLINE WATCH OK: 0 open window(s)
 ---
 
 ### L5-T37 — Vendor-deadline entries and deprecation feed (§49.2)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative assets feed in assets/ per L5-05.
+
 **Phase** P4 · **Size** S · **Mode** LANE · **Deps** L5-T36 · **Spec** §49.2 (spec lines 4355–4369), §58 (failure-pattern register), §62
 **Files:** `assets/deadlines/vendor-deadlines.yaml`, `assets/tools/vendor_deprecation_feed.py` (new)
 
@@ -3244,6 +3316,10 @@ VENDOR DEPRECATION FEED DRY-RUN OK: 0 vendor(s), 0 pattern candidate(s)
 ---
 
 ### L5-T38 — Asset-owner orphan feed (§49.1)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative asset tooling in assets/ per L5-05.
+
 **Phase** P4 · **Size** M · **Mode** LANE · **Deps** L5-T35 · **Spec** §49.1 (asset owners participate in orphan detection), §12 (person lifecycles), §53
 **Files:** `assets/tools/orphan_owners.py`, `assets/tests/test_orphan_owners.py` (new)
 
@@ -3315,6 +3391,10 @@ Spec anchors: §92.11 The notification contract (spec lines 8272–8283) · §42
 ---
 
 ### L5-T39 — Closed push-event list (§92.11)
+
+> **NOTE: SUPERSEDED BY FD-047 & PARTITION.md — NOT BUILT, NOT PENDING**
+> Task bodies for L5-T39..T40 retired per FD-047. Authoritative directory-per-route notification in notify/routes/ per L5-05. Platform registry additions for AT-106 are excluded from V1 (master/06-v1-scope.md §8.3) and forbidden to Lane 5 (PARTITION.md line 17).
+
 **Phase** P5 · **Size** M · **Mode** LANE · **Deps** L5-T04 · **Spec** §92.11 (spec lines 8272–8283), §97.3, D79
 **Files:** `notify/contract/push-events.yaml`, `notify/tools/validate_notify_config.py` (new — `--only push-events` mode; L5-T40 adds `--only channels`, L5-T41 adds `--all`)
 
@@ -3483,6 +3563,10 @@ NOTIFY CONFIG OK: push-events (8)
 ---
 
 ### L5-T41 — Router CLI, fail-closed on an unlisted event
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative routing in notify/routes/ per L5-05.
+
 **Phase** P5 · **Size** M · **Mode** LANE · **Deps** L5-T39, L5-T40 · **Spec** §92.11, §97.3, §64.2 (fail-closed row 1)
 **Files:** `notify/tools/route.py`, `notify/tools/validate_notify_config.py` (finalised with `--all`), `notify/tests/test_route.py` (new)
 
@@ -3613,6 +3697,10 @@ rc=1
 ---
 
 ### L5-T43 — Phone-escalation path artifact and presence check (§42.2)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative escalation routes in notify/routes/ per L5-05.
+
 **Phase** P5 · **Size** S · **Mode** LANE · **Deps** L5-T40 · **Spec** §42.2 (spec lines 3767–3787), §47.5
 **Files:** `notify/escalation/phone-path.template.yaml`, `notify/tools/check_phone_path.py` (new)
 
@@ -3688,6 +3776,10 @@ PHONE PATH PRESENCE OK: 0 number(s) in the repository
 ---
 
 ### L5-T44 — No-paging-apps check (§99.2 row R)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative channels check in notify/check_channels.py per L5-05.
+
 **Phase** P5 · **Size** S · **Mode** LANE · **Deps** L5-T40 · **Spec** §99.2 row R, §47.5
 **Files:** `notify/tools/check_no_paging_apps.py`, `notify/tests/test_no_paging_apps.py` (new)
 
@@ -3831,6 +3923,10 @@ Spec anchors: §90.3 Datasource-level enforcement (spec lines 7975–7989) · §
 ---
 
 ### L5-T46 — Founder-only Grafana instance provisioning (D75)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative Layer B architecture in access/layer-b/ per L5-03.
+
 **Phase** P6 · **Size** M · **Mode** LANE · **Deps** L5-T17, L5-T18 · **Spec** §90.3, §99.5 (Layer B mechanism), D75, D95
 **Files:** `access/layerb/instance/compose.layerb.yml`, `access/layerb/instance/grafana.layerb.ini`, `access/layerb/instance/provisioning/datasources/people.yaml`, `access/layerb/instance/provisioning/dashboards/layer-b.yaml`, `access/layerb/tools/check_separate_credential.py` (new — `--config-only` mode; L5-T48 adds the AT-098 assertions and the tests)
 
@@ -3893,6 +3989,10 @@ rc=1
 ---
 
 ### L5-T47 — Shared-instance people-datasource absence check (AT-097)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative check in access/layer-b/ per L5-03.
+
 **Phase** P6 · **Size** M · **Mode** LANE · **Deps** L5-T46, L5-T17 · **Spec** AT-097, §90.3, D75
 **Files:** `access/layerb/tools/check_no_people_datasource.py`, `access/tests/test_at097.py` (new)
 
@@ -3959,6 +4059,10 @@ rc=1
 ---
 
 ### L5-T48 — Separate-credential check (AT-098)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative check in access/layer-b/check-separate-credential.sh per L5-03.
+
 **Phase** P6 · **Size** M · **Mode** LANE · **Deps** L5-T46 · **Spec** AT-098, §90.3, D75
 **Files:** `access/layerb/tools/check_separate_credential.py` (extended), `access/tests/test_at098.py` (new)
 
@@ -4021,6 +4125,10 @@ LAYER B CONFIG OK: 4 separation assertions
 ---
 
 ### L5-T49 — Layer B allowlist derivation and comparison scope (§90.4)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative check in access/layer-b/check-allowlist-parity.sh per L5-03.
+
 **Phase** P6 · **Size** M · **Mode** LANE · **Deps** L5-T46, L5-T14 · **Spec** §90.4 (spec lines 7990–7999), §90.3 (the named accepted-access record), D109, invariant 106
 **Files:** `access/layerb/tools/allowlist_sync.py`, `access/layerb/allowlist-scope.yaml`, `access/tests/test_allowlist_scope.py` (new)
 
@@ -4105,6 +4213,10 @@ rc=1
 ---
 
 ### L5-T50 — Layer B access log and session lifetime (§90.3)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative check in access/layer-b/check-access-log.sh per L5-03.
+
 **Phase** P6 · **Size** M · **Mode** LANE · **Deps** L5-T46 · **Spec** §90.3, §84.5 (calibration cadence), §45.3 (write-only discipline), invariant 106
 **Files:** `access/layerb/tools/access_log.py`, `access/layerb/session-policy.yaml`, `access/tests/test_access_log.py` (new)
 
@@ -4190,6 +4302,10 @@ Expected output (exact, five lines):
 ---
 
 ### L5-T51 — Layer B at-rest and backup discipline config (§51.4)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative configuration in access/layer-b/ per L5-03.
+
 **Phase** P6 · **Size** M · **Mode** LANE · **Deps** L5-T46, L5-T34 · **Spec** §51.4 (spec lines 4487–4499), §45.3, §44.3, §14.4, §49
 **Files:** `access/layerb/backup/backup-policy.yaml`, `access/layerb/tools/check_backup_policy.py` (new)
 
@@ -4273,6 +4389,10 @@ rc=1
 ---
 
 ### L5-T52 — Self-view generator and public-key registry (§90.6)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative Layer B implementation in access/layer-b/ per L5-03.
+
 **Phase** P6 · **Size** M · **Mode** LANE · **Deps** L5-T50 · **Spec** §90.6 (spec lines 8029–8057), §90.3, §43.4, §84.5, AT-095, invariants 106 and 108
 **Files:** `access/layerb/selfview/generate_selfview.py`, `access/layerb/selfview/keyring-schema.json`, `access/tests/test_selfview.py` (new)
 
@@ -4343,6 +4463,10 @@ rc=1
 ---
 
 ### L5-T53 — Per-person public-key registration and annual re-key  **[ASSISTED — L0 EXECUTES]**
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative document at access/layer-b/assisted/key-registration-request.md per L5-03.
+
 **Phase** P6 · **Size** S · **Mode** ASSISTED · **Deps** L5-T52 · **Spec** §90.6, §43.4
 **Files:** `access/layerb/assisted/key-registration-request.md` (new)
 
@@ -4409,6 +4533,10 @@ OK
 ---
 
 ### L5-T54 — Layer B restore-protocol instrument (§45.4)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative restore verification in access/layer-b/ per L5-03.
+
 **Phase** P6 · **Size** M · **Mode** LANE · **Deps** L5-T51, L5-T22 · **Spec** §45.4 (the Layer B restore protocol, spec lines 4078–4085), §97.2, §18, §14.4
 **Files:** `access/layerb/restore/restore-protocol.yaml`, `access/layerb/tools/check_drill_record.py`, `access/tests/test_drill_record.py` (new)
 
@@ -4504,6 +4632,10 @@ Spec anchors: §100.6 Access acceptance tests (spec lines 9421–9441) · §101 
 ---
 
 ### L5-T55 — Access acceptance harness (AT-089/090/091/092/093/094/097/098)
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Authoritative acceptance checks in access/layer-b/ and infra/tools/readiness.sh.
+
 **Phase** P7 · **Size** L · **Mode** LANE · **Deps** L5-T47, L5-T48, L5-T49, L5-T50, L5-T13, L5-T14 · **Spec** §100.6, §90.2–§90.5, invariants 106–109
 **Files:** `access/acceptance/at_runner.py`, `access/acceptance/cases/*.yaml` (8 files), `access/tests/test_acceptance_harness.py` (new)
 
@@ -4572,6 +4704,10 @@ VERBATIM OK: 8/8 pass conditions match the spec
 ---
 
 ### L5-T56 — AT-110 reconciler-credential bound execution  **[ASSISTED — L0 EXECUTES]**
+
+> **NOTE: SUPERSEDED BY FD-047 — NOT BUILT, NOT PENDING**
+> Task body retired per FD-047. Live reconciler credential probe executed exclusively by L0 Lead per spec §100; autonomous agents must not handle reconciler credentials.
+
 **Phase** P7 · **Size** M · **Mode** ASSISTED · **Deps** L5-T55, L5-T08 · **Spec** AT-110 (spec line 9441), §99.6 risk 6, §40.1 clean-reconciliation condition
 **Files:** `access/acceptance/at110-runbook.md`, `access/acceptance/at110_probe.py` (new)
 

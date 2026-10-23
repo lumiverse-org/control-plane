@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# tools/records/mint-token — CLI entrypoint for GitHub App installation token exchange.
+# Delegates to lib/mint_token.py per FD-136.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+PY="${L4_PY:-python3}"
+if ! command -v "$PY" >/dev/null 2>&1; then
+  PY="python"
+fi
+exec "$PY" "$HERE/lib/mint_token.py" "$@"

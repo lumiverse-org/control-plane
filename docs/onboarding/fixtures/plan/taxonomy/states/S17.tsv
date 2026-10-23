@@ -1,0 +1,5 @@
+id	S17
+state	Library SDK or batch pipeline - no serving interface
+spec_line	L8824
+ai_gate	no
+prereq	profile-library-or-batch

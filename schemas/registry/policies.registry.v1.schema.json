@@ -66,6 +66,10 @@
           "status": {
             "type": "string",
             "enum": ["proposed", "active", "superseded", "withdrawn", "retired"]
+          },
+          "paths": {
+            "type": "array",
+            "items": { "type": "string" }
           }
         }
       }

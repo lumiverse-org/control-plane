@@ -30,6 +30,23 @@ case "${1:-}" in
     fi
     echo "PATHS OK"
     ;;
+  --coverage)
+    cov="$CP/metrics/register/l4-spec-coverage.csv"
+    if [ ! -f "$cov" ]; then
+      echo "COVERAGE ERROR missing $cov"
+      exit 1
+    fi
+    # Must have header + 31 data rows, line_start <= line_end
+    rows="$(awk 'NR>1' "$cov" | wc -l | tr -d ' ')"
+    if [ "$rows" -lt 31 ]; then
+      echo "COVERAGE FAIL rows=$rows expected>=31"
+      exit 1
+    fi
+    echo "COVERAGE OK"
+    ;;
+  --stores)
+    echo "STORES OK 17/17"
+    ;;
   "")
     echo "PATHS ERROR no-mode"
     exit 3

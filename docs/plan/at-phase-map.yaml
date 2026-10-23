@@ -1,0 +1,145 @@
+# --- CONTRACT HEADER (frozen) ---
+contract_id: C-DOC-AT-PHASE-1
+contract_version: 1
+owner: L0
+publishing_lane: L0
+consuming_lanes: [L0, L1, L2, L3, L4, L5]
+spec_refs: ["Section 98", "Section 100", "D-08-6"]
+ccr_required: true
+
+# Acceptance Test to Phase Activation Map (D-08-6)
+# Maps each AT to the Section 98 phase where its capability activates.
+phase_order:
+  - Ph1
+  - Ph2
+  - Ph3
+  - Ph4
+  - Ph5
+  - Ph6
+  - Ph7
+  - EH
+  - SA
+  - COND
+
+tests:
+  Ph1:
+    - id: AT-022
+      owner: L5
+      twin: null
+  Ph2:
+    - id: AT-051
+      owner: L1
+      twin: NT-051
+  Ph3:
+    - id: AT-011
+      owner: L5
+      twin: NT-011
+    - id: AT-018
+      owner: L3
+      twin: NT-018
+    - id: AT-021
+      owner: L1
+      twin: NT-021
+    - id: AT-036
+      owner: L3
+      twin: NT-036
+    - id: AT-039
+      owner: L1
+      twin: NT-039
+    - id: AT-075
+      owner: L1
+      twin: NT-075
+    - id: AT-102
+      owner: L3
+      twin: NT-102
+    - id: AT-109
+      owner: L5
+      twin: NT-109
+    - id: AT-110
+      owner: L3
+      twin: NT-110
+  Ph4:
+    - id: AT-010
+      owner: L1
+      twin: NT-010
+  Ph5:
+    - id: AT-009
+      owner: L2
+      twin: NT-009
+    - id: AT-049
+      owner: L1
+      twin: NT-049
+    - id: AT-107
+      owner: L5
+      twin: NT-107
+  Ph6:
+    - id: AT-028
+      owner: L5
+      twin: null
+    - id: AT-029
+      owner: L2
+      twin: null
+    - id: AT-101
+      owner: L1
+      twin: null
+    - id: AT-103
+      owner: L2
+      twin: NT-103
+  Ph7:
+    - id: AT-030
+      owner: L5
+      twin: NT-030
+    - id: AT-034
+      owner: L0
+      twin: NT-034
+    - id: AT-106
+      owner: G
+      twin: NT-106
+  EH:
+    - id: AT-003
+      owner: L1
+      twin: NT-003
+    - id: AT-004
+      owner: L3
+      twin: NT-004
+    - id: AT-023
+      owner: L2
+      twin: NT-023
+    - id: AT-024
+      owner: L2
+      twin: NT-024
+    - id: AT-025
+      owner: L1
+      twin: NT-025
+    - id: AT-026
+      owner: L2
+      twin: NT-026
+    - id: AT-033
+      owner: L3
+      twin: NT-033
+    - id: AT-035
+      owner: L2
+      twin: NT-035
+    - id: AT-048
+      owner: L4
+      twin: NT-048
+    - id: AT-104
+      owner: L4
+      twin: NT-104
+  SA:
+    - id: AT-008
+      owner: L3
+      twin: NT-008
+    - id: AT-019
+      owner: L1
+      twin: NT-019
+    - id: AT-040
+      owner: L1
+      twin: NT-040
+    - id: AT-074
+      owner: L1
+      twin: NT-074
+  COND:
+    - id: AT-005
+      owner: L1
+      twin: NT-005

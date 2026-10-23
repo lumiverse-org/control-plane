@@ -40,7 +40,7 @@ fi
 echo "PASS: Prometheus metric file created at $PROM_FILE"
 
 # Verify metric lines
-grep -q '^reconciler_drift_count{severity="blocking"} 17$' "$PROM_FILE" || { echo "FAIL: missing blocking count 17"; cat "$PROM_FILE"; exit 1; }
+grep -q '^reconciler_drift_count{severity="blocking"} 19$' "$PROM_FILE" || { echo "FAIL: missing blocking count 19"; cat "$PROM_FILE"; exit 1; }
 grep -q '^reconciler_drift_count{severity="amber"} 7$' "$PROM_FILE" || { echo "FAIL: missing amber count 7"; cat "$PROM_FILE"; exit 1; }
 grep -q '^reconciler_drift_count{severity="green"} 1$' "$PROM_FILE" || { echo "FAIL: missing green count 1"; cat "$PROM_FILE"; exit 1; }
 grep -q '^reconciler_drift_count{severity="degrading"} 0$' "$PROM_FILE" || { echo "FAIL: missing degrading count 0"; cat "$PROM_FILE"; exit 1; }

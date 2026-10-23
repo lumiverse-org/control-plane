@@ -1,0 +1,5 @@
+contexts:
+  phase_4:
+    - unit-tests
+    - integration-tests
+    - build

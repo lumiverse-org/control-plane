@@ -76,7 +76,9 @@ def get_job_names_from_dir(directory: str) -> set[str]:
         fpath = os.path.join(directory, fname)
         try:
             with open(fpath, "r", encoding="utf-8") as f:
-                wf = yaml.safe_load(f)
+                raw = f.read()
+            clean = re.sub(r'\{\{[A-Z_]+\}\}', 'placeholder', raw)
+            wf = yaml.safe_load(clean)
             if isinstance(wf, dict):
                 jobs = wf.get('jobs', {}) or {}
                 for jname, jdef in jobs.items():
@@ -99,7 +101,8 @@ def get_jobs_with_if_or_filter(directory: str) -> set[str]:
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 raw = f.read()
-                wf = yaml.safe_load(raw)
+            clean = re.sub(r'\{\{[A-Z_]+\}\}', 'placeholder', raw)
+            wf = yaml.safe_load(clean)
             has_path_filter = bool(PATH_FILTER_RE.search(raw))
             if isinstance(wf, dict):
                 jobs = wf.get('jobs', {}) or {}
@@ -142,6 +145,12 @@ def main() -> None:
     gha_bad = get_jobs_with_if_or_filter(gha_workflows)
 
     for ctx_name, group in contexts.items():
+        if ctx_name == "renovate-path-guard":
+            # FD-123: scope renovate-path-guard required-context to only fire once Renovate activates (Phase 2)
+            renovate_active = os.environ.get("RENOVATE_ACTIVE", "").lower() in ("1", "true", "yes")
+            if not renovate_active and not os.path.exists("ops-vm/renovate/config.js"):
+                continue
+
         if group == "always":
             jobs, bad, tree = gha_jobs, gha_bad, ".github/workflows/"
         else:

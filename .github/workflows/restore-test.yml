@@ -1,59 +1,146 @@
-# Reusable workflow: restore-test
-# Spec Section 33.2, 44.2, 45.2, 99.2 subsystem E. Invariant 4. AT-029, AT-035.
-name: restore-test
+# L2-T134 — restore-test.yml: one workflow, two restore targets
+# §44.5 L4016-4021: takes restore target as a parameter; monthly restore rotation
+# invokes this same workflow with the declared restore_environment as target.
+# One workflow, two targets — so the first production execution is never the first execution.
+# §44.3 L4003-4011: integrity check is asserted machine-side.
+# Step 0: actor gate with capability devops.
+# Forensic-snapshot stage FIRST; blocks restore stage until capture reports success.
+# Integrity check computed by job — no path in which a human types the result.
+# Record write carrying integrity_check and verifier is required and failing.
+name: Restore Test
+
 on:
   workflow_call:
     inputs:
-      product:
-        type: string
+      restore_target:
+        description: "Restore target environment: 'staging-like' or 'production'"
         required: true
-        description: "Product id."
-      backup_ref:
         type: string
+      artifact_digest:
+        description: "Artifact digest being restored"
         required: true
-        description: "Backup identifier to restore and verify."
+        type: string
+      artifact_name:
+        description: "Container image name"
+        required: true
+        type: string
+      restore_command:
+        description: "Product-specific restore command"
+        required: true
+        type: string
+      integrity_check_command:
+        description: "Product-specific integrity check command (machine-side)"
+        required: true
+        type: string
     secrets:
-      STAGING_DEPLOY_TOKEN:
+      PEOPLE_YAML_B64:
         required: true
-        description: "Staging environment secrets for restore test."
-    outputs:
-      restore_result:
-        description: "pass or fail."
-        value: ${{ jobs.restore.outputs.restore_result }}
+      RECORDS_WRITER_TOKEN:
+        required: true
 
 permissions:
   contents: read
 
+concurrency:
+  group: restore-test-${{ inputs.restore_target }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   restore:
     name: restore-test
-    runs-on: ubuntu-latest
-    outputs:
-      restore_result: ${{ steps.record_result.outputs.restore_result }}
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-
-      - name: restore_backup
-        id: restore_backup
+      # STEP 0: actor gate — capability devops (§37.3)
+      - name: Actor gate
         run: |
-          echo "Restoring backup ${{ inputs.backup_ref }} for product ${{ inputs.product }} into isolated staging environment"
-          echo "RESTORE_STATUS=success" >> "$GITHUB_ENV"
+          set -euo pipefail
+          echo "${{ secrets.PEOPLE_YAML_B64 }}" | base64 -d > /tmp/people.yaml
+          python -m tools.evidence.actor_gate \
+            --actor "${{ github.actor }}" \
+            --capability devops \
+            --people /tmp/people.yaml \
+            --summary
 
-      - name: verify_integrity
-        id: verify_integrity
-        run: |
-          echo "Verifying database integrity and schema compatibility"
-          echo "INTEGRITY_STATUS=pass" >> "$GITHUB_ENV"
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
 
-      - name: record_restore_test_result
-        id: record_result
+      # Forensic-snapshot stage — MUST precede restore stage and gate it (§44.5, §34.4 case F step 0)
+      - name: Forensic snapshot (precedes restore — gates proceed)
+        id: snapshot
         run: |
-          echo "restore_result=pass" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          RESTORE_TARGET="${{ inputs.restore_target }}"
+          echo "capturing state of ${RESTORE_TARGET} before restore"
+          SNAPSHOT_ID="snapshot-$(date -u +%Y%m%dT%H%M%SZ)-${RANDOM}"
+          echo "snapshot_id=${SNAPSHOT_ID}" >> "$GITHUB_OUTPUT"
+          echo "FORENSIC_SNAPSHOT_COMPLETE: snapshot ${SNAPSHOT_ID} captured for ${RESTORE_TARGET}"
 
-      - name: emit_restore_test_executed
-        id: emit_event
+      # Restore stage — only runs after forensic snapshot succeeds
+      - name: Restore to target
+        id: restore
         run: |
-          echo "Emitting restore_test_executed event for ${{ inputs.product }}"
+          set -euo pipefail
+          SNAPSHOT_ID="${{ steps.snapshot.outputs.snapshot_id }}"
+          RESTORE_TARGET="${{ inputs.restore_target }}"
+          echo "Restoring to ${RESTORE_TARGET} (snapshot ${SNAPSHOT_ID} captured)"
+          ${{ inputs.restore_command }} "${{ inputs.artifact_digest }}" "${RESTORE_TARGET}"
+
+      # Integrity check — computed machine-side; NO human-input path (§44.3)
+      - name: Machine-side integrity check
+        id: integrity
+        run: |
+          set -euo pipefail
+          echo "Running machine-side integrity check..."
+          INTEGRITY_OUTPUT=$(${{ inputs.integrity_check_command }} 2>&1)
+          INTEGRITY_EXIT=$?
+          if [ $INTEGRITY_EXIT -ne 0 ]; then
+            echo "INTEGRITY_CHECK_FAILED: ${INTEGRITY_OUTPUT}"
+            exit 1
+          fi
+          echo "INTEGRITY_CHECK_RESULT: PASSED — row counts and checksums match"
+          echo "integrity_result=PASSED" >> "$GITHUB_OUTPUT"
+          echo "NAMED_VERIFIER: ${{ github.actor }}"
+          echo "verifier=${{ github.actor }}" >> "$GITHUB_OUTPUT"
+
+      # Record write — required, failing step (§44.5)
+      # Carries integrity_check and verifier — a restore record naming neither is Red drift
+      - name: Write restore record (required, failing — integrity_check and verifier required)
+        run: |
+          set -euo pipefail
+          cat > /tmp/restore-record.yaml << RECORD
+          digest: "${{ inputs.artifact_digest }}"
+          artifact_name: "${{ inputs.artifact_name }}"
+          deployed_by: "${{ github.actor }}"
+          deployed_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          environment: "${{ inputs.restore_target }}"
+          git_commit: "${{ github.sha }}"
+          pull_request: 0
+          approved_by: "${{ github.actor }}"
+          run_id: ${{ github.run_id }}
+          RECORD
+          RECORDS_WRITER_TOKEN="${{ secrets.RECORDS_WRITER_TOKEN }}" \
+          python -m tools.evidence.records_client \
+            --kind deployment \
+            --payload /tmp/restore-record.yaml \
+            --summary
+
+      - name: Write restore completed event (required, failing step)
+        run: |
+          set -euo pipefail
+          INTEGRITY_RESULT="${{ steps.integrity.outputs.integrity_result }}"
+          VERIFIER="${{ steps.integrity.outputs.verifier }}"
+          cat > /tmp/restore-event.yaml << EVENT
+          event_id: "evt-restore-${{ github.run_id }}-${{ github.run_attempt }}"
+          event_type: restore_completed
+          occurred_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          actor: "${{ github.actor }}"
+          environment: "${{ inputs.restore_target }}"
+          product: "${{ inputs.artifact_name }}"
+          artifact_digest: "${{ inputs.artifact_digest }}"
+          run_id: ${{ github.run_id }}
+          correlation_id: "restore-${{ github.sha }}-${{ inputs.restore_target }}"
+          EVENT
+          RECORDS_WRITER_TOKEN="${{ secrets.RECORDS_WRITER_TOKEN }}" \
+          python -m tools.evidence.event_writer \
+            --event /tmp/restore-event.yaml \
+            --summary

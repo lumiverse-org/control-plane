@@ -1,0 +1,4 @@
+registry_version: 1
+people:
+  - id: p-1
+    capabilities: [code-review, production-approval]

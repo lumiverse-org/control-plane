@@ -1,0 +1,5 @@
+id	S16
+state	Customer-hosted or on-premises production
+spec_line	L8823
+ai_gate	no
+prereq	profile-customer-hosted

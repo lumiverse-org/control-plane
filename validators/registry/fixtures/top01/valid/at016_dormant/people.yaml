@@ -1,0 +1,6 @@
+registry_version: 1
+people:
+- id: dev-a
+  availability: active
+  roles:
+  - developer

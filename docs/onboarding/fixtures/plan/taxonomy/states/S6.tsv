@@ -1,0 +1,5 @@
+id	S6
+state	A UAT environment only or odd environment names
+spec_line	L8813
+ai_gate	no
+prereq	environment-mapping

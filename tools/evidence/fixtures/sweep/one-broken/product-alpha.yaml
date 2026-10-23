@@ -1,0 +1,11 @@
+q1_git_commit: "aaabbbccc"
+q2_pull_request: "PR-10"
+q3_gate2_approver: "alice (role: tech-lead)"
+q4_ci_run: "https://github.com/org/alpha/actions/runs/1"
+q5_artifact_digest: "sha256:alpha001"
+q6_staging_deploy: "2026-09-01T10:00:00Z"
+q7_staging_passed: true
+q8_prod_approver: "bob (role: release-manager)"
+q9_prod_deploy: "2026-09-01T14:00:00Z"
+q10_smoke_passed: true
+q11_live_digest: "sha256:alpha001"

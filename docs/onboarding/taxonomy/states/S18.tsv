@@ -1,0 +1,5 @@
+id	S18
+state	Platform-rebuild deployment - git-push PaaS rebuilding per environment
+spec_line	L8825
+ai_gate	no
+prereq	equivalent-identity

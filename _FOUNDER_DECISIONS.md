@@ -1,4 +1,4 @@
-﻿# FOUNDER DECISIONS â€” the closed register
+# FOUNDER DECISIONS â€” the closed register
 
 Decisions the founder has answered directly. This file is **additive and authoritative**: where a plan
 document disagrees with a row here, the row here wins and the document is to be corrected in the next
@@ -2201,3 +2201,155 @@ Publish the accepted set as `contracts/orphans/decisions.yaml`.
 **Date:** 2026-10-21
 
 **Decision:** "Delegation-type" assignments, for the 14-day expiry-warning rule (L3-P0-DEL14), are temporary or acting assignments only (e.g. acting-team-lead, temporary coverage roles) — not every assignment that happens to carry an `end_date`. Permanent role assignments with a scheduled end are out of scope for this warning.
+
+---
+
+## FD-130 — flags.schema.json: retired, store-specific field typing stands
+
+**Date:** 2026-10-22
+
+**Decision:** `schemas/records/defs/flags.schema.json` (L4-P2-23) is retired as redundant, not built. The already-shipped design stands: `incident.schema.json` enforces `detection_source` as a strict enum, `support.schema.json` leaves it an open string, each with its own written justification. Matches §97.2's "include" (not "are") wording — per-store variance was intentional, not an oversight.
+
+**Resolves:** RD-01 in `_gravity-handoff/batch-3/remaining-decisions.md`.
+
+---
+
+## FD-131 — Writer test harness: Python stdlib modules + pytest, not shell
+
+**Date:** 2026-10-22
+
+**Decision:** The Lane 4 writer tooling (`tools/records/record-write`, `event-append`, `record-verification-result` and their test harness) is built as Python stdlib modules under `tools/records/lib/` with dedicated pytest suites under `tools/records/tests/`, matching the convention already used throughout `tools/evidence/tests/`. The shell-script design in `lanes/L4-03-write-paths.md` is superseded — not built.
+
+**Resolves:** RD-02 (Blocker B2) in `_gravity-handoff/batch-3/remaining-decisions.md`.
+
+---
+
+## FD-132 — Freshness end-to-end test: built now with a synthetic git fixture
+
+**Date:** 2026-10-22
+
+**Decision:** `tools/records/test-freshness-e2e.sh` is built now as an offline test — a temporary git repository with backdated commits (`GIT_COMMITTER_DATE`) — rather than deferred until a live `control-plane-records` repository exists with real multi-day commit history. Matches this project's existing fixture-driven test convention; keeps the write-freshness Blocking-class signal provable at V1 instead of unproven indefinitely.
+
+**Resolves:** RD-03 in `_gravity-handoff/batch-3/remaining-decisions.md`.
+
+---
+
+## FD-133 — DoD matrix runner: offline matrix, remote-required rows explicitly skipped
+
+**Date:** 2026-10-22
+
+**Decision:** `tools/records/run-dod-matrix.sh` is built to actually execute and prove the 15 charter DoD rows that are checkable locally, and to explicitly report `SKIPPED (REMOTE-REQUIRED)` — never a silent pass — for the 5 rows that need live GitHub App credentials. The matrix is not deferred wholesale to Phase 6.
+
+**Resolves:** RD-04 in `_gravity-handoff/batch-3/remaining-decisions.md`.
+
+---
+
+## FD-134 — Lane 4 handoff manifest: harmonized to tools/records/HANDOFF.md
+
+**Date:** 2026-10-22
+
+**Decision:** Lane 4's cross-lane handoff manifest lives at `tools/records/HANDOFF.md`, not `metrics/HANDOFF.md` as `lanes/L4-06-tasks.md` originally named. Harmonizes with Lane 3's `reconciler/HANDOFF.md` and Lane 5's `infra/handoff/` — `tools/records/` is where the actual cross-lane-consumed tooling already lives, so the manifest sits beside what it documents.
+
+**Resolves:** RD-05 in `_gravity-handoff/batch-3/remaining-decisions.md`.
+
+---
+
+## FD-135 — control-plane-records branch protection: gap accepted temporarily
+
+**Date:** 2026-10-22
+
+**Decision:** `control-plane-records` was made private on 2026-10-22 per spec. Doing so revealed that GitHub's current plan tier (Free) only supports branch protection and repository rulesets on *public* repositories — both `GET .../branches/main/protection` and `GET .../rulesets` return HTTP 403 "Upgrade to GitHub Pro... or make this repository public" on the live repo. Upgrading the organization to a plan that supports both private visibility and branch protection (e.g. GitHub Team) is deferred, not actioned now. The gap — this repo currently has no append-only enforcement, no force-push/deletion protection, and D107's "append-only is enforced, not merely asserted" does not currently hold in practice — is accepted temporarily rather than reverting the repo to public.
+
+**Trigger to revisit:** before write access to `control-plane-records` is extended beyond the current trusted set of people, and before the records-writer GitHub App (FD-136, if created) is given broader rollout than a single installation. Separately noted: the current `main` HEAD commit is unsigned (`verified: false`) — compounds the same gap, not a new one.
+
+---
+
+## FD-136 — records-writer App: created and installed; host-custody exception tracked
+
+**Date:** 2026-10-22
+
+**Decision:** The `records-writer` GitHub App (`records-writer-lumiverse-org`, App ID `5422825`) was created and installed on `lumiverse-org`, scoped to `control-plane-records` only (`repository_selection: selected`, exactly 1 repository), with permissions exactly `{"contents":"write","metadata":"read"}` — matching L4-P1-T09/L4-P1-T10's acceptance criteria exactly. A private key was generated.
+
+Every fifth-tier credential envelope in this repo (`access/secrets/fifth-tier/records-writer.yaml` and its siblings) declares `host: "ops-vm-control-plane-01"` as the expected source host — but that host does not exist: no asset-inventory entry, nothing under `infra/` or `ops-vm/` provisions it. The private key currently has no spec-compliant home.
+
+**Decision:** use the key from the current working machine for now, as a deliberate, tracked exception to the envelope's `expected_source_host` check — not a silent violation. This unblocks L4-P1-T11 (proving the App can actually write) without waiting for ops-vm-control-plane-01 to be provisioned.
+
+**Trigger to revisit:** as soon as `ops-vm-control-plane-01` (or an equivalent designated host) is actually provisioned, migrate the key there and stop using it from any developer machine. Until then, `access/secrets/envelope/check-envelope.sh`'s `expected_source_host` check for this credential is expected to fail/flag — that is correct, known behavior under this exception, not a new defect to fix.
+
+---
+
+## FD-137 — lane-guard.yml.frozen placed; `actions/checkout` exception tracked
+
+**Date:** 2026-10-22
+
+**Decision:** `contracts/ci/lane-guard.yml.frozen` and `contracts/ci/lane-guard.contract.md` are placed now (L0D-LG-1/L0D-LG-3), as a retrofit rather than the Phase-0 bootstrap timing `lanes/L0-02-lane-guard.md` originally assumed — the live workflow had already been edited multiple times (FD-102, FD-086, FD-123, branch-path-ownership enforcement) before this freeze was ever established. The job's display name was corrected from `Lane Guard` to `lane-guard` (matching the contract's own exactness requirement) before freezing.
+
+One of the contract's five rules does not hold: the workflow uses `actions/checkout@<SHA> # v4.2.2`, a third-party action, where L0D-LG-4 requires zero third-party actions in this specific file. This is accepted as a deliberate, tracked exception rather than silently waived — the action is pinned to an exact commit SHA, not a floating tag, which substantially mitigates the supply-chain risk the rule targets. Rewriting the checkout step as raw `git` commands is deferred as its own, separately-reviewed change.
+
+**Trigger to revisit:** before this exception is cited as precedent for any other third-party action in `.github/workflows/**`; standing item to replace `actions/checkout` with an inline `git` checkout.
+
+---
+
+## FD-138 — Business Criticality Enum Contradiction Resolved: 3 Tiers (Canonical Spec)
+
+**Date:** 2026-10-22 · **Status:** DECIDED
+
+**Decision:** **Option A — 3 Tiers (`high | medium | low`) per Canonical Master Spec.**
+
+**Comprehensive Investigation Findings & Evidence:**
+1. **Master Spec §15.1 (Product Operating Contract, line 1531):**
+   Explicitly defines `business.criticality` under the `business:` block with three tiers:
+   ```yaml
+   business:
+     criticality: high                  # high | medium | low — business importance
+   ```
+   Contrasting with `classification.reliability_criticality` (line 1313) which has four tiers:
+   ```yaml
+   classification:
+     reliability_criticality: high      # low | medium | high | critical
+   ```
+2. **Master Spec §15.2 (lines 1536–1543) & D4 (line 10080):**
+   Explicitly emphasizes that the two fields are deliberately distinct:
+   *"Two criticality fields, deliberately distinct... business.criticality expresses business importance (portfolio economics, lifecycle decisions, platform investment)... classification.reliability_criticality expresses operational stringency (restore cadence, monitoring depth, verification depth, incident capacity reserve)... Collapsing them into one field forces one of the two decisions to be wrong."*
+   The apparent contradiction is dissolved: the two fields are intentionally separate scales with different tier counts.
+3. **Master Spec §96.5 (lines 8791–8795):**
+   The sequencing function explicitly sequences by `classification.reliability_criticality` first (highest first, 4 tiers), then within equal reliability criticality by `business.criticality` (highest first, 3 tiers), then by onboarding cost band (`S`, `M`, `L`, `XL`).
+4. **Lane 1 Production Schema (`schemas/product/product.contract.v2.schema.json` lines 380–386):**
+   Already implements Master Spec §15.1 and §15.2 faithfully:
+   ```json
+   "criticality": { "type": "string", "enum": ["high", "medium", "low"] }
+   ```
+5. **Contract Change Request Approval (`docs/escalation/CCR-001-business-criticality.md`):**
+   The 4-tier enum in Phase 0 contract draft `contracts/registry/product.contract.v2.json` line 187 and `lanes/L0-01-phase-0-contracts.md` line 1061 was an authoring copy-paste artifact that erroneously placed `business_criticality` inside `classification` and copied `reliability_criticality`'s 4 tiers. Under `L0D-06` and this decision, `CCR-001` is approved to align the frozen contract with Master Spec §15.1.
+6. **Actions Executed:**
+   - Amended `contracts/registry/product.contract.v2.json` to `"enum": ["high", "medium", "low"]`.
+   - Amended `lanes/L0-01-phase-0-contracts.md` line 1061 to `"enum":["high","medium","low"]`.
+   - Corrected `docs/onboarding/products/06/facts.tsv` to `business_criticality high`.
+   - Contract checksum refreshed in `contracts.sha256` via `make freeze`.
+   - `onboard-rank.sh` executed to calculate deterministic rank sequence (`06,01,03,04,08,05,02,07`).
+   - `onboard-gate.sh` confirmed with `rank OK`.
+
+---
+
+## FD-139 — Resolution of Placeholder Workflows (product-P1..P8, product-template) & Workflow Lint Compliance
+
+**Date:** 2026-10-23 · **Status:** DECIDED
+
+**Decision:**
+Per-product workflows in `.github/workflows/` (`product-P1.yml` through `product-P8.yml` and `product-template.yml`) are resolved as lint-clean placeholder workflows conforming strictly to MasterSpec §33.2 (LW-03 and LW-04):
+1. **Least-Privilege Permissions:** Added top-level `permissions: contents: read` to all 9 files, resolving `LW-04`.
+2. **Prohibition on Path Filters:** Removed `paths:` filters on push/pull_request triggers, retaining `workflow_dispatch:`, resolving `LW-03`.
+
+**Investigation Findings & Architectural Evidence:**
+1. **Architectural Role:**
+   - In the MultiProduct OS (MasterSpec §19.1, §33.2, V1 Scope §3 item 3 & 4), product CI workflows execute inside each product's own repository (`Product-1`, `Product-2`, etc.), created via `tools/provision/create_product.py` from `templates/workflows/MANIFEST.yaml`.
+   - The authoritative product caller template is `templates/workflows/ci.yml` (which renders to `.github/workflows/ci.yml` in each product repo, consuming `.github/workflows/ci.yml@{{WORKFLOWS_TAG}}` by pinned tag, with zero path filters and `permissions: contents: read`).
+   - `.github/workflows/product-P1.yml` through `product-P8.yml` and `product-template.yml` are control-plane-level placeholder dispatchers from early Phase-0 prototype development (FD-110).
+2. **Phase Boundary & Scope:**
+   - Per `master/04-phase-map.md` §2 and `master/06-v1-scope.md` §1-3, per-product onboarding (`OT-P4` through `OT-P7`) runs on the Onboarding Track after the Build Track (`BT-0` through `BT-3`). Per-product CI does not run against `control-plane` trunk commits.
+   - The control plane repository lacks a product verification contract (`verification/contract.yaml`), meaning automatic execution of `reusable-ci.yml` on push in `control-plane` would fail.
+3. **Spec Alignment (§33.2):**
+   - MasterSpec §33.2 (L2854–2869) and `tools/evidence/lint_workflow.py` rule LW-03 strictly prohibit `paths:` or `paths-ignore:` filters on workflows emitting or wrapping required status contexts.
+   - Restricting `product-P1` through `product-P8` and `product-template` to manual trigger (`workflow_dispatch:`) ensures they remain available for manual testing and promotion cuts (`scheduled-cut.yml`) while eliminating path filter drift and ensuring 100% compliance with workflow lint rules.
+
+

@@ -1,0 +1,25 @@
+# check<TAB>gate<TAB>mutation<TAB>required-failure-token
+LG-01	lane	Reset the worktree one commit behind origin/integration	behind=1
+LG-02	lane	Touch schemas/registry/.negative-probe from a lane-3 context	foreign=1
+LG-03	lane	Append a comment line to contracts/.negative-probe	l0_paths_touched=1
+LG-04	lane	Modify (not add) a file listed in contracts/gate/aggregates.txt	modified_aggregates=1
+LG-05	lane	Un-break the lane's declared seeded-defect case so the suite goes green on broken input	seeded_defect=PASSED
+LG-06	lane	Edit one frozen fixture byte	fixtures_match=0
+LG-07	lane	Delete one negative case from the battery manifest	unproven=1
+LG-08	lane	Drop one row from a registry the lane enumerates	narrowed=1
+LG-09	lane	Replay an approval by the PR author, then an approval by the machine account	author_distinct=0
+LG-10	lane	Add an if:false to a job emitting a required check name	skipped=1
+LG-11	lane	Add an import of reconciler/ into a lane-1 file	foreign_refs=1
+LG-12	lane	Flip the local verdict file to FAIL while CI says PASS	delta=1
+IG-01	integration	Re-order the cycle's merges to L3 before L1	out_of_order=1
+IG-02	integration	Un-break one lane's seeded-defect case at the merged head	seeded_defects=4/5
+IG-03	integration	Edit one frozen fixture byte	fixtures_match=0
+IG-04	integration	Delete one row from this manifest	unproven=1
+IG-05	integration	Drop one row from a registry the reconciler enumerates	narrowed=1
+IG-06	integration	Point one mechanical invariant at a non-existent check name	dangling_refs=1
+IG-07	integration	Mark one scheduled AT asserted instead of executed	asserted_only=1
+IG-08	integration	Touch schemas/registry/.negative-probe inside a merge commit in the range	foreign=1
+IG-09	integration	Add the machine account to a scratch CODEOWNERS in the verifier's sandbox	machine_codeowners=1
+IG-10	integration	Add an if:false to a job emitting a required check name	skipped=1
+IG-11	integration	Present a sign-off by the author of the cycle's largest diff	self_signoff=1
+IG-12	integration	Flip the local verdict file to FAIL while CI says PASS	delta=1

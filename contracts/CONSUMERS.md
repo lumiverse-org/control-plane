@@ -2,3 +2,44 @@
 
 Tracks which lanes consume each contract.
 Regenerate: python3 contracts/ci/append_register.py and then rebuild this file.
+
+C-CAP-VOCAB-1  registry/capability.vocabulary.v1.yaml  L1,L3,L5
+C-REG-PEOPLE-1  registry/people.registry.v1.json  L1,L3,L5
+C-REG-ROLES-1  registry/roles.registry.v1.json  L1,L3,L5
+C-REG-PRODUCT-2  registry/product.contract.v2.json  L1,L2,L3,L4,L5
+C-REG-VERIFICATION-1  registry/verification.contract.v1.json  L1,L2
+C-REG-SERVICE-1  registry/service.contract.v1.json  L1,L3
+C-REG-TOPOLOGY-1  registry/topology.registry.v1.json  L1,L3,L5
+C-REG-PLATFORM-1  registry/platform.record.v1.json  L1,L2,L3,L4
+C-REC-ENV-1  records/record.envelope.v1.json  L2,L3,L4
+C-EVT-ENV-1  records/event.envelope.v1.json  L1,L2,L3,L4,L5
+C-EVT-ENUM-1  records/event-type.enum.v1.yaml  L1,L2,L3,L4,L5
+C-REC-STORE-MAP-1  records/store-map.v1.yaml  L2,L3,L4
+C-WF-IFACE-1  workflows/reusable-workflow.interface.v1.yaml  L2,L3,L5
+C-WF-CHECKS-1  workflows/required-checks.v1.yaml  L2,L3,L5
+C-WF-SECRETS-1  workflows/secret-tiers.v1.yaml  L2,L5
+C-WF-EVIDENCE-1  workflows/evidence-chain.v1.yaml  L2,L4
+C-RECON-SET-1  reconciler/comparison-set.v1.yaml  L1,L3,L5
+C-RECON-FIND-1  reconciler/drift-finding.v1.json  L2,L3,L4,L5
+C-RECON-REPAIR-1  reconciler/repair-record.v1.json  L3,L4
+C-PROV-OP-1  provisioning/operation.v1.yaml  L1,L3,L5
+C-ACC-PERM-1  access/permission-model.v1.yaml  L1,L3,L5
+C-ACC-PROT-1  access/protection.template.v1.yaml  L2,L3,L5
+C-ACC-LAYER-1  access/layer-split.v1.yaml  L3,L4,L5
+C-CFG-SCHEMA-IDS-1  schema-ids.yaml  L0,L1
+C-CFG-ESTATE-1  estate.yaml  L0,L2,L4,L5
+C-CFG-TOOLING-1  tooling.lock  L0
+C-CFG-ENV-SCHEMA-1  environment-schema.yaml  L5
+C-EVT-TYPES-1  event-types/event-type.enum.v1.yaml  L1,L4
+C-CLI-VALIDATE-1  cli/registry-validate.yaml  L0
+C-WF-CTX-1  workflow-io/required-contexts.tsv  L1,L2
+C-EV-VER-OBS-1  evidence/version-observation.yaml  L3,L4
+C-EV-11Q-1  evidence/eleven-question-map.yaml  L1,L2,L3,L4,L5
+C-L3-HARNESS-1  l3-test-harness.env  L3
+C-L3-ORG-GATE-1  l3-live-org-gate.md  L3
+C-L4-RECORDS-1  l4-records.yaml  L4
+C-CFG-INTEG-1  integration.yaml  L0
+C-DOC-AT-PHASE-1  docs/plan/at-phase-map.yaml  L0,L1,L2,L3,L4,L5
+C-DOC-ID-XWALK-1  docs/plan/id-crosswalk.md  L0,L1,L2,L3,L4,L5
+C-DOC-CP4-RULES-1  docs/build/rulesets/cp-4-contract-tags.json  L0
+C-DOC-DR-L3-04-1  docs/decisions/D-L3-04.md  L3

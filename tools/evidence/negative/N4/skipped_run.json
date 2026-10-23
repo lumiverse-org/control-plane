@@ -1,0 +1,7 @@
+{
+  "check_runs": [
+    {"name": "unit-tests",        "conclusion": "skipped"},
+    {"name": "integration-tests", "conclusion": "success"},
+    {"name": "build",             "conclusion": "success"}
+  ]
+}

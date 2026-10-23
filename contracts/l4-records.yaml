@@ -1,0 +1,94 @@
+# --- CONTRACT HEADER (frozen) ---
+contract_id: C-L4-RECORDS-1
+contract_version: 1
+owner: L0
+publishing_lane: L0
+consuming_lanes: [L4]
+spec_refs: ["Section 97.2", "Section 97.3"]
+ccr_required: true
+
+# The 12 Canonical Record Stores of Section 97.2
+stores:
+  - store: incidents
+    path: records/incidents/
+    written_by: L4
+    generates: [incident_rate, mttr, severity_distribution]
+    freshness_class: amber
+    record_body: incident
+
+  - store: postmortems
+    path: records/postmortems/
+    written_by: L4
+    generates: [postmortem_completion_rate]
+    freshness_class: amber
+    record_body: null
+
+  - store: uat
+    path: records/uat/
+    written_by: L4
+    generates: [uat_pass_rate, gate_evidence]
+    freshness_class: blocking
+    record_body: null
+
+  - store: estimates
+    path: records/estimates/
+    written_by: L4
+    generates: [estimation_accuracy]
+    freshness_class: amber
+    record_body: null
+
+  - store: deployments
+    path: records/deployments/
+    written_by: L4
+    generates: [deployment_frequency, change_failure_rate]
+    freshness_class: blocking
+    record_body: deployment
+
+  - store: support
+    path: records/support/
+    written_by: L4
+    generates: [support_response_time, bug_yield]
+    freshness_class: amber
+    record_body: null
+
+  - store: decisions
+    path: records/decisions/
+    written_by: L4
+    generates: [decision_latency]
+    freshness_class: blocking
+    record_body: decision
+
+  - store: restoration
+    path: records/restoration/
+    written_by: L4
+    generates: [restore_test_success_rate]
+    freshness_class: blocking
+    record_body: null
+
+  - store: releases
+    path: records/releases/
+    written_by: L4
+    generates: [release_velocity]
+    freshness_class: amber
+    record_body: null
+
+  - store: exceptions
+    path: records/exceptions/
+    written_by: L4
+    generates: [exception_count, expired_exceptions]
+    freshness_class: blocking
+    record_body: null
+
+  - store: rotation
+    path: records/rotation/
+    written_by: L4
+    generates: [rotation_frequency]
+    freshness_class: amber
+    record_body: null
+
+  - store: gates
+    path: records/gates/
+    written_by: L4
+    generates: [gate_pass_rate]
+    freshness_class: blocking
+    record_body: null

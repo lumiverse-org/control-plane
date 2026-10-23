@@ -1,0 +1,4 @@
+id	T7
+standard	Immutable-artifact pipeline same digest staging to production
+defined_in	Sections 32-34
+spec_line	L8785-L8798

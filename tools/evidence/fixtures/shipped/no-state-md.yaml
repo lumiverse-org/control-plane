@@ -1,0 +1,8 @@
+merged: true
+artifact_built: "sha256:production001"
+deployed: true
+deploy_success: true
+smoke_passed: true
+version_recorded: "sha256:production001"
+health_green: true
+# state_md_updated intentionally absent — merged is not shipped (§34.1)

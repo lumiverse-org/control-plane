@@ -1,0 +1,25 @@
+people:
+  - id: person-approver
+    github_login: approver-login
+    identity_class: human
+    availability: active
+    access_status: provisioned
+    capabilities: [production-approval, release-signoff]
+  - id: person-deployer
+    github_login: deployer-login
+    identity_class: human
+    availability: active
+    access_status: provisioned
+    capabilities: [devops, incident-response]
+  - id: machine-hermes
+    github_login: hermes-bot
+    identity_class: machine
+    availability: active
+    access_status: provisioned
+    capabilities: [devops]
+  - id: person-lapsed
+    github_login: lapsed-login
+    identity_class: human
+    availability: departed
+    access_status: revoked
+    capabilities: [production-approval]

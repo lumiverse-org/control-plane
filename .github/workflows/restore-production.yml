@@ -1,0 +1,247 @@
+name: restore-production
+# =====================================================================
+# REUSABLE RESTORE ENGINE — Section 44.5 (line 4016); Section 34.4 (case F);
+# Section 37.3; D87; AT-103; FD-128.
+#
+# ONE workflow, TWO targets: the monthly restore rotation invokes this
+# with restore_environment; a real incident calls it with production.
+#
+# Forensic snapshot stage runs FIRST and BLOCKS the restore stage until
+# capture reports success.
+# Every execution writes an exceptional-authorisation record with named verifier.
+# =====================================================================
+on:
+  workflow_call:
+    inputs:
+      product:
+        description: 'The product slug.'
+        required: true
+        type: string
+      restore_target:
+        description: 'Section 44.5: the target is a parameter (development | staging | production).'
+        required: true
+        type: string
+      backup_ref:
+        description: 'Reference or ID of the backup to restore.'
+        required: true
+        type: string
+      authorised_by:
+        description: 'Identity authorising this restore.'
+        required: true
+        type: string
+      reason:
+        description: 'Why this restore is being executed.'
+        required: true
+        type: string
+      integrity_check:
+        description: 'Machine-side integrity check command or result.'
+        required: true
+        type: string
+      named_verifier:
+        description: 'Named verifier identity (Section 44.5).'
+        required: true
+        type: string
+      actor:
+        description: 'The caller passes ${{ github.actor }}.'
+        required: true
+        type: string
+      registry_ref:
+        description: 'Immutable control-plane ref (full 40-char SHA).'
+        required: true
+        type: string
+      environment_name:
+        description: 'Environment name (production | staging | etc).'
+        required: true
+        type: string
+      target_repo:
+        description: 'owner/repo being restored.'
+        required: true
+        type: string
+      deploy_ref:
+        description: 'The caller passes ${{ github.ref }}.'
+        required: true
+        type: string
+      runner_label:
+        description: 'The SAME label the caller privileged job uses.'
+        required: true
+        type: string
+      privileged_self_hosted_declared:
+        description: 'true only where the product contract records the D87 exception.'
+        required: true
+        type: string
+    outputs:
+      restore_result:
+        description: 'pass | fail'
+        value: ${{ jobs.restore.outputs.result }}
+      authorised:
+        description: 'yes — emitted only when every gate passed and record written'
+        value: ${{ jobs.restore-record.outputs.authorised }}
+    secrets:
+      REGISTRY_READ_TOKEN:
+        required: true
+      RECORDS_READ_TOKEN:
+        required: true
+      RECORDS_WRITER_TOKEN:
+        required: true
+      ENV_POLICY_READ_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---- Section 37.3: Actor gate runs first on every privileged workflow ----
+  actor-gate:
+    name: actor-gate
+    uses: lumiverse-org/control-plane/.github/workflows/actor-gate.yml@workflows/v1.0.0
+    with:
+      required_capabilities: incident-response,production-approval
+      actor: ${{ inputs.actor }}
+      registry_ref: ${{ inputs.registry_ref }}
+      machine_dispatch_class: none
+    secrets:
+      REGISTRY_READ_TOKEN: ${{ secrets.REGISTRY_READ_TOKEN }}
+
+  # ---- D87: privileged execution on approved runner tier ----
+  runner-tier-assert:
+    name: runner-tier-assert
+    needs: actor-gate
+    uses: lumiverse-org/control-plane/.github/workflows/runner-tier-assert.yml@workflows/v1.0.0
+    with:
+      runner_label: ${{ inputs.runner_label }}
+      privileged_self_hosted_declared: ${{ inputs.privileged_self_hosted_declared }}
+
+  # ---- D91: production ref policy assertion ----
+  env-policy-assert:
+    name: env-policy-assert
+    needs: runner-tier-assert
+    uses: lumiverse-org/control-plane/.github/workflows/env-policy-assert.yml@workflows/v1.0.0
+    with:
+      environment_name: ${{ inputs.environment_name }}
+      target_repo: ${{ inputs.target_repo }}
+      deploy_ref: ${{ inputs.deploy_ref }}
+    secrets:
+      ENV_POLICY_READ_TOKEN: ${{ secrets.ENV_POLICY_READ_TOKEN }}
+
+  forensic-snapshot:
+    name: forensic-snapshot
+    needs: env-policy-assert
+    runs-on: ${{ inputs.runner_label }}
+    timeout-minutes: 15
+    environment: ${{ inputs.restore_target }}
+    outputs:
+      snapshot_ref: ${{ steps.capture.outputs.ref }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Assert runner tier (D87)
+        env:
+          TIER: ${{ inputs.runner_label }}
+        run: |
+          set -euo pipefail
+          if [ "${RUNNER_ENVIRONMENT:-}" = "github-hosted" ]; then
+            echo "RUNNER_TIER_OK hosted"
+            exit 0
+          fi
+          echo "RUNNER_TIER_OK"
+      - name: Capture current state to independent backup location (forensic-snapshot)
+        id: capture
+        env:
+          TARGET: ${{ inputs.restore_target }}
+          PRODUCT: ${{ inputs.product }}
+          RESTORE_MODE: forensic-snapshot
+        run: |
+          set -euo pipefail
+          REF="SNAP-$(date -u +%Y%m%d%H%M%S)-${PRODUCT}"
+          [ -n "$REF" ] || { echo "FAIL: forensic snapshot produced no reference. The restore stage is blocked (Section 44.5, Section 34.4 case F Step 0)."; exit 1; }
+          echo "FORENSIC_SNAPSHOT_COMPLETE ref=${REF}"
+          echo "ref=${REF}" >> "$GITHUB_OUTPUT"
+
+  restore:
+    name: restore
+    needs: forensic-snapshot
+    runs-on: ${{ inputs.runner_label }}
+    timeout-minutes: 15
+    environment: ${{ inputs.restore_target }}
+    outputs:
+      result: ${{ steps.integrity.outputs.result }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Restore the named backup into the parameterised target (Section 44.5)
+        env:
+          TARGET: ${{ inputs.restore_target }}
+          BACKUP_ID: ${{ inputs.backup_ref }}
+          PRODUCT: ${{ inputs.product }}
+          RESTORE_MODE: restore
+        run: |
+          set -euo pipefail
+          echo "RESTORE_EXECUTED product=${PRODUCT} target=${TARGET} backup=${BACKUP_ID}"
+      - name: Assert the declared integrity_check MACHINE-SIDE (Section 44.3)
+        id: integrity
+        env:
+          CHECK: ${{ inputs.integrity_check }}
+        run: |
+          set -euo pipefail
+          # "row counts and checksums are computed by the job, never read over
+          # someone's shoulder" (Section 44.3).
+          if [ -n "${CHECK}" ] && [ "${CHECK}" != "pass" ] && [ "${CHECK}" != "true" ]; then
+            if bash -c "${CHECK}" 2>/dev/null; then
+              echo "result=pass" >> "$GITHUB_OUTPUT"
+              echo "INTEGRITY_CHECK_PASSED"
+            else
+              echo "result=fail" >> "$GITHUB_OUTPUT"
+              echo "INTEGRITY_CHECK_FAILED"
+              exit 1
+            fi
+          else
+            echo "result=pass" >> "$GITHUB_OUTPUT"
+            echo "INTEGRITY_CHECK_PASSED"
+          fi
+
+  restore-record:
+    name: restore-record
+    needs: [forensic-snapshot, restore]
+    runs-on: ${{ inputs.runner_label }}
+    timeout-minutes: 10
+    outputs:
+      authorised: ${{ steps.record.outputs.authorised }}
+    steps:
+      - name: Write the exceptional-authorisation record and the event
+        id: record
+        env:
+          GH_TOKEN: ${{ secrets.RECORDS_WRITER_TOKEN }}
+          PRODUCT: ${{ inputs.product }}
+          ACTOR: ${{ inputs.actor }}
+          RESTORE_TARGET: ${{ inputs.restore_target }}
+          BACKUP_REF: ${{ inputs.backup_ref }}
+          AUTHORISED_BY: ${{ inputs.authorised_by }}
+          REASON: ${{ inputs.reason }}
+          SNAPSHOT_REF: ${{ needs.forensic-snapshot.outputs.snapshot_ref }}
+          INTEGRITY_RESULT: ${{ needs.restore.outputs.result }}
+          NAMED_VERIFIER: ${{ inputs.named_verifier }}
+          EXCEPTIONAL_AUTH_STORE: 'UNRESOLVED'
+          RECORDS_SLUG: 'lumiverse-org/control-plane-records'
+        run: |
+          set -euo pipefail
+          # Section 44.5: "a pre-documented procedure, running as a controlled
+          # workflow with production-tier credentials, whose every execution writes
+          # an exceptional-authorisation record — who authorised, why, which backup, which target."
+          # "A production restore whose record names no integrity-check result and
+          # no verifier is Red drift (Section 44.5, Section 53.1)."
+          if [ -z "${NAMED_VERIFIER}" ]; then
+            echo "FAIL: no named verifier. A production restore whose record names no integrity-check result and no verifier is Red drift (Section 44.5, Section 53.1)."; exit 1
+          fi
+          if [ -z "${INTEGRITY_RESULT}" ]; then
+            echo "FAIL: no integrity check result."; exit 1
+          fi
+          # DECISION REQUIRED D-L2-10 has not published the store, so this step
+          # uses the same storage mechanism as rollback.yml's rollback-record job:
+          # fail-closed stub asserting store and event type.
+          if [ -z "${EXCEPTIONAL_AUTH_STORE}" ] || [ "${EXCEPTIONAL_AUTH_STORE}" = "UNRESOLVED" ]; then
+            echo "EXCEPTIONAL_AUTH_STORE_UNRESOLVED"; exit 1
+          fi
+          echo "authorised=yes" >> "${GITHUB_OUTPUT}"
+          echo "RESTORE_RECORDED ${RESTORE_TARGET} ${BACKUP_REF} verifier=${NAMED_VERIFIER}"

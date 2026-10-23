@@ -2,6 +2,7 @@
 # Charter-named entry point (L4-00-charter.md DoD-8). Delegates to suite 6.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
+export L4_TMP="${L4_TMP:-$(mktemp -d)}"
 out="$(sh "$HERE/test/suite-06-rqm.sh")"; rc=$?
 echo "$out" | grep -E '^(PASS|FAIL|SKIP) RQ-[1-6] '
 n="$(echo "$out" | grep -c '^PASS RQ-[1-6] ')"

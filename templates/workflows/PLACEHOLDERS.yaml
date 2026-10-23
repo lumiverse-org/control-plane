@@ -1,0 +1,31 @@
+# PLACEHOLDERS.yaml — Template placeholder contract for templates/workflows/**.
+# Authority: L2-05-tasks.md §1 D-L2-08 ratification; PARTITION.md rule 4; FD-124.
+# Substituting component: create-product (Lane 3, Subsystem D, §19.1 L1826-1882).
+# Lane 2 NEVER performs substitution into product repositories.
+#
+# RULES (binding, no exceptions):
+#   1. Every token used in a template must be declared here.
+#   2. Every declared token must be used by at least one template.
+#   3. No token may appear inside a GitHub Actions ${{ }} expression.
+#   4. Templates are consumed by pinned tag ({{WORKFLOWS_TAG}}), never by branch.
+#
+# Token syntax: double-brace {{UPPER_SNAKE_CASE}}
+
+tokens:
+  - "{{BUILD_CONFIG_PATHS}}"
+  - "{{CONFORMANCE_PROFILE}}"
+  - "{{CONTROL_PLANE_REPO}}"
+  - "{{DEFAULT_BRANCH}}"
+  - "{{IDENTITY_MODE}}"
+  - "{{IMAGE_REPO}}"
+  - "{{LOCKFILE_PATHS}}"
+  - "{{ORG}}"
+  - "{{PRODUCT}}"
+  - "{{PRODUCT_NAME}}"
+  - "{{PRODUCT_SLUG}}"
+  - "{{RECORDS_REPO}}"
+  - "{{RUNNER_LABEL}}"
+  - "{{SBOM_FILE}}"
+  - "{{SELF_HOSTED}}"
+  - "{{TARGET_REPO}}"
+  - "{{WORKFLOWS_TAG}}"

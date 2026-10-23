@@ -1,0 +1,114 @@
+ai_restrictions:
+  ai_processing_permitted: true
+  basis: Section 36.4 default posture
+  restricted_paths: []
+ai_runtime_dependency: null
+assignments: []
+automated_containment: null
+business:
+  active_customers: 1200
+  criticality: high
+  revenue_importance: high
+classification:
+  class: commercial
+  domain: payments
+  reliability_criticality: high
+code:
+  accepts_external_contributions: false
+  default_branch: main
+  gsd_version: v1.4.0
+  repositories:
+  - deploys: true
+    name: acme/checkout-svc
+    role: primary
+commitments: []
+conformance_profile: service
+contract_version: 2
+data:
+  classification: customer-data
+  deletion_sla_days: 30
+  deletion_supported: true
+  isolation: dedicated-tenant
+  residency: eu
+  retention_days: 365
+  subprocessors: []
+dependencies:
+  external: []
+  infrastructure: []
+  internal: []
+deployment:
+  artifact_registry: ghcr.io/acme
+  artifact_type: container-image
+  build: github-actions
+  progressive_delivery: none
+  rollback_method: redeploy-previous-tag
+  rollback_supported: true
+  staged_rollout: null
+environments:
+  local: docker-compose
+  production: https://checkout-svc.internal
+  staging: https://checkout-svc.staging.internal
+escalation: role-eng-lead
+identity:
+  created: '2024-01-15'
+  display_name: Checkout Service
+  id: checkout-svc
+  launch_status: launched
+  lifecycle: active
+infrastructure:
+  cache: redis-7
+  database: postgres-14
+  monthly_budget_band:
+    ceiling: 900.0
+    currency: USD
+    expected: 500.0
+  provider: aws
+  provider_outage_behaviour: degrade-read-only
+  region: eu-west-1
+  runtime: python3.11
+observability:
+  alert_channel: '#checkout-svc-alerts'
+  health_endpoint: /healthz
+  metrics: /metrics
+  telemetry_exposure: private-authenticated
+  version_endpoint: /version
+operations:
+  backup_responder: null
+  coverage_window: null
+  critical_incident_response: Page the on-call rotation via PagerDuty; Section 15.1
+    default.
+  detection_expectation: next-business-morning
+  intake_channel: null
+  primary_responder: null
+  support_model: business-hours
+  triager: null
+  weekend_exception_eligible: false
+platform_compatibility: transitional
+platform_migration:
+  target_contract_version: 3
+  target_workflow_version: migrate-v2-to-v3
+  owner: jordan-lee
+  deadline: '2026-12-31'
+  reason: Target platform v3 migration window; Section 60.3
+recovery:
+  backup_frequency: daily
+  backup_retention_days: 30
+  encrypted: true
+  integrity_check: SHA-256 checksum on backup file
+  restore_environment: staging-restore.recovery-fixture.internal
+  restore_procedure: Run ops/restore.sh with backup ID
+  restore_tested: '2026-08-20'
+  rpo_minutes: 60
+  rto_minutes: 120
+  storage_location: AWS S3 ap-south-1 (separate account)
+reversibility_default: fully-reversible
+security:
+  production_db_access: break-glass-only
+  scorecard_minimum: 7.0
+  secrets_location: vault:/acme/checkout-svc
+verification:
+  automated: required
+  contract_path: verification/contract.yaml
+  manual_uat: not-applicable
+  performance: optional
+  smoke_tests: optional

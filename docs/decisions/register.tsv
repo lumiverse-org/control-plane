@@ -1,0 +1,65 @@
+# register.tsv — L0-owned (L0D-DR-2). THE source of truth for every open decision.
+# docs/decisions/open/*.md are RENDERED from this file; never hand-edit them.
+# 10 tab-separated fields: id	priority	gates	title	decider	state	blocks	sources	record	opened
+# state is one of: open | closed | declined | withdrawn  (L0D-DR-4)
+# A source token is <source-id>@<file>. The @ makes a colliding id unique by file.
+REG-001	P0	Ph0	Subsystems G H J O and P are assigned to no lane	L0	closed	L2-T700,L3-05-10,IG-06,IG-07,OT-P7	D-PLAN-01@master/00,D-PLAN-02@master/00,LA-01@master/01,D-REQ-4@master/03,DECISION-1@master/04,D-EE-2@master/05,V1-D1@master/06,V1-D2@master/06,DEC-01@master/07,DECISION-REQUIRED-2@lanes/L1-00,L0-IG-D3@lanes/L0-05,L0-IG-D4@lanes/L0-05,D-L2-12@lanes/L2-06,D-L4-P4-04@lanes/L4-04,D-L4-P5-03@lanes/L4-05,DR-L0-07-F@lanes/L0-07	-	2026-10-22
+REG-002	P0	Ph0	The lane guard sits inside the exclusive path of a lane it judges	L0	closed	L0-02-05,L0-02-06,L0-02-07,L2-T004,IG-08	LA-02@master/01,D-REQ-3@master/03,DEC-02@master/07,D-L2-06@lanes/L2-00,DR-L1-06-D@lanes/L1-06,L0D-LG-1@lanes/L0-02,L0D-LG-2@lanes/L0-02,L0D-LG-3@lanes/L0-02	-	2026-10-22
+REG-003	P1	Ph0	Implementation toolchain language runtime and dependency pinning	L0	closed	L1-001,L1-03-00,L2-T500,L3-P0-02,L4-P2-02,L5-T02	D-EE-1@master/05,L1-D01@lanes/L1-05,validator-runtime@lanes/L1-03,D-3@lanes/L1-04,D-L2-07@lanes/L2-05,L3-D1@lanes/L3-06,D-L3-01@lanes/L3-01,D-L3-04-01@lanes/L3-04,D-L4-TL-1@lanes/L4-06	-	2026-10-22
+REG-004	P1	Ph0	The JSON Schema id host	L0	closed	L1-02-05,L4-P2-02	DECISION-REQUIRED-1@master/09	-	2026-10-22
+REG-005	P1	Ph0	The JSON Schema validator implementation and dialect	L0	closed	L1-03-00,L2-T106,L4-P2-02	DECISION-REQUIRED-2@master/09	-	2026-10-22
+REG-006	P1	Ph0	Commit-signing scope on control-plane lane branches	L0	closed	L1-001,L2-T500,L3-P0-02,L4-P2-02,L5-T01,L5-T07	DECISION-REQUIRED-4@master/09	-	2026-10-22
+REG-007	P1	Ph0	The contracts surface list filenames and directory layout	L0	closed	L1-001,L1-03-00,L2-T500,L3-P0-03,L4-P2-02	G-5@master/INDEX,G-10@master/INDEX,R-9@master/INDEX	-	2026-10-22
+REG-008	P1	Ph0	Where the spec root-named registry files physically live	L0	closed	L1-001,L1-107	D-REQ-2@master/03	-	2026-10-22
+REG-009	P1	Ph0	The GitHub organisation login and the two calendar anchors	L0	closed	L0-00-01,L4-P1-T02,L5-T05,L3-04-01	D-L4-01@lanes/L4-01,DECISION-5@master/04,D-L4-TL-5@lanes/L4-06	-	2026-10-22
+REG-010	P1	Ph0	L0 own branch prefix	L0	closed	L0-02-04	D-REQ-1@master/03	-	2026-10-22
+REG-011	P1	Ph0	Branch-name grammar task-id grammar and the phase crosswalk	L0	closed	L0-02-04,L0-03-03,L1-001,L2-T500,L3-P0-02,L4-P2-02,L5-T01	C-1@master/INDEX,C-2@master/INDEX,C-18@master/INDEX,C-19@master/INDEX,C-20@master/INDEX,G-2@master/INDEX,D-08-5@master/08	-	2026-10-22
+REG-012	P1	Ph0	Git conventions merge method staging branch creation message and templates	L0	closed	L0-03-05,L1-001,L2-T500,L3-P0-02,L4-P2-02,L5-T01	C-3@master/INDEX,C-4@master/INDEX,C-5@master/INDEX,C-6@master/INDEX,R-6@master/INDEX	-	2026-10-22
+REG-013	P1	Ph0	Branch-protection mechanism and the Phase 0 required-check list	L0	closed	L0-00-01,L5-T07	C-13@master/INDEX,C-14@master/INDEX	-	2026-10-22
+REG-014	P1	Ph0	CODEOWNERS content human identities lane teams or both	L0	closed	L0-00-01,L0-02-05	C-15@master/INDEX,L0D-LG-5@lanes/L0-02	-	2026-10-22
+REG-015	P2	Ph0	Owner and path of the acceptance-test harness	L0	closed	L0-05-05,IG-07	D-EE-3@master/05,L0-IG-D2@lanes/L0-05,G-6@master/INDEX,R-12@master/INDEX	-	2026-10-22
+REG-016	P2	Ph1	The AT to phase map	L0	closed	B2@master/08	D-08-6@master/08	-	2026-10-22
+REG-017	P2	Ph0	The unowned-path schedule sixteen artifacts	L0	closed	L1-101,L2-T700,L3-03-10,L0-07-06	LA-03@master/01,DECISION-2@master/04,DECISION-REQUIRED-1@lanes/L1-00,DECISION-REQUIRED-3@lanes/L1-00,DR-L0-07-A@lanes/L0-07,DR-L0-07-E@lanes/L0-07,D-L2-01@lanes/L2-00,D-08-1@master/08,D-08-3@master/08,framework-registry-path@lanes/L1-03,G-7@master/INDEX	-	2026-10-22
+REG-018	P2	Ph1	The L1 validator invocation contract	L0	closed	L2-T106,L2-T107,L1-06-02	DECISION-REQUIRED-4@lanes/L1-00,D-2@lanes/L1-04,D-L2-02@lanes/L2-00,DR-L1-06-B@lanes/L1-06	-	2026-10-22
+REG-019	P2	Ph1	The record write interface and records-writer commit signing	L0	closed	L2-T544,L2-T545,L4-T313,L4-T314	D-L2-03@lanes/L2-00,D-L4-02@lanes/L4-01,D-L4-P3-02@lanes/L4-03	-	2026-10-22
+REG-020	P2	Ph2	The record stores section 97.2 does not list	L0	open	L2-T174,L2-T176,L3-01-11,L3-01-18,L4-T304	D-L2-08@lanes/L2-03,D-L2-10@lanes/L2-03,D-L3-02@lanes/L3-01,D-L3-03@lanes/L3-01,DEC-L3-02-03@lanes/L3-02,D-L4-P3-01@lanes/L4-03,D-L4-P5-01@lanes/L4-05,R-7@master/INDEX	-	2026-10-22
+REG-021	P2	Ph1	The closed event_type enum mechanism and identifier list	L0	closed	L1-107,L2-T509,L2-T512,L4-T305,L4-T308	LA-05@master/01,D-L4-01@lanes/L4-00,DECISION-L1-02-B@lanes/L1-02,L1-D05@lanes/L1-05,D-L2-08@lanes/L2-04,D-L4-P3-03@lanes/L4-03	-	2026-10-22
+REG-022	P2	Ph2	The metric register content boundary os-health.yaml	L0	closed	L1-605	LA-04@master/01,D-L4-02@lanes/L4-00,L1-D04@lanes/L1-05	-	2026-10-22
+REG-023	P2	Ph1	The calibrated values and their stated initial numbers	L0	open	L2-P1-T04,L2-P1-T05,L2-P1-T06,L3-P4,L0-06-03,L0-06-12,L3-01-11	L0D-17@lanes/L0-00,L2-P1-DEC-C@lanes/L2-01,DECISION-REQUIRED-3@lanes/L0-06,D-EE-5@master/05	-	2026-10-22
+REG-024	P2	Ph3	Drift classes the spec assigns to nothing	L0	closed	L3-02-02,L3-02-04,L3-02-06,L3-02-14,L3-01-20	DEC-L3-02-01@lanes/L3-02,DEC-L3-02-04@lanes/L3-02,L3-D4@lanes/L3-06,DR-3.2@lanes/L3-03,D-L3-04b@lanes/L3-01	-	2026-10-22
+REG-025	P2	Ph1	The blocking check-run name and required-context composition	L0	closed	L3-02-11,L3-02-12,L3-02-14,L1-04-08,L2-T404	DEC-L3-02-02@lanes/L3-02,DR-L3-01@lanes/L3-00,D-1@lanes/L1-04,D-L2-07@lanes/L2-02	-	2026-10-22
+REG-026	P2	Ph3	Reconciler identity write scope and the records-head anchor	L0	closed	L3-P5-06,L3-P5-07,L3-03-06,L3-03-10,L3-04-02	L3-D3@lanes/L3-06,DR-3.1@lanes/L3-03,D-L3-04-02@lanes/L3-04	-	2026-10-22
+REG-027	P2	Ph5	Which repair class is enabled first and in what order	L0	closed	L3-repair-all	DR-L3-02@lanes/L3-00	-	2026-10-22
+REG-028	P2	Ph3	The seeded canary content location and label	L0	closed	L3-01-20,L3-03-01	DR-L3-03@lanes/L3-00,D-L3-04a@lanes/L3-01	-	2026-10-22
+REG-029	P2	Ph3	The gap-window mark carrier	L0	closed	L3-gap-window	DR-L3-04@lanes/L3-00	-	2026-10-22
+REG-030	P2	Ph2	The scan toolchain security licence and SBOM	L0	open	L2-P1-T01,L2-P1-T05,L2-P1-T06	L2-P1-DEC-A@lanes/L2-01	-	2026-10-22
+REG-031	P2	Ph4	Per-product deploy and restore command fields on product.yaml	L0	open	L3-04-10	L2-P1-DEC-B@lanes/L2-01	-	2026-10-22
+REG-032	P2	Ph4	The filename of the rollback workflow	L0	closed	L2-T133,L2-T309,L2-T554,L2-T701	D-L2-05@lanes/L2-00	-	2026-10-22
+REG-033	P2	Ph2	The template placeholder syntax	L0	open	L2-T300,L2-T301	D-L2-08@lanes/L2-05	-	2026-10-22
+REG-034	P2	Ph4	The version observation transport	L0	closed	L2-T511	D-L2-09@lanes/L2-04	-	2026-10-22
+REG-035	P2	Ph4	The eleven-question field binding	L0	closed	L2-T504	D-L2-07@lanes/L2-04	-	2026-10-22
+REG-036	P2	Ph6	The record field carrying an S18 platform-rebuild identity	L0	closed	L4-deployment-schema	D-L2-09@lanes/L2-02	-	2026-10-22
+REG-037	P1	Ph6	Runtime evidence of privileged-runner tier	L0	closed	L2-T172	D-L2-09@lanes/L2-03	-	2026-10-22
+REG-038	P2	Ph2	The sandbox organisation and fixture-repository slugs for X3	L0	open	L2-T603,L2-T221,L2-T607,L2-T608	D-L2-11@lanes/L2-06	-	2026-10-22
+REG-039	P2	Ph3	The five orphan-detection input surfaces	L0	closed	L3-05-10,L3-05-11,L3-05-12,L3-05-13,L3-05-14,L3-05-17,L3-05-18,L3-05-26,L3-05-27	DR-L3-05-A@lanes/L3-05,DR-L3-05-B@lanes/L3-05,DR-L3-05-C@lanes/L3-05,DR-L3-05-D@lanes/L3-05,DR-L3-05-E@lanes/L3-05	-	2026-10-22
+REG-040	P2	Ph2	product-template seed-data and migration-directory paths	L0	closed	L3-04-10	D-L3-04-03@lanes/L3-04	-	2026-10-22
+REG-041	P2	Ph3	The L3 test-harness contract and live-organisation authorisation	L0	open	L3-07-01,L3-07-10	DR-L3-07-A@lanes/L3-07,DR-L3-07-B@lanes/L3-07	-	2026-10-22
+REG-042	P2	Ph2	The per-product rota shape in people.yaml	L0	closed	L1-311	L1-D03@lanes/L1-05	-	2026-10-22
+REG-043	P2	Ph1	The eight L1 schema-shape rulings	L0	closed	L1-101,L1-107,L1-201,L1-02-09,L1-03-07,L1-03-11,L1-06-01	DECISION-L1-02-A@lanes/L1-02,DECISION-L1-02-C@lanes/L1-02,L1-D02@lanes/L1-05,control-classification-home@lanes/L1-03,records-snapshot-mode@lanes/L1-03,DR-L1-06-A@lanes/L1-06,DR-L1-06-C@lanes/L1-06	-	2026-10-22
+REG-044	P2	Ph1	The bootstrap write path and Gate 1 compensating control	L0	closed	L0-06-03,L1-108	DECISION-REQUIRED-1@lanes/L0-06,DECISION-REQUIRED-2@lanes/L0-06,DR-L0-07-B@lanes/L0-07	-	2026-10-22
+REG-045	P2	Ph1	How many cross-lane contract pairs exist	L0	open	L0-05-07,IG-03,IG-05	L0-IG-D1@lanes/L0-05	-	2026-10-22
+REG-046	P2	Ph1	How many context-holding humans hold Write during V1	L0	open	L0-06-03,L1-108,L0-00-01	V1-D6@master/06	-	2026-10-22
+REG-047	P2	Ph2	Which products are the pilots and are there two or three	L0	open	OT-P4,OT-P5,OT-P6,OT-P7,L0-07-02	V1-D4@master/06,DECISION-4@master/04	-	2026-10-22
+REG-048	P2	Ph1	The universal floor duration sequence tenth item and product identity	L0	open	L0-07-02,L0-07-04,L0-07-09	DECISION-3@master/04,DR-L0-07-C@lanes/L0-07,DR-L0-07-D@lanes/L0-07,DR-L0-07-G@lanes/L0-07	-	2026-10-22
+REG-049	P3	Ph6	Required-check status of digest-invariant-selftest	L0	closed	none	D-L2-08@lanes/L2-02	-	2026-10-22
+REG-050	P3	Ph2	Whether a local GitHub Actions runner is admitted	L0	closed	none	D-L2-13@lanes/L2-06	-	2026-10-22
+REG-051	P3	Ph2	The four L4 record vocabularies	L0	closed	none	D-L4-04@lanes/L4-02,D-L4-05@lanes/L4-02,D-L4-06@lanes/L4-02,D-L4-07@lanes/L4-02	-	2026-10-22
+REG-052	P3	P1	The four L4 derivation rulings	L0	closed	L4-T406,L4-T417	D-L4-P4-01@lanes/L4-04,D-L4-P4-02@lanes/L4-04,D-L4-P4-03@lanes/L4-04,D-L4-P7-03@lanes/L4-07	-	2026-10-22
+REG-053	P3	Ph2	Does D88 govern the section 97.2 decision-record comment	L0	closed	L4-P7-T07	D-L4-P7-01@lanes/L4-07	-	2026-10-22
+REG-054	P2	Ph2	SIG-43 is used twice and the denominator is 46 or 47	L0	closed	L4-P3-06,L4-P7-14	D-L4-P7-02@lanes/L4-07,D-L4-TL-4@lanes/L4-06,D-08-2@master/08,C-26@master/INDEX	-	2026-10-22
+REG-055	P3	Ph1	dot-github and root inside control-plane-records	L0	closed	L4-T003	D-L4-03@lanes/L4-00,C-10@master/INDEX	-	2026-10-22
+REG-056	P3	G3	Boards the Scorecard drop magnitude and the estimate exemption	L0	closed	none	D-L4-P5-02@lanes/L4-05,D-L4-P5-04@lanes/L4-05,D-L4-P5-05@lanes/L4-05	-	2026-10-22
+REG-057	P2	Ph1	Phase 0 and Phase 1 overlap on the records-repository skeleton	L0	closed	L4-T002,L4-T003	D-L4-TL-3@lanes/L4-06	-	2026-10-22
+REG-058	P2	Ph2	Is DevLake installed in V1	L0	closed	L5-ops-vm-compose	V1-D3@master/06	-	2026-10-22
+REG-059	P2	Ph2	Does the operational asset inventory ship a V1 sliver	L0	closed	L5-assets	V1-D5@master/06	-	2026-10-22
+REG-060	P2	Ph4	The seven design-open items of section 99.3	L0	open	none	L0D-10@lanes/L0-00,L0D-11@lanes/L0-00,L0D-12@lanes/L0-00,L0D-13@lanes/L0-00,L0D-14@lanes/L0-00,L0D-15@lanes/L0-00,L0D-16@lanes/L0-00,D-EE-4@master/05,DECISION-REQUIRED-3@master/09	-	2026-10-22

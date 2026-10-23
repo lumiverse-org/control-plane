@@ -1,0 +1,4 @@
+registry_version: 1
+roles:
+  - id: test_role
+    default_capabilities: [code-review, security-review]

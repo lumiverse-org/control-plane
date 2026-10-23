@@ -1,0 +1,19 @@
+# Version observation transport fixture for consuming lanes (L3, L4) (D-L2-09, §41.2)
+contract_version: 1
+runner_label: "ubuntu-latest"
+credential_secret_name: "VERSION_OBSERVATION_TOKEN"
+targets_file: "config/version-targets.yaml"
+timeout_seconds: 30
+endpoints:
+  path: "/version"
+  method: "GET"
+  expected_content_type: "application/json"
+sample_observation:
+  observed_at: "2026-10-22T20:00:00Z"
+  product: "Product-1"
+  environment: "staging"
+  endpoint: "https://staging.product-1.internal/version"
+  status_code: 200
+  observed_digest: "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
+  git_commit: "465415c2a129d2b2cc98c36395371b2680be908e"
+  build_number: "42"

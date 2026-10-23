@@ -43,8 +43,12 @@ jobs:
         run: |
           set -euo pipefail
           # PARTITION.md rule 4. tools/evidence/ reaches other lanes only
-          # through contracts/.
+          # through contracts/. This checks CODE, not documentation -- a
+          # handoff doc (e.g. HANDOFF.md) is expected to name which lane
+          # consumes what it writes, and doing so is not a code-level
+          # cross-lane reach.
           HITS="$(grep -rlE 'schemas/records/|registries/|metrics/|reconciler/|access/' \
+                    --include='*.py' --include='*.sh' \
                     tools/evidence/ || true)"
           if [ -n "${HITS}" ]; then
             COUNT="$(echo "${HITS}" | grep -v '^[[:space:]]*$' | wc -l | tr -d ' ')"

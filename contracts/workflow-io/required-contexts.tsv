@@ -1,0 +1,17 @@
+# --- CONTRACT HEADER (frozen) ---
+# contract_id: C-WF-CTX-1
+# contract_version: 1
+# owner: L0
+# publishing_lane: L0
+# consuming_lanes: [L1, L2]
+# spec_refs: ["Section 11.3", "Section 97.3", "Section 98.2", "D-1"]
+# ccr_required: true
+# context	phase	lane	scope
+tests	4	L2	product
+build	4	L2	product
+security-scan	4	L2	product
+contract-validation	4	L2	product
+reviewer-matrix-validation	4	L2	product
+parity-check	4	L2	product
+verification-contract	5	L2	product
+control-plane/blocking-drift	6	L3	product

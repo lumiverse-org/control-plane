@@ -1,0 +1,24 @@
+# Environment parity configuration fixture for consuming lanes (L5) (FD-014)
+contract_version: 1
+environment: staging
+variables:
+  - name: PORT
+    type: number
+    required: true
+    description: "Service HTTP port binding (8080-8088)"
+  - name: APP_ENV
+    type: string
+    required: true
+    description: "Environment designator (dev, staging, production)"
+  - name: DB_CONNECTION_STRING
+    type: secret
+    required: true
+    description: "Database connection URI"
+  - name: FEATURE_AI_CAGE_ENABLED
+    type: boolean
+    required: false
+    description: "Toggle for AI cage sandbox runtime"
+  - name: RECORDS_WRITER_TOKEN
+    type: secret
+    required: true
+    description: "Installation token for control-plane-records"

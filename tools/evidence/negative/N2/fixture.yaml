@@ -1,0 +1,8 @@
+case: N2
+description: Branch matching no lane/[1-5]/* prefix
+branch: feature/something-unchecked
+changed_paths:
+  - .github/workflows/ci.yml
+expected: lane-guard fails closed (non-zero exit)
+guard: lane-guard.yml
+assertion: branch name does not match lane/[1-5]/* pattern

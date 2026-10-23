@@ -1,0 +1,12 @@
+# Merge train integration configuration fixture for consuming lanes (L0) (FD-009, §97.3)
+contract_version: 1
+integration:
+  cadence: daily            # daily | weekly | monthly | paused | stopped
+  prs_per_lane_per_cycle: 3 # calibrated configuration
+  max_train_depth: 5
+  timeout_minutes_per_lane: 45
+  auto_rollback_on_failure: true
+  allowed_windows:
+    - start: "02:00"
+      end: "06:00"
+      timezone: "UTC"

@@ -1,0 +1,5 @@
+id	S12
+state	Mobile or store-delivered product
+spec_line	L8819
+ai_gate	no
+prereq	profile-client-app

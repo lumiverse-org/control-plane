@@ -1,4 +1,4 @@
-﻿# L1-05 — LANE 1 ATOMIC TASK LIST
+# L1-05 — LANE 1 ATOMIC TASK LIST
 
 **Lane 1 — Registries and Contracts.** Subsystems **A** (control-plane repository) and **B** (schema validation and CI gate engine), spec §99.2.
 **Repository:** `control-plane` (PARTITION.md, Repositories table).
@@ -351,10 +351,10 @@ PREFLIGHT OK
 
 ### L1-003 — CLI contract: exit codes, output grammar, `--today`
 
-> # FD-094: Option B grammar — updated 2026-09-09
+> # FD-094 / FD-120: Option B grammar — updated 2026-10-21. NOTE: report.py is superseded by FD-120, not built. Option B (cli.py + rules/registry.py, R01-R18) is the real, already-shipped interface.
 
 **PHASE:** L1.0 · **SIZE:** M · **DEPENDS:** L1-002 · **SPEC:** §99.2 B; §15.5; PARTITION rule 4 (Lane 2 consumes this CLI, never Lane 1 source)
-**FILES:** `validators/registry/cli.py`, `validators/registry/report.py`, `validators/registry/tests/test_cli_contract.py`
+**FILES:** `validators/registry/cli.py`, `validators/registry/report.py` (superseded by FD-120, not built), `validators/registry/tests/test_cli_contract.py`
 
 This CLI is the **only** interface Lane 2 may call. Its grammar is frozen from this task onward; changing it afterwards is a Contract Change Request (PARTITION rule 2), not an edit.
 
@@ -380,7 +380,7 @@ cd "$REPO_ROOT"
 git fetch origin && git checkout -B lane/1/l1-003 origin/integration
 ```
 
-Author `validators/registry/report.py` exporting a frozen dataclass `Error(rule_id, path, pointer, message)`, functions `render_text(errors, n_files) -> str` and `render_json(errors, n_files) -> str`, and the constants `EXIT_OK = 0`, `EXIT_INVALID = 1`, `EXIT_USAGE = 2`, `EXIT_INTERNAL = 3`.
+*(Note: `validators/registry/report.py` is superseded by FD-120 / FD-094, not built. Option B `validators/registry/cli.py` + `rules/registry.py` provides the live implementation.)*
 
 Author `validators/registry/cli.py` exporting `main(argv=None) -> int` implementing the table above. Parse `--today` with `datetime.date.fromisoformat`; a malformed value is exit 2.
 
@@ -479,8 +479,11 @@ DUP_RULE=L-YML-01
 
 ### L1-005 — Rule registry, fixture harness, RULES.md index
 
+> # SUPERSEDED BY FD-120 / FD-094 — NOT BUILT.
+> Option D (discover() / harness.py / APPLIES_TO / Error) is retired. Option B (cli.py + rules/registry.py, R01-R18) is the real, already-shipped interface. Do not resurrect harness.py or the module-discovery harness.
+
 **PHASE:** L1.0 · **SIZE:** M · **DEPENDS:** L1-003, L1-004 · **SPEC:** §99.2 B; §101 preamble (a `mechanical` invariant must name the live check that enforces it)
-**FILES:** `validators/registry/rules/__init__.py`, `validators/registry/harness.py`, `validators/registry/RULES.md`, `validators/registry/tests/test_harness.py`
+**FILES:** `validators/registry/rules/__init__.py`, `validators/registry/harness.py` (superseded by FD-120, not built), `validators/registry/RULES.md`, `validators/registry/tests/test_harness.py`
 
 Every rule from here on is a module in `validators/registry/rules/` exposing exactly four names:
 
@@ -741,8 +744,11 @@ ERRORS=0
 
 ### L1-104 — `people.yaml` schema including `work_arrangement`
 
+> # SUPERSEDED BY FD-119 — NOT BUILT.
+> The flat `registries/people.yaml` and its schema `people.registry.v1.schema.json` are retired. The directory-based `registries/people/*.yaml` (already populated, wired into R01/R02/R08/R11) is the only people registry. Do not create a flat file alongside it.
+
 **PHASE:** L1.1 · **SIZE:** L · **DEPENDS:** L1-101 · **SPEC:** §7 code block; §7.1; §7.3 (D111); §76.2; §60.2
-**FILES:** `schemas/registry/people.registry.v1.schema.json`, `validators/registry/tests/test_people_schema.py`, `validators/registry/fixtures/people/**`
+**FILES:** `schemas/registry/people.registry.v1.schema.json` (superseded by FD-119, not built), `validators/registry/tests/test_people_schema.py`, `validators/registry/fixtures/people/**`
 
 **Schema shape** — top-level object, `additionalProperties: false`:
 
@@ -821,8 +827,11 @@ HAS_ROTA=False
 
 ### L1-105 — `registries/people.yaml` empty skeleton
 
+> # SUPERSEDED BY FD-119 — NOT BUILT.
+> The flat `registries/people.yaml` is retired. The directory-based `registries/people/*.yaml` (already populated, wired into R01/R02/R08/R11) is the only people registry. Do not create a flat file alongside it.
+
 **PHASE:** L1.1 · **SIZE:** S · **DEPENDS:** L1-104 · **SPEC:** §98.2 Phase 1; §0.6 (captured content); §99.6 secondary risks
-**FILES:** `registries/people.yaml`
+**FILES:** `registries/people.yaml` (superseded by FD-119, not built)
 
 The roster is **captured content** (§0.6): §99.6 states the current-configuration snapshots "are configuration captured from their source, never inferred from this document". **Do not copy any name from §78 into this file.** The file's declared owner is the Founder (§52.6); they populate it.
 
@@ -6004,20 +6013,20 @@ bash validators/registry/tools/lane_verify.sh [--with-l1-311 | --without-l1-311]
 
 `--without-l1-311` was the default while L1-D03 was open; L1-D03 is now resolved (2026-09-16) and L1-311 is unblocked.
 
-**The six checks:**
+**The six checks (updated per FD-120 for Option B):**
 
 | # | Check | How |
 |---|---|---|
-| 1 | The whole suite passes at the expected count | `python -m pytest validators/registry/tests -q`, then assert the summary line is exactly `698 passed, 3 xfailed` without `--with-l1-311`, or `708 passed, 3 xfailed` with it |
-| 2 | Every rule module is discoverable and well-formed | `discover()` returns without raising, and every returned module exposes all four names |
-| 3 | Every discovered rule has a row in `RULES.md`, and every `R-` row in `RULES.md` is discoverable | set equality both ways |
-| 4 | Every live registry file validates, or fails only for a recorded known-red reason | run the CLI over `registries/` with `--today`, and assert the error set equals exactly the two known-red errors: R-CAP-02 on the `founder` row (L1-103) and R-INV-01 on the artifact count (L1-505) |
+| 1 | The whole suite passes at the expected count | `python -m pytest validators/registry/tests -q`, summary is `697 passed, 3 xfailed` (updated per FD-120) |
+| 2 | Option B rule registry is well-formed | all rules in `rules/registry.py` (R01-R18) import cleanly and dispatch via `validators.registry.cli` |
+| 3 | Every rule module is documented | every rule in `rules/registry.py` is documented in `validators/registry/` |
+| 4 | Every live registry file validates via Option B CLI | `python -m validators.registry.cli --root . --as-of $(date +%Y-%m-%d) --records-root records/ --summary` reports `Overall: PASS (18 rules)` |
 | 5 | No file outside the four owned trees was touched by this lane | `git diff --name-only origin/main...HEAD` matches only `schemas/registry/`, `schemas/product/`, `registries/`, `validators/registry/` |
 | 6 | The suite runs inside the runtime budget | wall-clock under 120 seconds |
 
 **The three xfails are named, not counted loosely.** They are: the `spec_founder_row` case at L1-202, and the two conformance clauses at L1-308 (`R-PRD-21`'s consumer-contract clause and `R-PRD-23`'s exception-resolution clause). The script asserts the pytest summary names exactly `3 xfailed`; a fourth xfail means a test was silenced rather than fixed, and that is a failure of check 1.
 
-**Check 4 is the AT-102 principle applied to this lane.** A lane_verify that reported "no errors" over a live tree carrying two known contradictions would be a validator that found nothing, and §53.1's seeded-canary discipline says such a run is assumed broken. The two known-red errors are the lane's own canary: if either stops firing, either L0 answered a blocker — in which case the script's expected set changes in the same commit as the fix — or a rule silently stopped working.
+**Check 4 is the AT-102 principle applied to this lane.** Live validation runs through the Option B `validators.registry.cli` CLI interface over all active registries.
 
 **The runtime budget is a Lane 1 declaration, not a spec citation.** §51.2's platform SLOs are **Lane 5**'s and govern the control plane's services, not this suite. 120 seconds is chosen so the gate stays usable as a pre-push check. If the suite exceeds it, that is a STOP.
 
@@ -6031,7 +6040,7 @@ git status --porcelain
 git checkout -B lane/1/l1-904 origin/integration
 mkdir -p validators/registry/tools
 python -m pytest validators/registry/tests -q | tail -1
-python -c "from validators.registry.rules import discover; print('RULES=%d' % len(discover()))"
+python -m validators.registry.cli --root . --as-of $(date +%Y-%m-%d) --records-root records/ --summary
 git diff --name-only origin/main...HEAD | grep -vE '^(schemas/registry/|schemas/product/|registries/|validators/registry/)' | wc -l
 ```
 
@@ -6041,18 +6050,18 @@ Author `validators/registry/tools/lane_verify.sh` implementing the six checks, t
 set -euo pipefail
 cd "$REPO_ROOT"
 chmod +x validators/registry/tools/lane_verify.sh
-bash validators/registry/tools/lane_verify.sh --without-l1-311
+bash validators/registry/tools/lane_verify.sh
 ```
 
 **ACCEPTANCE**
 
 | # | Command | Expected output |
 |---|---|---|
-| 1 | `bash validators/registry/tools/lane_verify.sh --without-l1-311` | final line `LANE 1 VERIFY OK` |
-| 2 | `bash validators/registry/tools/lane_verify.sh --without-l1-311 >/dev/null 2>&1; echo "EXIT=$?"` | `EXIT=0` |
-| 3 | `python -m pytest validators/registry/tests -q \| tail -1 \| grep -oE "^[0-9]+ passed, [0-9]+ xfailed"` | `698 passed, 3 xfailed` |
+| 1 | `bash validators/registry/tools/lane_verify.sh` | final line `LANE 1 VERIFY OK` |
+| 2 | `bash validators/registry/tools/lane_verify.sh >/dev/null 2>&1; echo "EXIT=$?"` | `EXIT=0` |
+| 3 | `python -m pytest validators/registry/tests -q \| tail -1 \| grep -oE "^[0-9]+ passed, [0-9]+ xfailed"` | `697 passed, 3 xfailed` |
 | 4 | `git diff --name-only origin/main...HEAD \| grep -cvE '^(schemas/registry/|schemas/product/|registries/|validators/registry/)'` | `0` |
-| 5 | `bash validators/registry/tools/lane_verify.sh --without-l1-311 \| grep -c "KNOWN-RED"` | `2` |
+| 5 | `python -m validators.registry.cli --root . --as-of $(date +%Y-%m-%d) --records-root records/ --summary` | `Overall: PASS (18 rules)` |
 | 6 | `/usr/bin/time -f "%e" python -m pytest validators/registry/tests -q >/dev/null 2>/tmp/t; awk '{print ($1 < 120) ? "UNDER_BUDGET" : "OVER_BUDGET"}' /tmp/t` | `UNDER_BUDGET` |
 
 **SELF-VERIFY**

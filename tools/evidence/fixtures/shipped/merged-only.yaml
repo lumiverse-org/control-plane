@@ -1,0 +1,3 @@
+merged: true
+# artifact_built, deployed, deploy_success, smoke_passed,
+# version_recorded, health_green, state_md_updated all absent

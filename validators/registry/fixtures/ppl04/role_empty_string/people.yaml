@@ -1,0 +1,13 @@
+registry_version: 1
+people:
+  - id: dev-a
+    display_name: "Dev A"
+    github_login: dev-a
+    role: ""
+    employment_type: employee
+    capabilities: []
+    ai_runtime: null
+    availability: active
+    access_status: provisioned
+    start_date: "2024-01-15"
+    end_date: null

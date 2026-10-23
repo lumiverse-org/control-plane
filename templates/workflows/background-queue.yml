@@ -1,0 +1,27 @@
+# Generated template — rendered by Lane 3 create-product ONLY for products
+# declaring background work (see MANIFEST.yaml rendering condition).
+# Placeholders substituted at render time; none may appear inside ${{ }} expressions.
+# Conditionality is expressed in MANIFEST.yaml, not as an if: in this workflow.
+# No production environment and no production secret reference.
+
+name: background-queue
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: "Background job identifier to enqueue"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  background-queue:
+    name: background-queue
+    uses: {{CONTROL_PLANE_REPO}}/.github/workflows/background-queue.yml@{{WORKFLOWS_TAG}}
+    with:
+      product: "{{PRODUCT_NAME}}"
+      job_id: ${{ github.event.inputs.job_id }}
+    secrets: inherit

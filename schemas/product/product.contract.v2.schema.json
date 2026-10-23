@@ -8,6 +8,7 @@
   "required": [
     "contract_version",
     "platform_compatibility",
+    "platform_migration",
     "conformance_profile",
     "identity",
     "classification",
@@ -36,6 +37,23 @@
     "platform_compatibility": {
       "type": "string",
       "enum": ["supported", "transitional", "unsupported"]
+    },
+    "platform_migration": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["target_contract_version", "target_workflow_version", "owner", "deadline", "reason"],
+          "properties": {
+            "target_contract_version": { "type": "integer", "minimum": 1 },
+            "target_workflow_version": { "type": "string", "minLength": 1 },
+            "owner": { "$ref": "https://control-plane.local/schemas/registry/common/defs.v1.schema.json#/$defs/stableId" },
+            "deadline": { "$ref": "https://control-plane.local/schemas/registry/common/defs.v1.schema.json#/$defs/isoDate" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
     },
     "conformance_profile": {
       "type": "string",
@@ -517,5 +535,13 @@
         }
       ]
     }
+  },
+  "if": {
+    "properties": { "platform_compatibility": { "const": "transitional" } },
+    "required": ["platform_compatibility"]
+  },
+  "then": {
+    "properties": { "platform_migration": { "type": "object" } },
+    "required": ["platform_migration"]
   }
 }

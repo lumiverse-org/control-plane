@@ -1,0 +1,89 @@
+# schemas/records/versions.yaml
+# Record and event schema version register.
+# Master Spec v4.0 Section 60.2 and Section 97.2 line 8888.
+#
+# Rule (§60.2): Write v2 alongside v1 — do not replace.
+# Record and event schemas are versioned contracts.
+# A retired version is marked retired: true, never removed.
+version: 1
+schemas:
+  - file: "schemas/records/record.base.schema.json"
+    name: "record.base"
+    version: 1
+    retired: false
+  - file: "schemas/records/record.probe.schema.json"
+    name: "record.probe"
+    version: 1
+    retired: false
+  - file: "schemas/records/event.envelope.schema.json"
+    name: "event.envelope"
+    version: 1
+    retired: false
+  - file: "schemas/records/incident.schema.json"
+    name: "incident"
+    version: 1
+    retired: false
+  - file: "schemas/records/postmortem.schema.json"
+    name: "postmortem"
+    version: 1
+    retired: false
+  - file: "schemas/records/uat.schema.json"
+    name: "uat"
+    version: 1
+    retired: false
+  - file: "schemas/records/estimate.schema.json"
+    name: "estimate"
+    version: 1
+    retired: false
+  - file: "schemas/records/deployment.schema.json"
+    name: "deployment"
+    version: 1
+    retired: false
+  - file: "schemas/records/restore-test.schema.json"
+    name: "restore-test"
+    version: 1
+    retired: false
+  - file: "schemas/records/decision.schema.json"
+    name: "decision"
+    version: 1
+    retired: false
+  - file: "schemas/records/decision-pending.schema.json"
+    name: "decision-pending"
+    version: 1
+    retired: false
+  - file: "schemas/records/breach.schema.json"
+    name: "breach"
+    version: 1
+    retired: false
+  - file: "schemas/records/deletion-request.schema.json"
+    name: "deletion-request"
+    version: 1
+    retired: false
+  - file: "schemas/records/security-review.schema.json"
+    name: "security-review"
+    version: 1
+    retired: false
+  - file: "schemas/records/eval.schema.json"
+    name: "eval"
+    version: 1
+    retired: false
+  - file: "schemas/records/launch.schema.json"
+    name: "launch"
+    version: 1
+    retired: false
+  - file: "schemas/records/demo.schema.json"
+    name: "demo"
+    version: 1
+    retired: false
+  - file: "schemas/records/support.schema.json"
+    name: "support"
+    version: 1
+    retired: false
+  - file: "schemas/records/onboarding.schema.json"
+    name: "onboarding"
+    version: 1
+    retired: false
+  - file: "schemas/records/leave.schema.json"
+    name: "leave"
+    version: 1
+    retired: false

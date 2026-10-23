@@ -1,0 +1,11 @@
+# ordinal<TAB>phase<TAB>Section 98 reference
+1	Ph1	98.2 Phase 1 Foundation
+2	Ph2	98.2 Phase 2 Visibility
+3	Ph3	98.2 Phase 3 Registries and Standards
+4	Ph4	98.2 Phase 4 Environments
+5	Ph5	98.2 Phase 5 Verification
+6	Ph6	98.2 Phase 6 Delivery Pipeline
+7	Ph7	98.2 Phase 7 GSD Activation
+8	EH	98.3 Early hardening
+9	SA	98.4 Scale activation
+10	COND	Conditional activation on the Section 39.5 trigger
