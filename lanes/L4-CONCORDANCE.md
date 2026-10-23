@@ -466,7 +466,7 @@ sed -n '3300,3306p' L4-05-pipeline-and-boards.md # "built by L4-P3-07" -- an ind
 ls L4-0*.md    # L4-00..L4-05, L4-06-tasks, L4-07 -- there is no metric-register phase file
 ```
 
-**Reconciliation:** 117 index = 82 mapped + 35 residue. 107 bodies = 66 consumed by those 82
+**Reconciliation:** 117 index = 116 mapped + 1 residue. 100 bodies consumed by those 116
 mappings + 41 orphans.
 
 ---
