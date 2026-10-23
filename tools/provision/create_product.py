@@ -26,6 +26,19 @@ invariants 52-53 and AT-001 require: "Add product 21" must never need
 to hand-edit a dashboard, workflow or script that carries its own copy
 of the product list, and this module is one of the places that claim is
 checked against.
+
+Step Executor Implementation Status (tools/provision/executors.py):
+All 13 automated steps have real executor logic built:
+- Purely local/data writes (product_yaml, verification_skeleton,
+  local_environment_contract, register_portfolio_board,
+  register_grafana_scorecard_devlake, register_dependency_graph) write to
+  target fixture directories under test.
+- External GitHub API writes (repo_from_template, team, codeowners,
+  branch_protection, environments, ci_workflows_pinned_tag, required_endpoints)
+  execute against an injectable GitHubClient protocol and are tested with
+  FakeGitHubClient.
+NOTE: No step is executed against live infrastructure; the live GitHub API
+client implementation remains pending separate, explicit authorization.
 """
 
 from __future__ import annotations
