@@ -8,9 +8,10 @@ line 7280; Section 93; Section 99.2 line 9203.
 
 Subsystem P — people intelligence: capacity profiles, utilisation composition, bandwidth states,
 overload and under-utilisation detection, staffing diagnosis (Section 99.2, line 9203) — is
-assigned to no lane in PARTITION v1. L4 does not claim it and builds none of it. L4 owns the
-ledger; P owns every surface the ledger feeds. See L4-04-attention-ledger.md section 5,
-DECISION REQUIRED D-L4-P4-04, routed to L0.
+assigned to Lane 4 per Founder Decision FD-093 (PFD-019). Capacity planning is a metric aggregate,
+and L4 is the metrics lane. L4 owns the attention ledger and owns subsystem P, consuming the
+`capacity_profile_eligible`, `workload_state_eligible`, and `founder_view_eligible` flags emitted
+by the ledger derivation. See L4-04-attention-ledger.md section 5 and FD-093.
 
 ## What L4 emits, and where it comes from
 
