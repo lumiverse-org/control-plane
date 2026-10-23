@@ -10,6 +10,10 @@ name: build
 on:
   workflow_call:
     inputs:
+      job:
+        required: false
+        type: string
+        default: ''
       product:
         required: true
         type: string
@@ -63,12 +67,26 @@ jobs:
       identity: ${{ steps.build.outputs.identity }}
       identity_mode: ${{ steps.build.outputs.identity_mode }}
     steps:
+      - name: Check job dispatch
+        shell: bash
+        run: |
+          set -euo pipefail
+          JOB="${{ inputs.job }}"
+          if [ -n "${JOB}" ] && [ "${JOB}" != "build" ]; then
+            echo "REASON: job '${JOB}' targeted, skipping build — explicit recorded success (§33.2)"
+            exit 0
+          fi
+          echo "Executing build"
+
       - name: Checkout product repository
+        if: ${{ inputs.job == '' || inputs.job == 'build' }}
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
           path: product
+
       - name: Guard the control-plane read credential
+        if: ${{ inputs.job == '' || inputs.job == 'build' }}
         shell: bash
         env:
           CP_TOKEN: ${{ secrets.control_plane_read_token }}
@@ -79,7 +97,9 @@ jobs:
             exit 1
           fi
           echo "CONTROL_PLANE_ACCESS_PRESENT"
+
       - name: Checkout the control-plane build surface at the pinned ref
+        if: ${{ inputs.job == '' || inputs.job == 'build' }}
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ github.repository_owner }}/control-plane
@@ -87,7 +107,9 @@ jobs:
           token: ${{ secrets.control_plane_read_token }}
           path: control-plane
           sparse-checkout: tools/evidence
+
       - name: Log in to the artifact registry
+        if: ${{ inputs.job == '' || inputs.job == 'build' }}
         shell: bash
         env:
           REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -96,7 +118,9 @@ jobs:
           printf '%s' "${REGISTRY_TOKEN}" \
             | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
           echo "REGISTRY_LOGIN_OK"
+
       - name: Build the artifact, record the digest, emit the SBOM
+        if: ${{ inputs.job == '' || inputs.job == 'build' }}
         id: build
         shell: bash
         env:
@@ -125,7 +149,9 @@ jobs:
             echo "- identity: \`${IDENTITY}\`"
             echo "- run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Assert the identity was recorded
+        if: ${{ inputs.job == '' || inputs.job == 'build' }}
         shell: bash
         env:
           IDENTITY: ${{ steps.build.outputs.identity }}
@@ -136,7 +162,9 @@ jobs:
             exit 1
           fi
           echo "DIGEST_RECORDED identity=${IDENTITY}"
+
       - name: Assert the SBOM sits beside the identity
+        if: ${{ inputs.job == '' || inputs.job == 'build' }}
         shell: bash
         run: |
           set -euo pipefail
