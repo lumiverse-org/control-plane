@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-A comprehensive, adversarial verification audit of Lane 2 was conducted across all 8 canonical specification files (`L2-00` through `L2-07`) and the authoritative master task breakdown in `L2-05-tasks.md` / `L2-CONCORDANCE.md`, comprising **113 distinct tasks**, spanning the 3 owned directories: `.github/workflows/`, `templates/workflows/`, and `tools/evidence/` (320 tracked files, 147 pytest unit tests across 23 test modules, 45 production workflows, 17 workflow templates, 20 Definition-of-Done matrix assertions).
+A comprehensive, adversarial verification audit of Lane 2 was conducted across all 8 canonical specification files (`L2-00` through `L2-07`) and the authoritative master task breakdown in `L2-05-tasks.md` / `L2-CONCORDANCE.md`, comprising **113 distinct tasks**, spanning the 3 owned directories: `.github/workflows/`, `templates/workflows/`, and `tools/evidence/` (322 tracked files, 149 pytest unit tests across 23 test modules, 45 production workflows, 17 workflow templates, 20 Definition-of-Done matrix assertions).
 
 Prior review `lanes/L2-98-DEEP-REVIEW.md` (dated 2026-09-16) was a pre-implementation review of task specifications and was discarded as audit evidence.
 
@@ -40,9 +40,9 @@ Prior review `lanes/L2-98-DEEP-REVIEW.md` (dated 2026-09-16) was a pre-implement
    PASS DoD-20: no L2 pull request ever touched a foreign path
    ```
 
-2. **Automated Unit Test Suite: 147 PASSED, 0 FAIL across 147 tests.**  
-   `python -m pytest tools/evidence/tests/ -q` executes 147 test items across 23 test modules with 100% pass rate in 18.82s:
-   - `test_action_pins.py` (2 tests PASS)
+2. **Automated Unit Test Suite: 149 PASSED, 0 FAIL across 149 tests.**  
+   `python -m pytest tools/evidence/tests/ -q` executes 149 test items across 23 test modules with 100% pass rate in 16.97s:
+   - `test_action_pins.py` (4 tests PASS)
    - `test_actor_gate.py` (4 tests PASS)
    - `test_assert_actor_gate_first.py` (7 tests PASS)
    - `test_assert_run_conclusions.py` (6 tests PASS)
@@ -237,7 +237,7 @@ Authoritative task mapping from `lanes/L2-05-tasks.md` and `lanes/L2-CONCORDANCE
 ## 4. AGENTS.md 7-Step Verification Checklist Cross-Check
 
 - **Step 1: Validate Properly (Execution Evidence):**  
-  Ran concrete automated test suites (`acceptance_matrix` -> 20/20 PASS; `pytest tools/evidence/tests/` -> 147/147 PASS across 23 modules; `lint_workflow.py` -> 62/62 checked 0 failed; `check_action_pins` -> 6/6 ledgered PASS; `run_negative_tests.sh` -> 6/6 PASS; `run-all.sh` -> 21/21 PASS; `run-pins.sh` -> 7/7 PASS; `at-*.sh` -> 4/4 PASS). Literal stdout and exit codes captured verbatim.
+  Ran concrete automated test suites (`acceptance_matrix` -> 20/20 PASS; `pytest tools/evidence/tests/` -> 149/149 PASS across 23 modules; `lint_workflow.py` -> 62/62 checked 0 failed; `check_action_pins` -> 6/6 ledgered PASS; `run_negative_tests.sh` -> 6/6 PASS; `run-all.sh` -> 21/21 PASS; `run-pins.sh` -> 7/7 PASS; `at-*.sh` -> 4/4 PASS). Literal stdout and exit codes captured verbatim.
 - **Step 2: Develop Real Code (Zero Empty Stubs):**  
   Automated scanner confirmed zero empty stubs (`pass`), zero placeholder markers, and verified substantive execution logic across all tools and workflows.
 - **Step 3: Cross-Check Against Canonical Phase Map (`04-phase-map.md`):**  

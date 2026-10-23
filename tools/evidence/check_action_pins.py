@@ -49,11 +49,11 @@ def get_ledger_pins(ledger_path: Path) -> set[tuple[str, str]]:
     return pins
 
 
-def check_pins(repo_root: Path | None = None) -> tuple[bool, int, list[tuple[str, str]]]:
+def check_pins(repo_root: Path | None = None, ledger_path: Path | None = None) -> tuple[bool, int, list[tuple[str, str]]]:
     root = repo_root or Path.cwd()
-    ledger_path = root / "tools" / "evidence" / "action-pins.txt"
+    ledger_file = ledger_path or (root / "tools" / "evidence" / "action-pins.txt")
     referenced = get_referenced_actions(root)
-    ledger = get_ledger_pins(ledger_path)
+    ledger = get_ledger_pins(ledger_file)
     missing = sorted(referenced - ledger)
     ok = len(missing) == 0
     return ok, len(referenced), missing
@@ -62,9 +62,10 @@ def check_pins(repo_root: Path | None = None) -> tuple[bool, int, list[tuple[str
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Verify action pin ledger coverage")
     parser.add_argument("--summary", action="store_true", help="Print §0.4 summary line")
+    parser.add_argument("--ledger", type=Path, default=None, help="Path to action-pins.txt ledger")
     args = parser.parse_args(argv)
 
-    ok, total, missing = check_pins()
+    ok, total, missing = check_pins(ledger_path=args.ledger)
     if not ok:
         print(f"FAIL check_action_pins covered={total - len(missing)} missing={len(missing)}", file=sys.stderr)
         for act, sha in missing:

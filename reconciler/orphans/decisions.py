@@ -25,12 +25,15 @@ ASSET_TYPE_CERTIFICATE = None
 ASSET_TYPE_DOMAIN = None
 ASSET_TYPE_VENDOR = None
 
-# DR-L3-05-B: Delegation-type assignment types (FD-129: temporary or acting assignments only)
+# DR-L3-05-B: Delegation-type assignment types
+# FD-129 specifies a general principle ("temporary or acting assignments only")
+# with illustrative examples ("e.g. acting-team-lead, temporary coverage roles"),
+# not an exhaustive closed list. Only "acting-team-lead" matches a confirmed real
+# role definition in this repository (registries/roles/acting-team-lead.yaml).
+# The remaining scope of "temporary coverage roles" versus assignments[].type
+# delegates remains an open interpretation question pending formal L0 enumeration.
 DELEGATION_WARNING_TYPES = (
     "acting-team-lead",
-    "temporary-coverage",
-    "acting",
-    "temporary",
 )
 
 # DR-L3-05-C: Board snapshot source and shape for H1 items
