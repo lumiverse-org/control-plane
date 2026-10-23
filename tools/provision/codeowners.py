@@ -112,7 +112,30 @@ def generate_from_registry(product_yaml: dict[str, Any], people: list[dict[str, 
     any rule whose slot currently has no holder, rather than naming an
     absent one.
     """
-    assignments = product_yaml.get("assignments") or {}
+    raw_assignments = product_yaml.get("assignments") or {}
+    if isinstance(raw_assignments, list):
+        assignments: dict[str, str] = {}
+        for item in raw_assignments:
+            if isinstance(item, dict):
+                role = str(item.get("role", ""))
+                person = str(item.get("person", ""))
+                assignments[role] = person
+                if role in ("lead", "primary_owner"):
+                    assignments["primary_owner"] = person
+                elif role in ("reviewer", "cross_reviewer"):
+                    assignments["cross_reviewer"] = person
+                elif role in ("backup", "backup_owner"):
+                    assignments["backup_owner"] = person
+                elif role in ("qa", "verification_responsibility"):
+                    assignments["verification_responsibility"] = person
+                elif role in ("incident-primary", "incident_responder_primary"):
+                    assignments["incident_responder_primary"] = person
+                elif role in ("incident-backup", "incident_responder_backup"):
+                    assignments["incident_responder_backup"] = person
+    elif isinstance(raw_assignments, dict):
+        assignments = raw_assignments
+    else:
+        assignments = {}
     human_logins = {p.get("github_login") for p in people if p.get("github_login")}
 
     lines: list[str] = []

@@ -157,35 +157,103 @@ def execute_product_yaml(
 ) -> dict[str, Any]:
     """Step 2: product_yaml (Local data write to fixture).
 
-    Writes declared/products/<product>.yaml at current contract_version.
+    Writes declared/products/<product>.yaml at current contract_version,
+    conforming fully to contracts/registry/product.contract.v<N>.json.
     """
     version = _current_product_contract_version()
     products_dir = fixture_dir / "declared" / "products"
     products_dir.mkdir(parents=True, exist_ok=True)
     target = products_dir / f"{product}.yaml"
 
+    primary_owner = kwargs.get("primary_owner", "lead-1")
+    cross_reviewer = kwargs.get("cross_reviewer", "dev-1")
+    backup_owner = kwargs.get("backup_owner", "founder-1")
+    incident_primary = kwargs.get("incident_responder_primary", "lead-1")
+    incident_backup = kwargs.get("incident_responder_backup", "dev-1")
+    qa_owner = kwargs.get("verification_responsibility", "qa-1")
+    assignment_date = kwargs.get("assignment_from", "2026-09-02")
+    restore_tested_date = kwargs.get("restore_tested", "2026-09-01")
+
     content = {
-        "product": product,
         "contract_version": version,
-        "lifecycle": "draft",
-        "restore_tested": "",
-        "assignments": {
-            "primary_owner": kwargs.get("primary_owner", "lead-1"),
-            "cross_reviewer": kwargs.get("cross_reviewer", "dev-1"),
-            "backup_owner": kwargs.get("backup_owner", "founder-1"),
-            "incident_responder_primary": kwargs.get("incident_responder_primary", "lead-1"),
-            "incident_responder_backup": kwargs.get("incident_responder_backup", "dev-1"),
-            "verification_responsibility": kwargs.get("verification_responsibility", "qa-1"),
+        "platform_compatibility": kwargs.get("platform_compatibility", "supported"),
+        "conformance_profile": kwargs.get("conformance_profile", "service"),
+        "identity": {
+            "product_id": str(product),
+            "repository": str(product),
+            "team": kwargs.get("team", str(product)),
         },
+        "classification": {
+            "reliability_criticality": kwargs.get("reliability_criticality", "critical"),
+            "business_criticality": kwargs.get("business_criticality", "high"),
+            "onboarding_cost_band": kwargs.get("onboarding_cost_band", "M"),
+        },
+        "assignments": [
+            {"role": "lead", "person": primary_owner, "from": assignment_date},
+            {"role": "reviewer", "person": cross_reviewer, "from": assignment_date},
+            {"role": "backup", "person": backup_owner, "from": assignment_date},
+            {"role": "incident-primary", "person": incident_primary, "from": assignment_date},
+            {"role": "incident-backup", "person": incident_backup, "from": assignment_date},
+            {"role": "qa", "person": qa_owner, "from": assignment_date},
+        ],
+        "escalation": {
+            "owner": primary_owner,
+        },
+        "code": {
+            "languages": kwargs.get("languages", ["python"]),
+        },
+        "verification": {
+            "performance": kwargs.get("verification_performance", "required"),
+            "mechanisms": kwargs.get("verification_mechanisms", ["automated"]),
+            "coverage_map": kwargs.get("coverage_map", []),
+            "seeded_defect_cases": kwargs.get("seeded_defect_cases", []),
+        },
+        "environments": {
+            "staging": {"enabled": True},
+            "production": {"enabled": True},
+        },
+        "deployment": {
+            "strategy": kwargs.get("deployment_strategy", "blue-green"),
+        },
+        "reversibility_default": kwargs.get("reversibility_default", "rollback"),
         "infrastructure": {
-            "attestation_date": "",
+            "monthly_budget_band": {
+                "expected": kwargs.get("budget_expected", 100),
+                "ceiling": kwargs.get("budget_ceiling", 150),
+            },
+            "attestation_date": kwargs.get("attestation_date", "2026-09-01"),
         },
-        "workflow_tag": "workflows/v3",
+        "dependencies": kwargs.get("dependencies", []),
+        "security": {
+            "threat_model_reviewed": kwargs.get("threat_model_reviewed", False),
+        },
+        "ai_restrictions": kwargs.get("ai_restrictions", []),
+        "observability": {
+            "metrics": kwargs.get("metrics", []),
+            "alerts": kwargs.get("alerts", []),
+        },
+        "recovery": {
+            "rto_hours": kwargs.get("rto_hours", 24),
+            "rpo_hours": kwargs.get("rpo_hours", 24),
+            "restore_tested": restore_tested_date,
+        },
+        "operations": {
+            "support_model": kwargs.get("support_model", "business-hours"),
+            "detection_expectation": kwargs.get("detection_expectation", "next-business-morning"),
+            "coverage_window": kwargs.get("coverage_window", None),
+        },
+        "business": {
+            "data_sensitivity": kwargs.get("data_sensitivity", "internal"),
+        },
+        "product": str(product),
+        "lifecycle": kwargs.get("lifecycle", "draft"),
+        "restore_tested": restore_tested_date,
+        "workflow_tag": kwargs.get("workflow_tag", "workflows/v3"),
     }
     with target.open("w", encoding="utf-8") as fh:
         yaml.safe_dump(content, fh, sort_keys=False)
 
-    return {"path": str(target), "contract_version": version, "status": "created"}
+    return {"path": str(target), "contract_version": version, "status": "created", "content": content}
 
 
 def execute_team(
