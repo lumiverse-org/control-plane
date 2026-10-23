@@ -75,8 +75,15 @@ Per `AGENTS.md` Step 1 & Step 2, a green checkmark is never taken at face value.
 - **Locations:** `access/published/secret-tiers.v1.json`, `access/secrets/tools/publish_secret_tiers.py`.
 - **Evidence:** The committed `secret-tiers.v1.json` carries `"artifact_under_test": "access\\published\\secret-tiers.v1.json"` due to Windows `os.path.join()`. When POSIX python runs `--check`, it expects forward slashes, causing Gate G12 in `phase2-gate.sh` to fail as stale.
 
-### Finding 5: Hermes Background Agent Reality Check
-- **Analysis:** MasterSpec §35.2, §36.3, and §39.1 describe the Hermes background autonomous agent. In the codebase, Hermes exists **strictly as policy text and configuration metadata**: `access/ai-toolchain/runtimes/hermes-agent.yaml` (pin metadata) and `assets/inventory/hermes-background-inference-host.yaml` (host declaration). There is **zero executable agent code, daemon process, or inference client** implemented in the repo.
+### Finding 5: Hermes Background Agent Reality Check & Cage Architecture
+- **Analysis:** MasterSpec §35.2, §36.3, and §39.1 describe the Hermes background autonomous agent.
+- **Resolution (2026-10-23):**
+  - Upstream release `v0.22.4` (`4d04303818b61bf3aa09278af48356315515965b`) verified via throwaway install (`hermes --version` / `--help`) and pinned in `access/ai-toolchain/runtimes/hermes-agent.yaml` per D80.
+  - Cage configurations authored in `infra/hermes/` (`background-worker.yaml`, `ops-console.yaml`, `pr-review.yaml`) and wrapped with Docker whole-process isolation (`docker-compose.yaml`).
+  - Registered in `registries/tools.yaml` with `criticality: low` and §62.5 / D49 removal consequence.
+  - One-write-path proposal demonstration implemented in `.github/workflows/generate-handover-digest.yml` per D71/D72.
+  - Structural removal independence proven: zero required checks, gates, or metrics depend on Hermes (documented in `records/audit/hermes-removal-independence.md`).
+  - Physical hosting & GPU compute remain unprovisioned pending Founder budget decision per §37.6 / §49.
 
 ### Finding 6: Missing `infra/tools/l5-validate.sh`
 - **Location:** `infra/tools/l5-validate.sh`.
