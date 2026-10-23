@@ -1,0 +1,45 @@
+# Instance B sharing hermes_home
+schema_version: 1
+hermes_home: "/var/lib/hermes-shared"
+os_user: "hermes-ops"
+container_name: "hermes-ops-console"
+
+model:
+  provider: "custom"
+  base_url: "http://10.0.0.50:8000/v1"
+  background_review:
+    enabled: false
+
+memory:
+  memory_enabled: false
+
+approvals:
+  cron_mode: "deny"
+
+security:
+  allow_lazy_installs: false
+
+gateway:
+  unauthorized_dm_behavior: "ignore"
+  sender_allowlist:
+    - "bendrohit-eng"
+
+agent:
+  disabled_toolsets:
+    - "terminal"
+    - "code_execution"
+    - "web"
+    - "browser"
+    - "mcp"
+    - "kanban"
+
+mcp_servers: {}
+
+plugins:
+  enabled: false
+
+sync:
+  enabled: false
+
+telemetry:
+  enabled: false

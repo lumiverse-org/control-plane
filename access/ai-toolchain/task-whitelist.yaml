@@ -1,0 +1,24 @@
+# access/ai-toolchain/task-whitelist.yaml
+# Spec Section 37.2 Permitted task whitelist (enforced at queue level: a task outside these classes is never dispatched)
+schema_version: 1
+spec_reference: "37.2"
+
+tasks:
+  - task_class: "Test suite drafts for existing code"
+    spec_reference: "37.2"
+  - task_class: "Documentation and docstrings"
+    spec_reference: "37.2"
+  - task_class: "Lint, format and type fixes"
+    spec_reference: "37.2"
+  - task_class: "Safe mechanical refactors and renames"
+    spec_reference: "37.2"
+  - task_class: "Dependency work where explicitly permitted"
+    spec_reference: "37.2"
+  - task_class: "CI failure triage drafts"
+    spec_reference: "37.2"
+  - task_class: "Commit message and PR description drafts"
+    spec_reference: "37.2"
+  - task_class: "Evaluation scenario drafts (draft-only, confirmed by a human before entering `verification/ai-eval/`; local inference — Section 38.3)"
+    spec_reference: "37.2"
+  - task_class: "Intake gap assessment drafts (draft-only, the recorded assessment is written by the human assessor; local inference — Section 96.6)"
+    spec_reference: "37.2"
