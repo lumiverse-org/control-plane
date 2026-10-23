@@ -1,0 +1,8 @@
+# metrics/taxonomy/payloads/ci_check_result.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: ci_check_result
+n: 17
+entry: CI pass or fail per check
+payload_required:
+- check
+- result

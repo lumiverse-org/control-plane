@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/support_first_touch_breach.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: support_first_touch_breach
+n: 82
+entry: support first-touch breach
+payload_required: []

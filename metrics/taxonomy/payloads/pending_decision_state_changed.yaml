@@ -1,0 +1,10 @@
+# metrics/taxonomy/payloads/pending_decision_state_changed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: pending_decision_state_changed
+n: 79
+entry: pending decision opened and closed
+payload_required:
+- state
+states:
+- opened
+- closed

@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/canary_started.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: canary_started
+n: 61
+entry: canary started
+payload_required: []

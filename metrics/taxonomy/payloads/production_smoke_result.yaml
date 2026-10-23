@@ -1,0 +1,7 @@
+# metrics/taxonomy/payloads/production_smoke_result.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: production_smoke_result
+n: 26
+entry: production smoke result
+payload_required:
+- result

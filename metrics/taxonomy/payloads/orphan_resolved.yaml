@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/orphan_resolved.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: orphan_resolved
+n: 49
+entry: orphan resolved
+payload_required: []

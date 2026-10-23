@@ -1,0 +1,7 @@
+# metrics/taxonomy/payloads/reversibility_class_assigned.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: reversibility_class_assigned
+n: 10
+entry: reversibility class assigned
+payload_required:
+- reversibility_class

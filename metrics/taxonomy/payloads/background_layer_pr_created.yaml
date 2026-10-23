@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/background_layer_pr_created.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: background_layer_pr_created
+n: 67
+entry: background layer PR created
+payload_required: []

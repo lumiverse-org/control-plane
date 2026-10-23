@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/shared_service_breaking_change_released.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: shared_service_breaking_change_released
+n: 59
+entry: shared service breaking change released
+payload_required: []

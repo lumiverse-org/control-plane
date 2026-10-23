@@ -1,4 +1,4 @@
-﻿# L4-07 — PHASE 7: TEST STRATEGY AND DAILY RUNBOOK
+# L4-07 — PHASE 7: TEST STRATEGY AND DAILY RUNBOOK
 
 **Lane:** L4 — Records, Events and Metrics (Subsystems **I** metrics pipeline, **N** work tracking conventions — MasterSpec §99.2, lines 9184–9231)
 **Branch prefix:** `lane/4/*`
@@ -1985,6 +1985,109 @@ FULL_EXIT=0
 ```
 
 **STOP RULE** — if `CANARY-01` or `CANARY-02` prints `FAIL`, the suite passed while a check was deliberately broken: **the suite is not a check**. Do not push. Do not open the PR. File a blocker titled `BLOCKER L4-P7-T13: L4 suite passes with a seeded defect` and quote §53.1 line 4680. If `FIXTURES_DIRTY` is not `0`, a canary did not restore the tree — run `git -C "$CP_DIR" checkout -- tools/records/fixtures`, re-run, and if it is still dirty file a blocker; **never** commit a canary-mutated fixture.
+
+---
+
+### TASK `L4-P7-T15` — Write-freshness proved end to end from git commit timestamps (L4-P8-01)
+
+**Size:** M **Depends on:** `L4-P7-T11`, `L4-P3-04`
+**Artifacts:** `tools/records/test-freshness-e2e.sh`
+**Spec anchor:** MasterSpec §97.2 line 8873
+
+Documents `tools/records/test-freshness-e2e.sh`. Proves write-freshness end to end from actual git commit timestamps on real store paths, verifying breach detection on Blocking stores (`records/deployments/`, `records/uat/`).
+
+**Commands**
+
+```bash
+bash tools/records/test-freshness-e2e.sh
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | E2E freshness test detects aging store breaches | `bash tools/records/test-freshness-e2e.sh` | `BREACH BLOCKING records/deployments/ age=... max=24h` |
+| 2 | E2E test script exists | `test -f tools/records/test-freshness-e2e.sh && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+bash tools/records/test-freshness-e2e.sh
+```
+
+Expected output:
+```
+BREACH BLOCKING records/deployments/
+```
+
+---
+
+### TASK `L4-P7-T16` — DoD matrix runner — all 20 charter rows in one command (L4-P8-02)
+
+**Size:** M **Depends on:** `L4-P7-T14`
+**Artifacts:** `tools/records/run-dod-matrix.sh`
+**Spec anchor:** `lanes/L4-00-charter.md` §7 (Charter Definition of Done)
+
+Documents `tools/records/run-dod-matrix.sh`. Runs all 20 Definition-of-Done criteria from `lanes/L4-00-charter.md` §7 in a single command, verifying store paths, schema validation, negative corpus, taxonomy, freshness, derivation, and fail-closed reader.
+
+**Commands**
+
+```bash
+bash tools/records/run-dod-matrix.sh
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | DoD matrix executes all rows with 15 passing and 5 remote-required skips | `bash tools/records/run-dod-matrix.sh` | `DOD MATRIX SUMMARY: 15 passed, 0 failed, 5 skipped (remote-required)` / `DOD MATRIX OK` |
+| 2 | DoD runner exists | `test -f tools/records/run-dod-matrix.sh && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+bash tools/records/run-dod-matrix.sh
+```
+
+Expected output:
+```
+DOD MATRIX SUMMARY: 15 passed, 0 failed, 5 skipped (remote-required)
+DOD MATRIX OK
+```
+
+---
+
+### TASK `L4-P7-T17` — Lane handoff manifest (L4-P8-03)
+
+**Size:** S **Depends on:** `L4-P7-T16`
+**Artifacts:** `tools/records/HANDOFF.md`
+**Spec anchor:** `lanes/L4-00-charter.md` §5; Founder Decision FD-134
+
+Documents `tools/records/HANDOFF.md` (harmonized to `tools/records/HANDOFF.md` per FD-134). Names the exact artifact paths that consumer lanes (L0, L1, L2, L3) consume from Lane 4 with no artifact left unnamed.
+
+**Commands**
+
+```bash
+bash tools/records/run-dod-matrix.sh --handoff
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | Handoff manifest verified for all 4 consumer lanes | `bash tools/records/run-dod-matrix.sh --handoff` | `HANDOFF OK: .../tools/records/HANDOFF.md verified (all 4 consumer lanes documented)` |
+| 2 | Handoff manifest exists at canonical path | `test -f tools/records/HANDOFF.md && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+bash tools/records/run-dod-matrix.sh --handoff
+```
+
+Expected output:
+```
+HANDOFF OK: .../tools/records/HANDOFF.md verified (all 4 consumer lanes documented)
+```
 
 ---
 

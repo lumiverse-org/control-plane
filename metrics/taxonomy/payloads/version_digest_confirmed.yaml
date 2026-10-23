@@ -1,0 +1,7 @@
+# metrics/taxonomy/payloads/version_digest_confirmed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: version_digest_confirmed
+n: 27
+entry: /version digest confirmed
+payload_required:
+- digest

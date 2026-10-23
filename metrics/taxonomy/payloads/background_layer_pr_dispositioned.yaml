@@ -1,0 +1,8 @@
+# metrics/taxonomy/payloads/background_layer_pr_dispositioned.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: background_layer_pr_dispositioned
+n: 68
+entry: accepted or rejected with task-class reason
+payload_required:
+- disposition
+- task_class_reason

@@ -96,13 +96,17 @@ PY
   exit $?
 fi
 
-"$L4_PY" - "$CP_ROOT/metrics/taxonomy/event-types.yaml" <<'PY'
+"$L4_PY" - "$CP_ROOT/metrics/taxonomy/event-types.yaml" "$CP_ROOT/metrics/taxonomy/payloads" <<'PY'
+import os
+import pathlib
 import re
 import sys
 
 import yaml
 
 path = sys.argv[1]
+payloads_dir = sys.argv[2] if len(sys.argv) > 2 else None
+
 try:
     doc = yaml.safe_load(open(path, encoding="utf-8"))
 except Exception as exc:
@@ -131,6 +135,33 @@ if compound != [29, 50, 51, 69, 75, 76, 79, 86]:
 for r in rows:
     if "states" in r and r.get("payload_required") != ["state"]:
         fail.append("compound row %r must declare payload_required: [state]" % r.get("id"))
+
+# L4-P3-02: validate directory-per-item payloads under metrics/taxonomy/payloads/
+if payloads_dir:
+    p_dir = pathlib.Path(payloads_dir)
+    if not p_dir.is_dir():
+        fail.append("payloads directory missing: %s" % payloads_dir)
+    else:
+        actual_files = set(p.name for p in p_dir.glob("*.yaml"))
+        expected_files = set(f"{r['id']}.yaml" for r in rows)
+        missing_payloads = expected_files - actual_files
+        orphan_payloads = actual_files - expected_files
+        if missing_payloads:
+            fail.append("missing payload files: %s" % sorted(missing_payloads))
+        if orphan_payloads:
+            fail.append("orphan payload files: %s" % sorted(orphan_payloads))
+        for r in rows:
+            p_file = p_dir / f"{r['id']}.yaml"
+            if p_file.is_file():
+                try:
+                    p_doc = yaml.safe_load(p_file.read_text(encoding="utf-8")) or {}
+                    if p_doc.get("event_type") != r["id"]:
+                        fail.append("payload file %s event_type mismatch: %r != %r" % (p_file.name, p_doc.get("event_type"), r["id"]))
+                    if not isinstance(p_doc.get("payload_required"), list):
+                        fail.append("payload file %s payload_required not a list" % p_file.name)
+                except Exception as exc:
+                    fail.append("payload file %s unreadable: %s" % (p_file.name, exc))
+
 if fail:
     for f in fail:
         print("TAXONOMY FAIL: %s" % f)

@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/security_incident_opened.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: security_incident_opened
+n: 36
+entry: security incident opened
+payload_required: []

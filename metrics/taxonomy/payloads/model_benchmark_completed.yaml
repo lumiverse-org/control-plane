@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/model_benchmark_completed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: model_benchmark_completed
+n: 72
+entry: model benchmark completed
+payload_required: []

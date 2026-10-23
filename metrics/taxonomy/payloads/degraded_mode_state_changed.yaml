@@ -1,0 +1,10 @@
+# metrics/taxonomy/payloads/degraded_mode_state_changed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: degraded_mode_state_changed
+n: 76
+entry: degraded mode entered and exited
+payload_required:
+- state
+states:
+- entered
+- exited

@@ -1,0 +1,10 @@
+# metrics/taxonomy/payloads/feature_flag_state_changed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: feature_flag_state_changed
+n: 29
+entry: feature flag enabled or disabled
+payload_required:
+- state
+states:
+- enabled
+- disabled

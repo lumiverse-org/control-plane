@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/onboarding_phase_completed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: onboarding_phase_completed
+n: 80
+entry: onboarding phase completed
+payload_required: []

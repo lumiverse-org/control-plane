@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/temporary_person_expiry_warning_issued.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: temporary_person_expiry_warning_issued
+n: 84
+entry: temporary-person expiry warning issued
+payload_required: []

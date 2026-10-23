@@ -1,0 +1,10 @@
+# metrics/taxonomy/payloads/acting_team_lead_state_changed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: acting_team_lead_state_changed
+n: 51
+entry: acting team lead activated and deactivated
+payload_required:
+- state
+states:
+- activated
+- deactivated

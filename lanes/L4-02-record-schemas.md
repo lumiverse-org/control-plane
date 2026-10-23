@@ -1,4 +1,4 @@
-﻿# L4 — PHASE 2 — RECORD AND EVENT SCHEMAS
+# L4 — PHASE 2 — RECORD AND EVENT SCHEMAS
 
 **Lane:** L4 Records, Events & Metrics (subsystems I, N — Master Spec §99.2, lines 9184–9231)
 **Phase:** 2 — Record and event schemas
@@ -7,6 +7,7 @@
 **Authority:** `C:/D_Drive/PS/MultiProduct/Code/implementation/PARTITION.md` (FROZEN). Where this file and PARTITION.md appear to differ, PARTITION.md wins and the difference is a blocker for L0.
 **Charter:** `C:/D_Drive/PS/MultiProduct/Code/implementation/lanes/L4-00-charter.md`
 **Spec of record:** `C:/D_Drive/PS/MultiProduct/Research/MultiProduct_MasterSpec_v4.0.md` (10,214 lines)
+**Retirement note (FD-130):** Task `L4-P2-23` (`schemas/records/defs/flags.schema.json`) is formally retired as redundant per FD-130 (2026-10-22); store-specific field typing confirmed correct as-is.
 
 ---
 
@@ -3995,6 +3996,74 @@ expected: "REBASED=0 / DIRTY=0 / SCHEMAS GATE PASS / NEGATIVE 10/10 / FOREIGN=0 
 spec_ref: "PARTITION.md lines 20, 25, 30-34; L4-00-charter.md phase-branch convention"
 needs: "L0"
 action_taken: "nothing pushed"
+```
+
+---
+
+### L4-T226 — Universal per-task check dispatcher check.sh and CONTRACT.md (L4-P2-01)
+
+**Size:** S
+**Depends on:** L4-T201
+**Artifacts:** `tools/records/check.sh`, `tools/records/CONTRACT.md`
+
+Documents `tools/records/check.sh` (the universal per-task check dispatcher conforming to `L4-06` §0.6) and `tools/records/CONTRACT.md` (transcribing the §0.5 OK/FAIL/ERROR exit contract).
+
+**Commands**
+
+```bash
+bash tools/records/check.sh NONEXISTENT
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | Missing check file returns ERROR and exits 3 | `bash tools/records/check.sh NONEXISTENT` | `CHECK NONEXISTENT ERROR no-check-file` (exit 3) |
+| 2 | Contract document exists | `test -f tools/records/CONTRACT.md && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+bash tools/records/check.sh NONEXISTENT
+```
+
+Expected output:
+```
+CHECK NONEXISTENT ERROR no-check-file
+```
+
+---
+
+### L4-T227 — Schema version inventory versions.yaml and VERSIONS.md (L4-P2-28)
+
+**Size:** S
+**Depends on:** L4-T223
+**Artifacts:** `schemas/records/versions.yaml`, `schemas/records/VERSIONS.md`
+
+Documents `schemas/records/versions.yaml` and `schemas/records/VERSIONS.md`. Every schema file is listed with its active version. Record and event schemas are §60.2 versioned contracts; retired versions are marked and never deleted.
+
+**Commands**
+
+```bash
+bash tools/records/validate-schemas.sh --versions
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | All 20 record schemas tracked in versions register | `bash tools/records/validate-schemas.sh --versions` | `VERSIONS OK 20` |
+| 2 | Versions markdown documentation exists | `test -f schemas/records/VERSIONS.md && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+bash tools/records/validate-schemas.sh --versions
+```
+
+Expected output:
+```
+VERSIONS OK 20
 ```
 
 ---

@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/product_split.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: product_split
+n: 55
+entry: product split
+payload_required: []

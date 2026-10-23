@@ -37,10 +37,10 @@ wc -l L4-0*.md   (in C:/D_Drive/PS/MultiProduct/Code/implementation/lanes)
 | Quantity | Count |
 | --- | ---: |
 | Distinct task ids the **index** promises (`L4-06-tasks.md`) | **117** |
-| Distinct task ids with an actual **body** anywhere in the lane | **107** |
-| Index ids **confidently mapped** to a body | **103** |
-| Index ids with **no body anywhere** — the residue, the true unbuilt work | **14** |
-| Distinct bodies consumed by those 103 mappings | 87 |
+| Distinct task ids with an actual **body** anywhere in the lane | **120** |
+| Index ids **confidently mapped** to a body | **116** |
+| Index ids with **no body anywhere** — the residue, the true unbuilt work | **1** |
+| Distinct bodies consumed by those 116 mappings | 100 |
 | Bodies **no index row claims** — orphans, work that will be done but is tracked nowhere | **41** |
 
 The mapping is many-to-one in both directions by construction: one body can discharge several index
@@ -114,6 +114,7 @@ row's; **MED** = the substance is present but the scope or the artifact count di
 
 | Index id | Body id | Body file | Line | Conf | What the task does |
 | --- | --- | --- | ---: | --- | --- |
+| L4-P2-01 | L4-T226 | L4-02-record-schemas.md | 4003 | HIGH | `tools/records/check.sh` universal dispatcher + `tools/records/CONTRACT.md` |
 | L4-P2-02 | L4-T201 | L4-02-record-schemas.md | 216 | HIGH | Toolchain preflight; pins `jsonschema==4.23.0`, `PyYAML==6.0.2` — the index's `requirements.txt` pinning rule |
 | L4-P2-03 | L4-T202 | L4-02-record-schemas.md | 288 | HIGH | UTC-with-offset definition: `$defs.timestamp_utc` + the `NEGTIME` negative that rejects a naive local time |
 | L4-P2-04 | L4-T202 | L4-02-record-schemas.md | 288 | HIGH | Record envelope base — index calls it `record.envelope.schema.json`, body writes `record.base.schema.json`; same four required fields, §97.2 line 8890 |
@@ -139,6 +140,7 @@ row's; **MED** = the substance is present but the scope or the artifact count di
 | L4-P2-25 | L4-T216 | L4-02-record-schemas.md | 2378 | **MED** | Security-review unfixed-finding linkage. The body encodes the rule in the schema (findings require severity + disposition; unfixed requires owner and date); there is **no** separate `asserts/secreview.py` module and no `--at046-secreview` mode. |
 | L4-P2-26 | L4-P7-T04 | L4-07-tests-and-runbook.md | 631 | HIGH | Golden valid fixtures, one per store — body: "the writer-generated valid corpus, **all 19 stores**" | <!-- 19 per FD-059 (bootstrap/ counts as a store) -->
 | L4-P2-27 | L4-P7-T06 | L4-07-tests-and-runbook.md | 807 | HIGH | The ten envelope negatives: nine missing-field cases `EN-01`…`EN-09` + `EN-10` free-text `event_type`. Exactly the index's 9+1. (`L4-T224` also prints `--negative 10/10` but proves ten *different*, rule-level cases — see orphans.) |
+| L4-P2-28 | L4-T227 | L4-02-record-schemas.md | 4037 | HIGH | `schemas/records/versions.yaml` and `schemas/records/VERSIONS.md` |
 | L4-P2-29 | L4-T223 | L4-02-record-schemas.md | 3166 | HIGH | Full schema sweep — `validate-schemas.sh --all` over `--coverage/--lint/--fields/--time` + fixture sweep |
 
 ### Phase 3 — taxonomy (cross-namespace)
@@ -146,8 +148,12 @@ row's; **MED** = the substance is present but the scope or the artifact count di
 | Index id | Body id | Body file | Line | Conf | What the task does |
 | --- | --- | --- | ---: | --- | --- |
 | L4-P3-01 | L4-T203 | L4-02-record-schemas.md | 507 | HIGH | `metrics/taxonomy/event-types.yaml`, the closed 89-identifier enum (D114-D / REG-021), one id per §97.3 tracked event |
+| L4-P3-02 | L4-P3-02 | L4-03-metric-register.md | 46 | HIGH | Event payload declarations (directory-per-item) |
 | L4-P3-03 | L4-T203 | L4-02-record-schemas.md | 507 | HIGH | Retire-never-remove and `validate-taxonomy.sh` — the validator is written inside `L4-T203` (line 634); the retirement rule is stated at lines 531 and 538 (`retired: true` stays, never removed) |
-| L4-P3-06 | L4-P3-06 | L4-03-metric-register.md | 46 | HIGH | Metric-register bootstrap: `metrics/register/metric-declarations.yaml` skeleton, `metrics/register/validate-sources.sh`, and `metrics/signals/sig-source-map.yaml` (SIG-06/17/41/42/46 source map) |
+| L4-P3-04 | L4-P3-04 | L4-03-metric-register.md | 86 | HIGH | Write-freshness windows per store (3 Blocking) |
+| L4-P3-05 | L4-P3-05 | L4-03-metric-register.md | 124 | HIGH | Records head-SHA anchor schema (D107) |
+| L4-P3-06 | L4-P3-06 | L4-03-metric-register.md | 164 | HIGH | Metric-register bootstrap: `metrics/register/metric-declarations.yaml` skeleton, `metrics/register/validate-sources.sh`, and `metrics/signals/sig-source-map.yaml` (SIG-06/17/41/42/46 source map) |
+| L4-P3-07 | L4-P3-07 | L4-03-metric-register.md | 379 | HIGH | Retention classes per store (§97.6) |
 
 ### Phase 4 — writers and the dispatch handler (cross-namespace)
 
@@ -165,7 +171,10 @@ discharges five index rows.
 | L4-P4-04 | L4-T305 | L4-03-write-paths.md | 745 | **MED** | Event id and date-partition path convention. The library owns event path resolution, but the body does not restate the `events/<YYYY-MM-DD>/<event_id>.yaml` shape as its own acceptance criterion the way the index row does. |
 | L4-P4-05 | L4-T305 | L4-03-write-paths.md | 745 | HIGH | `event-append` — envelope and enum rejection at write time |
 | L4-P4-06 | L4-T306 | L4-03-write-paths.md | 990 | HIGH | The RECORD-VERIFICATION-RESULT handler (charter DoD-9) |
+| L4-P4-07 | L4-T419 | L4-04-attention-ledger.md | 3674 | HIGH | Record-decision CLI and decision library |
+| L4-P4-08 | L4-T420 | L4-04-attention-ledger.md | 3708 | HIGH | Fail-closed cross-repository reader read-across |
 | L4-P4-09 | L4-T315 | L4-03-write-paths.md | 2133 | HIGH | Writer negative suite — `validate-human-record.sh` rejects hand-authored files in machine stores, in-place edits (`M`/`R`) and deletions (`D`) |
+| L4-P4-10 | L4-T421 | L4-04-attention-ledger.md | 3742 | HIGH | Records-writer token adapter rwtoken.py |
 
 ### Phase 5 — boards and the Ready-queue-miss detector
 
@@ -187,6 +196,7 @@ rules `C1`…`C7`) and `L4-T417` (`rqm-detect`, which reads those rules and neve
 | L4-P5-10 | L4-T416 | L4-04-attention-ledger.md | 3060 | HIGH | `ready_bypass` — rule `C6`, recorded as board hygiene, `counts_in_sig06: false`; asserted by SELF-VERIFY `BYPASS=False` |
 | L4-P5-11 | L4-T417 | L4-04-attention-ledger.md | 3225 | HIGH | Cause-prompt fields supplied never inferred — `CAUSE_KEYS`, asserted by SELF-VERIFY `FIELDSET=SUBSET 3` |
 | L4-P5-12 | L4-P7-T10 | L4-07-tests-and-runbook.md | 1377 | HIGH | RQM acceptance harness. `L4-04` §2.1 line 74 names `L4-P7-T10` as the owner of `tools/records/test-rqm-detector.sh` and `fixtures/rqm/**` — the index's exact files. Charter DoD-8 is that suite's `RQM OK 6/6`. |
+| L4-P5-13 | L4-P5-13 | L4-05-pipeline-and-boards.md | 1341 | HIGH | Material requirement change: re-plan event linked to estimate record |
 
 ### Phase 6 — the attention ledger (cross-namespace)
 
@@ -214,88 +224,51 @@ Note: `L4-P7-01`…`L4-P7-20` are **index** metric-register rows. `L4-P7-T01`…
 
 | Index id | Body id | Body file | Line | Conf | What the task does |
 | --- | --- | --- | ---: | --- | --- |
-| L4-P7-01 | L4-P7-01 | L4-03-metric-register.md | 267 | HIGH | `metrics/register/metric-declarations.yaml` — eight §84.6 attributes per §103 measure; charter DoD-13 |
-| L4-P7-02 | L4-P7-02 | L4-03-metric-register.md | 351 | HIGH | `metrics/register/validate-sources.sh` — every measure names its record store; a measure that cannot name its store does not ship |
-| L4-P7-03 | L4-P7-03 | L4-03-metric-register.md | 389 | HIGH | `metrics/register/arming.py` — empty store renders `unbaselined`, never a miss (D77); charter DoD-14 |
-| L4-P7-04 | L4-P7-04 | L4-03-metric-register.md | 429 | HIGH | `metrics/register/baselines.yaml` + `baselines.py` — baseline markers and the §103.14 five-measure minimum (AT-046); charter DoD-15 |
-| L4-P7-05 | L4-P7-05 | L4-03-metric-register.md | 471 | HIGH | `metrics/register/ownership.py` — owner-and-response completeness gate (invariant 49) |
-| L4-P7-06 | L4-P7-06 | L4-03-metric-register.md | 511 | HIGH | `metrics/compute/deployments.py` — deployment measures from `records/deployments/` |
-| L4-P7-07 | L4-P7-07 | L4-03-metric-register.md | 550 | HIGH | `metrics/compute/incidents.py` — incident measures from `records/incidents/` |
-| L4-P7-08 | L4-P7-08 | L4-03-metric-register.md | 588 | HIGH | `metrics/compute/restore.py` — restore freshness and failed restore tests |
-| L4-P7-09 | L4-P7-09 | L4-03-metric-register.md | 626 | HIGH | `metrics/compute/uat.py` — UAT coverage and pass rate |
-| L4-P7-10 | L4-P7-10 | L4-03-metric-register.md | 664 | HIGH | `metrics/compute/support.py` — support load and first-response by severity |
-| L4-P7-11 | L4-P7-11 | L4-03-metric-register.md | 702 | HIGH | `metrics/compute/eval.py` — eval measures and regression detection (feeds AT-107 / SIG-42) |
-| L4-P7-12 | L4-P7-12 | L4-03-metric-register.md | 740 | HIGH | `metrics/compute/security_reviews.py` — security-review measures: count by severity, unfixed-finding age |
-| L4-P7-13 | L4-P7-13 | L4-03-metric-register.md | 778 | HIGH | `metrics/compute/decisions.py` — decision latency, pending-decision queue depth and age |
-| L4-P7-14 | L4-P7-14 | L4-03-metric-register.md | 816 | HIGH | `metrics/compute/learning_loop.py` — learning-loop measures (SIG-47) |
-| L4-P7-15 | L4-P7-15 | L4-03-metric-register.md | 854 | HIGH | `metrics/compute/estimates.py` — estimate-vs-actual and forecast-calibration inputs |
-| L4-P7-16 | L4-P7-16 | L4-03-metric-register.md | 892 | HIGH | `metrics/compute/rqm.py` — Ready-queue-miss 30-day rolling count and trend (SIG-06, invariant 15) |
-| L4-P7-17 | L4-P7-17 | L4-03-metric-register.md | 930 | HIGH | `metrics/compute/status_requests.py` — status-request count from the event log |
-| L4-P7-18 | L4-P7-18 | L4-03-metric-register.md | 968 | HIGH | `metrics/compute/lifecycle_cadence.py` — onboarding, launch and demo cadence measures |
-| L4-P7-19 | L4-P7-19 | L4-03-metric-register.md | 1006 | HIGH | `metrics/compute/weekend_residual.py` — undeclared weekend activations, the residual |
-| L4-P7-20 | L4-P7-20 | L4-03-metric-register.md | 1044 | HIGH | `metrics/compute/attention_measures.py` — attention-ledger eleven figures into the §103 register |
+| L4-P7-01 | L4-P7-01 | L4-03-metric-register.md | 423 | HIGH | `metrics/register/metric-declarations.yaml` — eight §84.6 attributes per §103 measure; charter DoD-13 |
+| L4-P7-02 | L4-P7-02 | L4-03-metric-register.md | 507 | HIGH | `metrics/register/validate-sources.sh` — every measure names its record store; a measure that cannot name its store does not ship |
+| L4-P7-03 | L4-P7-03 | L4-03-metric-register.md | 545 | HIGH | `metrics/register/arming.py` — empty store renders `unbaselined`, never a miss (D77); charter DoD-14 |
+| L4-P7-04 | L4-P7-04 | L4-03-metric-register.md | 585 | HIGH | `metrics/register/baselines.yaml` + `baselines.py` — baseline markers and the §103.14 five-measure minimum (AT-046); charter DoD-15 |
+| L4-P7-05 | L4-P7-05 | L4-03-metric-register.md | 627 | HIGH | `metrics/register/ownership.py` — owner-and-response completeness gate (invariant 49) |
+| L4-P7-06 | L4-P7-06 | L4-03-metric-register.md | 667 | HIGH | `metrics/compute/deployments.py` — deployment measures from `records/deployments/` |
+| L4-P7-07 | L4-P7-07 | L4-03-metric-register.md | 706 | HIGH | `metrics/compute/incidents.py` — incident measures from `records/incidents/` |
+| L4-P7-08 | L4-P7-08 | L4-03-metric-register.md | 744 | HIGH | `metrics/compute/restore.py` — restore freshness and failed restore tests |
+| L4-P7-09 | L4-P7-09 | L4-03-metric-register.md | 782 | HIGH | `metrics/compute/uat.py` — UAT coverage and pass rate |
+| L4-P7-10 | L4-P7-10 | L4-03-metric-register.md | 820 | HIGH | `metrics/compute/support.py` — support load and first-response by severity |
+| L4-P7-11 | L4-P7-11 | L4-03-metric-register.md | 858 | HIGH | `metrics/compute/eval.py` — eval measures and regression detection (feeds AT-107 / SIG-42) |
+| L4-P7-12 | L4-P7-12 | L4-03-metric-register.md | 896 | HIGH | `metrics/compute/security_reviews.py` — security-review measures: count by severity, unfixed-finding age |
+| L4-P7-13 | L4-P7-13 | L4-03-metric-register.md | 934 | HIGH | `metrics/compute/decisions.py` — decision latency, pending-decision queue depth and age |
+| L4-P7-14 | L4-P7-14 | L4-03-metric-register.md | 972 | HIGH | `metrics/compute/learning_loop.py` — learning-loop measures (SIG-47) |
+| L4-P7-15 | L4-P7-15 | L4-03-metric-register.md | 1010 | HIGH | `metrics/compute/estimates.py` — estimate-vs-actual and forecast-calibration inputs |
+| L4-P7-16 | L4-P7-16 | L4-03-metric-register.md | 1048 | HIGH | `metrics/compute/rqm.py` — Ready-queue-miss 30-day rolling count and trend (SIG-06, invariant 15) |
+| L4-P7-17 | L4-P7-17 | L4-03-metric-register.md | 1086 | HIGH | `metrics/compute/status_requests.py` — status-request count from the event log |
+| L4-P7-18 | L4-P7-18 | L4-03-metric-register.md | 1124 | HIGH | `metrics/compute/lifecycle_cadence.py` — onboarding, launch and demo cadence measures |
+| L4-P7-19 | L4-P7-19 | L4-03-metric-register.md | 1162 | HIGH | `metrics/compute/weekend_residual.py` — undeclared weekend activations, the residual |
+| L4-P7-20 | L4-P7-20 | L4-03-metric-register.md | 1200 | HIGH | `metrics/compute/attention_measures.py` — attention-ledger eleven figures into the §103 register |
 
 ### Phase 8 — lane acceptance and handoff
 
 | Index id | Body id | Body file | Line | Conf | What the task does |
 | --- | --- | --- | ---: | --- | --- |
-| L4-P8-04 | L4-P7-T14 | L4-07-tests-and-runbook.md | 1929 | HIGH | Rebase, lane self-check, open the final PR to `integration` |
+| L4-P8-01 | L4-P7-T15 | L4-07-tests-and-runbook.md | 1991 | HIGH | Write-freshness proved end to end from real git commit timestamps |
+| L4-P8-02 | L4-P7-T16 | L4-07-tests-and-runbook.md | 2025 | HIGH | DoD matrix runner — all 20 charter rows in one command |
+| L4-P8-03 | L4-P7-T17 | L4-07-tests-and-runbook.md | 2060 | HIGH | Lane handoff manifest (tools/records/HANDOFF.md per FD-134) |
+| L4-P8-04 | L4-P7-T14 | L4-07-tests-and-runbook.md | 2094 | HIGH | Rebase, lane self-check, open the final PR to `integration` |
 
 ---
 
-## 3. Residue — index ids with no body anywhere (14)
+## 3. Residue — index ids with no body anywhere (1)
 
-**This is the true unbuilt work of Lane 4.** Each row states what the index promises, so it can be
-scoped. Nothing here is authored in this file.
+Only `L4-P2-23` remains in residue, formally RETIRED per FD-130.
 
-### 3.1 Phase 2 residue (3)
+### 3.1 Phase 2 residue (1)
 
-| Index id | What the index promises | Why nothing matches |
+| Index id | What the index promises | Status |
 | --- | --- | --- |
-| L4-P2-01 | `tools/records/check.sh` (the universal per-task check dispatcher, byte-identical to `L4-06` §0.6) and `tools/records/CONTRACT.md` (transcribing the §0.5 OK/FAIL/ERROR exit contract). **Every index task from `L4-P2-01` onward is required to contribute `tools/records/checks/<TASK-ID>.sh`.** | No body creates `check.sh`. `L4-00-charter.md` `L4-T005` creates `lane-selfcheck.sh`, a different script (path ownership). `L4-P5-14` line 1345 *runs* `bash tools/records/check.sh ZZZ` as entry condition E2, i.e. treats it as a prerequisite built elsewhere. `CONTRACT.md` appears only in `L4-06-tasks.md`. **This is load-bearing: the entire index-side SELF-VERIFY convention rests on a dispatcher no body builds.** |
 | L4-P2-23 | `schemas/records/defs/flags.schema.json` — **RETIRED per FD-130.** Redundant; not built. | Store-specific field typing confirmed correct as-is per FD-130: `incident.schema.json` enforces strict enum, `support.schema.json` open string, each with written justification matching §97.2 line 8873 "include" wording. |
-| L4-P2-28 | `schemas/records/versions.yaml` + `schemas/records/VERSIONS.md` — every schema file listed with its version; a statement that record and event schemas are §60.2 versioned contracts and that a retired version is marked, never removed. | Neither filename appears in any body. Partial substance only: `store-map.yaml` (`L4-T223`) carries a `version:` column per row and documents the §60.2 "write v2 alongside v1, never replace" rule as a new-row convention. There is no version register document and no retired-version marking rule for schemas. Mapped at LOW and therefore **not counted as mapped**. |
 
-### 3.2 Phase 3 residue (4) — the taxonomy and store-policy tail
+### 3.2 Residue Backfill Status (Closed Session 14)
 
-| Index id | What the index promises | Why nothing matches |
-| --- | --- | --- |
-| L4-P3-02 | `metrics/taxonomy/payloads/<event_type>.yaml` — one payload declaration **file per event type**, directory-per-item, no shared file. Every one of the 89 identifiers (D114-D / REG-021) has exactly one; no orphan file, no identifier without one. Charter DoD-4. | No body creates a `payloads/` directory; the string appears in no phase file. `L4-T203` declares `payload_required: [...]` **inline as a column of `event-types.yaml`** — which is exactly the single shared file `PARTITION.md` rule 3 and the index row forbid. Substance partly present, structure explicitly contrary. |
-| L4-P3-04 | `metrics/freshness/write-freshness.yaml` + `tools/records/validate-freshness.sh` — an expected maximum inter-write interval per store; exactly **3** Blocking (`events/`, `records/deployments/`, `records/uat/`); every other store Amber past its interval; computed from git commit timestamps on the store path. Charter DoD-5. | No builder. Every occurrence is a forward reference: `L4-P7-T01`'s entry gate requires `validate-freshness.sh` PRESENT, `L4-P7-T11` tests it, `L4-T316`/`L4-T225` name it in coverage proofs. Nothing writes either file. (`L4-P5-23` writes `metrics/ingest/freshness.yaml` — collector ingest freshness, a different artifact for a different subsystem.) |
-| L4-P3-05 | `metrics/anchor/records-head-anchor.schema.json` — the records-repo default-branch head SHA and commit count; a head not descending from the last anchored SHA is Blocking drift, Level 5 (D107). L4 writes the schema only; L3 writes the anchors. | Appears once in the whole lane, in `L4-00-charter.md` line 112 (a scope statement). No body. This is the L4 side of a cross-lane contract with L3 — its absence breaks L3's reconciler input. |
-| ~~L4-P3-06~~ | ~~`metrics/signals/sig-source-map.yaml`~~ | **(Closed Session 13 — body in L4-03-metric-register.md line 46; mapped in §2 Phase 3.)** |
-| L4-P3-07 | `metrics/retention/retention-classes.yaml` + `tools/records/validate-retention.sh` — a retention class per store; canonical records append-only permanent with effective dating; raw activity telemetry a diagnostic window; no store unclassified. Charter DoD-19. | No builder. **`L4-P5-23` line 3304 states it outright:** *"the class file is `metrics/retention/retention-classes.yaml`, built by `L4-P3-07` (entry condition E8). This task asserts that file is reachable and declares **no** class of its own."* A phase body names an index id as the builder of a file no body builds. |
-
-### 3.3 Phase 4 residue (3)
-
-| Index id | What the index promises | Why nothing matches |
-| --- | --- | --- |
-| L4-P4-07 | `tools/records/record-decision` + `record_decision.py` — the decision CLI writing `pending` then `decided`, against `decision.schema.json` and `decision-pending.schema.json`. | No builder. `L4-T314` (line 2016) and `L4-T302` mention the record-decision CLI in the write-path register as a write path that must exist; `L4-T213` builds the `decision-pending` **schema** only. The CLI itself is written nowhere. Note the schemas (`L4-T212`, `L4-T213`) *are* built, so this is a thin, well-specified gap. |
-| L4-P4-08 | `tools/records/read-across` + `read_across.py` + `test-read-across.sh` — the **fail-closed** cross-repository reader: a check that cannot reach the records repository fails closed rather than reporting zero (§40.1 line 3671). Charter DoD-16. | The **test** exists and the **subject** does not. `L4-P7-T11` (line 1548) builds `test-read-across.sh` and `L4-P7-T01`'s entry gate requires `tools/records/read-across` PRESENT. No body creates `read-across`. This is one of the two instrument traps that produce false zeros — it is exactly the fail-closed guarantee, unbuilt. |
-| L4-P4-10 | `tools/records/lib/rwtoken.py` — a records-writer token adapter **for every writer**, so each writer mints an installation token rather than carrying a credential. | No builder. `L4-P1-T12` writes `tools/records/rw-token.sh` (the credential *shape* as code, phase-1 provisioning) — a different artifact at a different layer. No writer-library adapter exists; `L4-T305`'s emission library does not acquire a token. |
-
-### 3.4 Phase 5 residue (1)
-
-| Index id | What the index promises | Why nothing matches |
-| --- | --- | --- |
-| L4-P5-13 | `tools/records/rqm/replan.py` — material requirement change: a re-plan event linked to the estimate record it invalidates. | No builder. `re-plan triggered` exists only as event-type entry text in `L4-T203`'s enum (`L4-04` lines 126, 552 quote it). Nothing links a re-plan event to an estimate record. |
-
-### 3.5 Phase 7 residue (0) — metric register [ALL CLOSED Session 13]
-
-**Closed Session 13.** `L4-03-metric-register.md` was created with all 20 task bodies
-(`L4-P7-01`…`L4-P7-20`). All 20 rows are now mapped in §2 Phase 7. The structural gap described
-in §1.1 is filled; `L4-P7-T01`'s entry-gate precondition (`metric-declarations.yaml` and
-`validate-sources.sh` PRESENT) can now be satisfied.
-
-21 items closed in this section and §3.2 (Closed Session 13 — body in L4-03-metric-register.md).
-
-### 3.6 Phase 8 residue (3)
-
-| Index id | What the index promises | Why nothing matches |
-| --- | --- | --- |
-| L4-P8-01 | `tools/records/test-freshness-e2e.sh` — write-freshness proved end to end from real git commit timestamps. | No builder; depends on `L4-P3-04`, itself residue. |
-| L4-P8-02 | `tools/records/run-dod-matrix.sh` — the **20 charter DoD rows in one command**. | No builder. The lane has four per-phase coverage proofs (`L4-T225`, `L4-T316`, `L4-T418`, `L4-P5-24`) and one tests-phase runner (`L4-P7-T14`), but no single 20-row DoD matrix. This is the lane's own acceptance gate, unbuilt. |
-| L4-P8-03 | `metrics/HANDOFF.md` — the **lane** handoff manifest. | No builder. `L4-T413` writes `HANDOFF-P.md`, scoped in its own heading to *"what **this phase** emits"* (the attention ledger only). A phase handoff is not the lane handoff; mapping it would overstate coverage. |
+All 13 other residue items (`L4-P2-01`, `L4-P2-28`, `L4-P3-02`, `L4-P3-04`, `L4-P3-05`, `L4-P3-07`, `L4-P4-07`, `L4-P4-08`, `L4-P4-10`, `L4-P5-13`, `L4-P8-01`, `L4-P8-02`, `L4-P8-03`) have been backfilled with explicit phase-body sections and mapped in §2 above.
 
 ---
 

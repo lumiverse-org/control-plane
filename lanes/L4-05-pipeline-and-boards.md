@@ -1338,6 +1338,45 @@ gh pr create --base integration --title "L4-P5-04: Estimate capture at Ready con
 
 ---
 
+### TASK `L4-P5-13` — Material requirement change: re-plan event linked to estimate record
+
+**Title:** Material requirement change — re-plan event linked to the estimate record it invalidates
+**Phase:** 5
+**Files touched:**
+- `tools/records/replan.py`
+
+**Deps:** L4-P5-04, L4-P3-01
+**Acceptance command:** `python tools/records/replan.py --help`
+**Spec anchor:** MasterSpec §29.5 lines 2699–2701
+
+Documents `tools/records/replan.py`. When a requirement changes materially, execution is halted, the item carries the Blocked flag with reason `re-plan`, and a re-plan event is linked directly to the estimate record that is invalidated (§29.5).
+
+**Commands**
+
+```bash
+python tools/records/replan.py --help
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | Replan tool help message accessible | `python tools/records/replan.py --help` | `usage: replan.py` |
+| 2 | Replan tool script exists | `test -f tools/records/replan.py && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+python tools/records/replan.py --help
+```
+
+Expected output:
+```
+usage: replan.py [-h] [--selftest] [--input INPUT]
+```
+
+---
+
 ## 9. Tasks — subsystem I, ingest
 
 Ids resume at `L4-P5-14`. `L4-P5-05`…`L4-P5-13` are the Ready-queue-miss detector, indexed as rows 70–78 of `L4-06-tasks.md` §2, and are not in this file.

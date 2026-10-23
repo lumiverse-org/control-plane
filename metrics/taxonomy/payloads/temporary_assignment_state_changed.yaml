@@ -1,0 +1,10 @@
+# metrics/taxonomy/payloads/temporary_assignment_state_changed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: temporary_assignment_state_changed
+n: 50
+entry: temporary assignment created and expired
+payload_required:
+- state
+states:
+- created
+- expired

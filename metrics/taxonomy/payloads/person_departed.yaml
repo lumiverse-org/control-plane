@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/person_departed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: person_departed
+n: 47
+entry: person departed
+payload_required: []

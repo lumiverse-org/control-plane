@@ -1,0 +1,7 @@
+# metrics/taxonomy/payloads/gate_2_approval_granted.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: gate_2_approval_granted
+n: 16
+entry: Gate 2 approval with reviewer role
+payload_required:
+- reviewer_role
