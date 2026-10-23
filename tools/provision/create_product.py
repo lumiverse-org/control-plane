@@ -137,9 +137,10 @@ class CreateProductPlan(Plan):
         return f"PLAN {operation} steps={len(self.steps)} writes={writes} manual={len(self.manual_steps)}"
 
 
-def _automated_step_descriptions(product: str, fixture: str) -> dict[str, str]:
+def _automated_step_descriptions_from_roster(
+    product: str, existing: tuple[str, ...]
+) -> dict[str, str]:
     version = _current_product_contract_version()
-    existing = registered_product_ids(fixture)
     roster_note = (
         f"enumerated from the registry - {len(existing)} product(s) registered today, "
         f"{product} would make {len(existing) + 1} (§101 invariants 52-53)"
@@ -168,6 +169,11 @@ def _automated_step_descriptions(product: str, fixture: str) -> dict[str, str]:
     }
 
 
+def _automated_step_descriptions(product: str, fixture: str) -> dict[str, str]:
+    existing = registered_product_ids(fixture)
+    return _automated_step_descriptions_from_roster(product, existing)
+
+
 def _manual_step_descriptions(product: str) -> dict[str, str]:
     return {
         "alert_channel": (
@@ -194,6 +200,29 @@ def build_create_product_plan(product: str, fixture: str) -> CreateProductPlan:
     `.manual_steps` (see `CreateProductPlan`).
     """
     automated = _automated_step_descriptions(product, fixture)
+    steps = [Step(step_id, automated[step_id], StepKind.WRITE) for step_id in CREATE_PRODUCT_STEPS]
+
+    manual_text = _manual_step_descriptions(product)
+    manual_steps = tuple(
+        Step(step_id, manual_text[step_id], StepKind.MANUAL) for step_id in CREATE_PRODUCT_MANUAL_STEPS
+    )
+
+    return CreateProductPlan(steps=steps, manual_steps=manual_steps)
+
+
+def build_create_product_plan_against_live_roster(
+    product: str, onboarding_root: Path | None = None
+) -> CreateProductPlan:
+    """Build the create-product plan for `product` using the live product roster.
+
+    Reads current registered product IDs from `docs/onboarding/products/<slot>/facts.tsv`
+    (excluding slot 06 per CCR-002 and FD-138) rather than a fixture.
+    Produces a dry-run plan only.
+    """
+    from tools.provision.live_roster import live_registered_product_ids
+
+    existing = live_registered_product_ids(onboarding_root=onboarding_root)
+    automated = _automated_step_descriptions_from_roster(product, existing)
     steps = [Step(step_id, automated[step_id], StepKind.WRITE) for step_id in CREATE_PRODUCT_STEPS]
 
     manual_text = _manual_step_descriptions(product)
