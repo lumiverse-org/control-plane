@@ -25,8 +25,13 @@ ASSET_TYPE_CERTIFICATE = None
 ASSET_TYPE_DOMAIN = None
 ASSET_TYPE_VENDOR = None
 
-# DR-L3-05-B: Delegation-type assignment types
-DELEGATION_WARNING_TYPES = None
+# DR-L3-05-B: Delegation-type assignment types (FD-129: temporary or acting assignments only)
+DELEGATION_WARNING_TYPES = (
+    "acting-team-lead",
+    "temporary-coverage",
+    "acting",
+    "temporary",
+)
 
 # DR-L3-05-C: Board snapshot source and shape for H1 items
 BOARD_SNAPSHOT_PATH = None

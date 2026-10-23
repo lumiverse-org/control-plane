@@ -1,1 +1,8 @@
+# Pinned GitHub Actions ledger (L2-T532; Master Spec §48.1 L4300-4308; Invariant 85 L9565)
+# Covered: ledger lists every uses: reference's action+SHA that appears anywhere in .github/workflows/** or templates/workflows/**
+actions/checkout v4.2.2 11bd71901bbe5b1630ceea73d27597364c9af683
 actions/checkout v4 11d5960a326750d5838078e36cf38b85af677262
+actions/checkout v7.0.1 3d3c42e5aac5ba805825da76410c181273ba90b1
+actions/download-artifact v4.1.8 fa0a91b85d4f404e444e00e005971372dc801d16
+actions/setup-python v5.4.0 5fda3b95a4ea91299a34e894583c3862153e4b97
+actions/upload-artifact v4.6.1 ea165f8d65b6e75b540449e92b4886f43607fa02

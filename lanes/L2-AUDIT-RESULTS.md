@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-A comprehensive, adversarial verification audit of Lane 2 was conducted across all 8 canonical specification files (`L2-00` through `L2-07`) and the authoritative master task breakdown in `L2-05-tasks.md` / `L2-CONCORDANCE.md`, comprising **113 distinct tasks**, spanning the 3 owned directories: `.github/workflows/`, `templates/workflows/`, and `tools/evidence/` (84 files, 145 pytest unit tests, 45 production workflows, 17 workflow templates, 20 Definition-of-Done matrix assertions).
+A comprehensive, adversarial verification audit of Lane 2 was conducted across all 8 canonical specification files (`L2-00` through `L2-07`) and the authoritative master task breakdown in `L2-05-tasks.md` / `L2-CONCORDANCE.md`, comprising **113 distinct tasks**, spanning the 3 owned directories: `.github/workflows/`, `templates/workflows/`, and `tools/evidence/` (320 tracked files, 147 pytest unit tests across 23 test modules, 45 production workflows, 17 workflow templates, 20 Definition-of-Done matrix assertions).
 
 Prior review `lanes/L2-98-DEEP-REVIEW.md` (dated 2026-09-16) was a pre-implementation review of task specifications and was discarded as audit evidence.
 
@@ -40,24 +40,31 @@ Prior review `lanes/L2-98-DEEP-REVIEW.md` (dated 2026-09-16) was a pre-implement
    PASS DoD-20: no L2 pull request ever touched a foreign path
    ```
 
-2. **Automated Unit Test Suite: 145 PASSED, 0 FAIL across 145 tests.**  
-   `python -m pytest tools/evidence/tests/ -v` executes 145 test items across 16 test modules with 100% pass rate in 22.05s:
-   - `test_lint_workflow.py` (10 tests PASS)
-   - `test_render_template.py` (10 tests PASS)
-   - `test_assert_actor_gate_first.py` (10 tests PASS)
-   - `test_verify_digest_chain.py` (8 tests PASS)
-   - `test_timegate.py` (9 tests PASS)
-   - `test_restore_rotation.py` (7 tests PASS)
-   - `test_shipped_assert.py` (7 tests PASS)
-   - `test_version_monitor.py` (9 tests PASS)
+2. **Automated Unit Test Suite: 147 PASSED, 0 FAIL across 147 tests.**  
+   `python -m pytest tools/evidence/tests/ -q` executes 147 test items across 23 test modules with 100% pass rate in 18.82s:
+   - `test_action_pins.py` (2 tests PASS)
+   - `test_actor_gate.py` (4 tests PASS)
+   - `test_assert_actor_gate_first.py` (7 tests PASS)
+   - `test_assert_run_conclusions.py` (6 tests PASS)
+   - `test_check_required_contexts.py` (5 tests PASS)
+   - `test_delta_gate.py` (4 tests PASS)
+   - `test_digest_invariant.py` (8 tests PASS)
+   - `test_event_writer.py` (8 tests PASS)
+   - `test_evidence_chain.py` (9 tests PASS)
+   - `test_identity_gate.py` (4 tests PASS)
+   - `test_lint_workflow.py` (12 tests PASS)
+   - `test_package_init.py` (4 tests PASS)
    - `test_profile_evidence.py` (6 tests PASS)
    - `test_records_client.py` (5 tests PASS)
+   - `test_render_template.py` (10 tests PASS)
+   - `test_restore_rotation.py` (7 tests PASS)
    - `test_sbom_assert.py` (5 tests PASS)
    - `test_seeded_defect.py` (4 tests PASS)
+   - `test_shipped_assert.py` (7 tests PASS)
+   - `test_timegate.py` (9 tests PASS)
    - `test_verification_contract_check.py` (6 tests PASS)
-   - `test_event_writer.py` (9 tests PASS)
-   - `test_evidence_chain.py` (26 tests PASS)
-   - `test_package_init.py` (4 tests PASS)
+   - `test_verify_digest_chain.py` (7 tests PASS)
+   - `test_version_monitor.py` (8 tests PASS)
 
 3. **Workflow Lint Engine: 62 Workflows Checked, 0 Failed.**  
    - `python -m tools.evidence.lint_workflow --path .github/workflows --summary` -> `OK lint_workflow checked=45 failed=0`.
@@ -72,7 +79,10 @@ Prior review `lanes/L2-98-DEEP-REVIEW.md` (dated 2026-09-16) was a pre-implement
 6. **Action-Pins Harness: 7/7 PASS.**  
    `bash tools/evidence/test/run-pins.sh` -> `L2 ACTION-PINS SUITE: pass=7 fail=0, SUITE_PASS` (resolved defect in `stub/gh`, verified pin resolution and idempotent substitution).
 
-7. **Acceptance Test Executables (§100): 4/4 ATs PASS.**  
+7. **Action-Pins Coverage Validator: 6/6 PASS.**  
+   `python -m tools.evidence.check_action_pins --summary` -> `OK check_action_pins checked=6 failed=0` (verifies all action+SHA references across workflows are explicitly ledgered).
+
+8. **Acceptance Test Executables (§100): 4/4 ATs PASS.**  
    - `tools/evidence/at/at-024.sh --summary` -> `OK at-024 checked=4 failed=0` (shared workflow canary catch and tag revert).
    - `tools/evidence/at/at-029.sh --summary` -> `OK at-029 checked=3 failed=0` (control plane outage manual rollback).
    - `tools/evidence/at/at-035.sh --summary` -> `OK at-035 checked=4 failed=0` (org export restoration).
@@ -95,7 +105,7 @@ Prior review `lanes/L2-98-DEEP-REVIEW.md` (dated 2026-09-16) was a pre-implement
 
 Per `AGENTS.md` Step 1 & Step 2, a green checkmark is never taken at face value. The following concrete defects were surfaced and resolved:
 
-### Finding 1: Execution Failure in `tools/evidence/test/run-pins.sh` via CRLF Line Endings
+### Finding 1: Execution Failure in `tools/evidence/test/run-pins.sh` via Extensionless Script Wrappers
 - **Location:** `tools/evidence/test/stub/gh` and `tools/evidence/test/run-pins.sh`.
 - **Failing Command Output:**
   ```bash
@@ -111,10 +121,16 @@ Per `AGENTS.md` Step 1 & Step 2, a green checkmark is never taken at face value.
   L2 ACTION-PINS SUITE: pass=6 fail=1
   SUITE_FAIL
   ```
-- **Root Cause:** `tools/evidence/test/stub/gh` is an extensionless shell script acting as a test double for `gh`. Because `.gitattributes` only matched `*.sh text eol=lf`, git on Windows checked out `stub/gh` with `CRLF` line endings (`\r\n`). In WSL/bash, executing `#!/usr/bin/env bash\r` caused the kernel to search for `bash\r`, which failed with exit code 127. Inside `resolve_action_pin.sh`, `2>/dev/null` swallowed the interpreter error, causing it to fail closed with `RESOLVE_FAILED` (exit 3).
+- **Root Cause:** `tools/evidence/test/stub/gh` is an extensionless shell script acting as a test double for `gh`. Because `.gitattributes` initially only covered `*.sh text eol=lf`, git on Windows checkouts could convert extensionless scripts to `CRLF` line endings (`\r\n`). In WSL/bash, executing `#!/usr/bin/env bash\r` caused the kernel to search for `bash\r`, which failed with exit code 127. Inside `resolve_action_pin.sh`, `2>/dev/null` swallowed the interpreter error, causing it to fail closed with `RESOLVE_FAILED` (exit 3).
 - **Resolution Applied:**
-  1. Converted `tools/evidence/test/stub/gh` line endings to `LF`.
-  2. Added explicit line in `.gitattributes`: `tools/evidence/test/stub/gh text eol=lf` (committed in `ba6035f`).
+  1. Verified `tools/evidence/test/stub/gh` has LF line endings in the repository.
+  2. Added explicit lines in `.gitattributes` for extensionless executable script wrappers (committed in `ba6035f`):
+     - `tools/evidence/test/stub/gh text eol=lf`
+     - `tools/records/event-append text eol=lf`
+     - `tools/records/mint-token text eol=lf`
+     - `tools/records/record-decision text eol=lf`
+     - `tools/records/record-verification-result text eol=lf`
+     - `tools/records/record-write text eol=lf`
 - **Re-Verification Command & Output:**
   ```bash
   $ bash tools/evidence/test/run-pins.sh
@@ -142,7 +158,7 @@ Authoritative task mapping from `lanes/L2-05-tasks.md` and `lanes/L2-CONCORDANCE
 |---|---|---|---|---|---|---|
 | `L2-T001` | Lane branch & owned skeleton | `.github/workflows/`, `templates/`, `tools/evidence/` | `bash _concordance-check.sh lanes` | `L2 113/113 INDEX OK` | **PASS** | Three owned roots present and verified. |
 | `L2-T002` | Pin consumed contract surface | `contracts/workflow-io/` | `test -d contracts && echo OK` | `OK` | **PASS** | Consumed contract surface pinned. |
-| `L2-T003` | Required check name registry | `templates/workflows/required-checks.yaml` | `python -m tools.evidence.check_required_contexts` | Exit code 0 | **PASS** | Required checks defined and synchronized. |
+| `L2-T003` | Required check name registry | `templates/workflows/required-checks.yaml` | `python -m tools.evidence.check_required_contexts --templates templates/workflows --registry templates/workflows/required-checks.yaml --summary` | `OK check_required_contexts checked=15 failed=0` | **PASS** | Required checks defined and synchronized. |
 | `L2-T004` | Lane-guard workflow | `.github/workflows/lane-guard.yml` | `python -m tools.evidence.lint_workflow --path .github/workflows/lane-guard.yml` | `OK lint_workflow checked=1 failed=0` | **PASS** | Validated with zero lint findings. |
 | `L2-T005` | Merge-train preflight check | `tools/evidence/preflight.sh` | `bash tools/evidence/preflight.sh` | Exit code 0 | **PASS** | Preflight toolchain operational. |
 | `L2-T006` | Rebase & open lane PR | `lanes/L2-00-charter.md` | `git status --porcelain` | Clean working tree | **PASS** | Partition bounds fully preserved. |
@@ -152,11 +168,11 @@ Authoritative task mapping from `lanes/L2-05-tasks.md` and `lanes/L2-CONCORDANCE
 |---|---|---|---|---|---|---|
 | `L2-T530` | Evidence toolchain package | `tools/evidence/__init__.py` | `python -m pytest tools/evidence/tests/test_package_init.py -q` | `4 passed in 0.05s` | **PASS** | Tool contract grammar verified. |
 | `L2-T531` | Action-pin resolver & applier | `tools/evidence/resolve_action_pin.sh`, `apply_pins.sh` | `bash tools/evidence/test/run-pins.sh` | `L2 ACTION-PINS SUITE: pass=7 fail=0` | **PASS** | Pinned action resolver verified. |
-| `L2-T532` | Action-pin ledger | `tools/evidence/action-pins.txt` | `test -f tools/evidence/action-pins.txt && echo OK` | `OK` | **PASS** | Immutable ledger of GitHub Action SHAs. |
-| `L2-T533` | Workflow linter | `tools/evidence/lint_workflow.py` | `python -m pytest tools/evidence/tests/test_lint_workflow.py -q` | `10 passed in 0.12s` | **PASS** | Checks pinning, permissions, no-if rules. |
-| `L2-T534` | Required-context cross-checker | `tools/evidence/check_required_contexts.py` | `python -m tools.evidence.check_required_contexts` | Exit code 0 | **PASS** | Context ↔ job emission verification. |
-| `L2-T535` | Run-conclusion assertor | `tools/evidence/assert_run_conclusions.py` | `python -m pytest tools/evidence/tests/test_assert_actor_gate_first.py -q` | `10 passed in 0.14s` | **PASS** | No skipped / no neutral conclusion rule. |
-| `L2-T536` | Delta-gate engine | `tools/evidence/delta_gate.py` | `python -m pytest tools/evidence/tests/test_evidence_chain.py -k delta` | `5 passed in 0.08s` | **PASS** | Security & license delta-gating. |
+| `L2-T532` | Action-pin ledger & validator | `tools/evidence/action-pins.txt`, `tools/evidence/check_action_pins.py` | `python -m tools.evidence.check_action_pins --summary` | `OK check_action_pins checked=6 failed=0` | **PASS** | Ledger covers all 6 action+SHA references; unit tests pass in `test_action_pins.py`. |
+| `L2-T533` | Workflow linter | `tools/evidence/lint_workflow.py` | `python -m pytest tools/evidence/tests/test_lint_workflow.py -q` | `12 passed in 0.15s` | **PASS** | Checks pinning, permissions, no-if rules. |
+| `L2-T534` | Required-context cross-checker | `tools/evidence/check_required_contexts.py` | `python -m tools.evidence.check_required_contexts --templates templates/workflows --registry templates/workflows/required-checks.yaml --summary` | `OK check_required_contexts checked=15 failed=0` | **PASS** | Context ↔ job emission verification across 15 contexts. |
+| `L2-T535` | Run-conclusion assertor | `tools/evidence/assert_run_conclusions.py` | `python -m pytest tools/evidence/tests/test_assert_run_conclusions.py -q` | `6 passed in 0.07s` | **PASS** | No skipped / no neutral conclusion rule. |
+| `L2-T536` | Delta-gate engine | `tools/evidence/delta_gate.py` | `python -m pytest tools/evidence/tests/test_delta_gate.py -q` | `4 passed in 0.51s` | **PASS** | Security & license delta-gating. |
 
 ### 3.3 CI & Reusable Workflows (`L2-T100` .. `L2-T155`)
 | Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
@@ -205,14 +221,14 @@ Authoritative task mapping from `lanes/L2-05-tasks.md` and `lanes/L2-CONCORDANCE
 | `L2-T538` | SBOM-beside-digest assertion | `tools/evidence/assert_sbom.py` | `python -m pytest tools/evidence/tests/test_sbom_assert.py -q` | `5 passed in 0.08s` | **PASS** | Enforces Invariant 85. |
 | `L2-T539` | Template placeholder linter | `tools/evidence/render_template.py` | `python -m pytest tools/evidence/tests/test_render_template.py -k placeholder` | `4 passed in 0.06s` | **PASS** | Prevents uninstantiated tokens. |
 | `L2-T540` | Time gate: Friday freeze & core hours | `tools/evidence/timegate.py` | `python -m pytest tools/evidence/tests/test_timegate.py -q` | `9 passed in 0.11s` | **PASS** | Enforces operating window rules. |
-| `L2-T541` | Actor gate: human identity + capability | `tools/evidence/assert_actor_gate_first.py` | `python -m pytest tools/evidence/tests/test_assert_actor_gate_first.py -q` | `10 passed in 0.14s` | **PASS** | Enforces privileged step preconditions. |
+| `L2-T541` | Actor gate: human identity + capability | `tools/evidence/assert_actor_gate_first.py` | `python -m pytest tools/evidence/tests/test_assert_actor_gate_first.py -q` | `7 passed in 0.10s` | **PASS** | Enforces privileged step preconditions. |
 | `L2-T542` | Workflow identity gate (approver != deployer) | `tools/evidence/lib/identity.sh` | `bash tools/evidence/test/phase3/run-all.sh` | `PASS identity/self-approval-refused` | **PASS** | Separation of duties enforced. |
-| `L2-T543` | Digest invariant (requested vs staging) | `tools/evidence/verify_digest_chain.py` | `python -m pytest tools/evidence/tests/test_verify_digest_chain.py -q` | `8 passed in 0.11s` | **PASS** | Section 32 immutable digest chain. |
+| `L2-T543` | Digest invariant (requested vs staging) | `tools/evidence/verify_digest_chain.py` | `python -m pytest tools/evidence/tests/test_verify_digest_chain.py -q` | `7 passed in 0.09s` | **PASS** | Section 32 immutable digest chain. |
 | `L2-T544` | Records-write client | `tools/evidence/records_client.py` | `python -m pytest tools/evidence/tests/test_records_client.py -q` | `5 passed in 0.08s` | **PASS** | Cryptographic record append client. |
-| `L2-T545` | Event writer: bound envelope | `tools/evidence/event_writer.py` | `python -m pytest tools/evidence/tests/test_event_writer.py -q` | `9 passed in 0.12s` | **PASS** | One file per event, bound schema. |
+| `L2-T545` | Event writer: bound envelope | `tools/evidence/event_writer.py` | `python -m pytest tools/evidence/tests/test_event_writer.py -q` | `8 passed in 0.11s` | **PASS** | One file per event, bound schema. |
 | `L2-T546` .. `T552` | Rotation & posture checks | `tools/evidence/restore_rotation.py` | `python -m pytest tools/evidence/tests/test_restore_rotation.py -q` | `7 passed in 0.09s` | **PASS** | Restore rotation cadence verified. |
-| `L2-T500` .. `T516` | Evidence chain & verification | `tools/evidence/evidence_chain.py` | `python -m pytest tools/evidence/tests/test_evidence_chain.py -q` | `26 passed in 0.35s` | **PASS** | End-to-end evidence chain. |
-| `L2-T520` .. `T528` | Digest invariant verification | `tools/evidence/verify_digest_chain.py` | `python -m pytest tools/evidence/tests/test_version_monitor.py -q` | `9 passed in 0.12s` | **PASS** | Monitored digest agreement. |
+| `L2-T500` .. `T516` | Evidence chain & verification | `tools/evidence/evidence_chain.py` | `python -m pytest tools/evidence/tests/test_evidence_chain.py -q` | `9 passed in 0.12s` | **PASS** | End-to-end evidence chain. |
+| `L2-T520` .. `T528` | Digest invariant verification | `tools/evidence/verify_digest_chain.py` | `python -m pytest tools/evidence/tests/test_version_monitor.py -q` | `8 passed in 0.11s` | **PASS** | Monitored digest agreement. |
 | `L2-T170` .. `T572` | Production gates & release controls | `tools/evidence/shipped_assert.py` | `python -m pytest tools/evidence/tests/test_shipped_assert.py -q` | `7 passed in 0.10s` | **PASS** | Complete release assertions verified. |
 | `L2-T600` .. `L2-T611` | Regression suite & acceptance tests | `tools/evidence/acceptance_matrix.py` | `python -m tools.evidence.acceptance_matrix` | `PASS DoD-01 .. DoD-20` | **PASS** | Complete 20-DoD matrix passing. |
 
@@ -221,7 +237,7 @@ Authoritative task mapping from `lanes/L2-05-tasks.md` and `lanes/L2-CONCORDANCE
 ## 4. AGENTS.md 7-Step Verification Checklist Cross-Check
 
 - **Step 1: Validate Properly (Execution Evidence):**  
-  Ran concrete automated test suites (`acceptance_matrix.py` -> 20/20 PASS; `pytest tools/evidence/tests/` -> 145/145 PASS; `lint_workflow.py` -> 62/62 checked 0 failed; `run_negative_tests.sh` -> 6/6 PASS; `run-all.sh` -> 21/21 PASS; `run-pins.sh` -> 7/7 PASS; `at-*.sh` -> 4/4 PASS). Literal stdout and exit codes captured verbatim.
+  Ran concrete automated test suites (`acceptance_matrix` -> 20/20 PASS; `pytest tools/evidence/tests/` -> 147/147 PASS across 23 modules; `lint_workflow.py` -> 62/62 checked 0 failed; `check_action_pins` -> 6/6 ledgered PASS; `run_negative_tests.sh` -> 6/6 PASS; `run-all.sh` -> 21/21 PASS; `run-pins.sh` -> 7/7 PASS; `at-*.sh` -> 4/4 PASS). Literal stdout and exit codes captured verbatim.
 - **Step 2: Develop Real Code (Zero Empty Stubs):**  
   Automated scanner confirmed zero empty stubs (`pass`), zero placeholder markers, and verified substantive execution logic across all tools and workflows.
 - **Step 3: Cross-Check Against Canonical Phase Map (`04-phase-map.md`):**  

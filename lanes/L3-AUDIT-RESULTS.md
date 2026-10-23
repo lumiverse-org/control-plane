@@ -3,13 +3,13 @@
 **Branch:** `gravity/batch-3`  
 **Audit Date:** 2026-10-23  
 **Governing Standard:** `AGENTS.md` (Radical honesty, verifiable CLI execution evidence, zero premature completion claims, no empty stubs).  
-**Authoritative Decomposition:** 82 canonical tasks per `L3-06-tasks.md` and `L3-CONCORDANCE.md` (78 core tasks + 4 CMP/AT/DEL tasks), mapping to 194 task bodies across the lane. Residue: 0.
+**Authoritative Decomposition:** 78 canonical index tasks per `L3-06-tasks.md` Section 2 and `_concordance-check.sh` (`78/78 INDEX, 194/194 BODIES, RESIDUE 0/0, STATUS OK`). 4 additional Session 12 tasks tracked in dedicated Section 3.10.
 
 ---
 
 ## 1. Executive Summary
 
-A comprehensive, adversarial verification audit of Lane 3 was conducted across all 8 canonical specification files (`L3-00` through `L3-07`) and the authoritative master task breakdown in `L3-06-tasks.md` / `L3-CONCORDANCE.md`, comprising **82 distinct tasks**, spanning the 3 owned directories: `reconciler/`, `tools/provision/`, and `validators/drift/` (114 files, 467 pytest unit tests, 19 drift comparators, 16 orphan detectors, 5 repair classes, 11 acceptance matrix tests).
+A comprehensive, adversarial verification audit of Lane 3 was conducted across all 8 canonical specification files (`L3-00` through `L3-07`) and the authoritative master task breakdown in `L3-06-tasks.md` Section 2 (`L3-CONCORDANCE.md`), comprising **78 canonical index tasks** (plus 4 Session 12 un-indexed tasks), spanning the 3 owned directories: `reconciler/`, `tools/provision/`, and `validators/drift/` (114 files, 467 pytest unit tests, 19 drift comparators, 16 orphan detectors, 5 repair classes, 11 acceptance matrix tests).
 
 Lane 3 had no prior deep-review document (unlike L1/L2/L4); this audit provides the from-scratch evidence baseline of built state.
 
@@ -32,8 +32,8 @@ Lane 3 had no prior deep-review document (unlike L1/L2/L4); this audit provides 
    MATRIX passed=11 total=11
    ```
 
-2. **Automated Unit Test Suites: 467 PASSED, 0 FAIL across 467 tests in 7.33s.**  
-   - `python -m pytest reconciler/ -q` -> `300 passed in 3.33s`.
+2. **Automated Unit Test Suites: 467 PASSED, 0 FAIL across 467 tests.**  
+   - `python -m pytest reconciler/ -q` -> `300 passed in 4.36s`.
    - `python -m pytest tools/provision/tests/ -q` -> `120 passed in 3.65s`.
    - `python -m pytest validators/drift/tests/ -q` -> `47 passed in 0.35s`.
 
@@ -104,10 +104,10 @@ Lane 3 had no prior deep-review document (unlike L1/L2/L4); this audit provides 
 
 | Classification | Count | Description |
 |---|:---:|---|
-| **PASS** | **82** | Substantive real code/scripts matching specification, with passing tests, zero empty stubs, and verified non-stub content. |
-| **FAIL** | **0** | All discovered defects and bounds checked with live execution evidence. |
-| **PENDING** | **0** | Zero pending tasks; all 82 canonical master tasks have verified bodies and passing suites. |
-| **TOTAL** | **82** | Complete canonical task set per `L3-06-tasks.md` and `L3-CONCORDANCE.md`. |
+| **PASS** | **78** | Canonical index tasks per `L3-06-tasks.md` Section 2 with verified executable tests, zero empty stubs, and non-stub production logic. |
+| **FAIL** | **0** | Discovered path or test name discrepancies re-verified against live test modules and passing cleanly. |
+| **PENDING** | **0** | Zero pending tasks among canonical index tasks 1–78. (1 pending Session 12 un-indexed task tracked in Section 3.10). |
+| **TOTAL** | **78** | Complete canonical task set per `L3-06-tasks.md` Section 2 and `_concordance-check.sh` (`78/78 INDEX, 194/194 BODIES, RESIDUE 0/0, STATUS OK`). |
 
 ---
 
@@ -115,12 +115,10 @@ Lane 3 had no prior deep-review document (unlike L1/L2/L4); this audit provides 
 
 Per `AGENTS.md` Step 1 & Step 2, a green checkmark is never taken at face value. The following architectural findings were analyzed:
 
-### Finding 1: Dual Decomposition & Orphan Body Architecture
-- **Location:** `lanes/L3-CONCORDANCE.md`, `lanes/L3-06-tasks.md`, and phase files `L3-00` through `L3-07`.
-- **Analysis:** Lane 3 carries **two distinct task decompositions**:
-  1. The Master Task Breakdown in `L3-06-tasks.md` containing **82 canonical tasks** (`L3-P0-01` through `L3-P8-06`). Every single one of these 82 tasks has a complete, executable body with `**Files**`, `Acceptance`, `Commands`, and `SELF-VERIFY` blocks in `L3-06-tasks.md` itself.
-  2. The Phase Files (`L3-00` through `L3-07`) containing **116 task bodies** across six disjoint namespaces (`L3-00-Tnn`, `L3-01-Tnn`, etc.).
-- **Audit Determination:** All 82 master index tasks are fully implemented and verified passing in the codebase. The 116 phase-file bodies represent a duplicate decomposition authored concurrently during architecture design; zero tasks are missing from the implemented product tree. Residue is confirmed **0** via `bash _concordance-check.sh lanes`.
+### Finding 1: Canonical Task Index vs Session 12 Additions
+- **Location:** `lanes/L3-06-tasks.md`, `lanes/L3-CONCORDANCE.md`, and phase files `L3-00` through `L3-07`.
+- **Analysis:** `L3-06-tasks.md` Section 2 contains exactly 78 numbered tasks (`L3-P0-01` through `L3-P8-06`). `_concordance-check.sh lanes` checks `L3 78 194 0` and validates that all 78 index entries resolve cleanly. In Section 1.5, four additional work items from superseded phase files were ported during Session 12 (`L3-P0-CMP10`, `L3-P0-CMP12`, `L3-P0-AT001`, `L3-P0-DEL14`).
+- **Audit Determination:** To preserve absolute concordance with `_concordance-check.sh` and Section 2, the canonical index count is audited at **78 tasks** (100% PASS). The 4 Session 12 un-indexed tasks are tracked transparently in Section 3.10, where 3 are verified PASS and 1 (`L3-P0-DEL14`) is confirmed PENDING.
 
 ---
 
@@ -137,127 +135,135 @@ Per `AGENTS.md` Step 1 & Step 2, a green checkmark is never taken at face value.
 
 ---
 
-## 3. Section-by-Section Task Audit (82 Tasks)
+## 3. Section-by-Section Task Audit (78 Canonical Tasks)
 
-Authoritative task mapping from `lanes/L3-06-tasks.md` and `lanes/L3-CONCORDANCE.md`:
+Authoritative task mapping from `lanes/L3-06-tasks.md` Section 2 and `lanes/L3-CONCORDANCE.md`:
 
-### 3.1 Phase 0: Foundations & Data Models (`L3-P0-01` .. `L3-P0-DEL14`)
+### 3.1 Phase 0: Foundations & Data Models (`L3-P0-01` .. `L3-P0-07`)
 | Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
 |---|---|---|---|---|---|---|
 | `L3-P0-01` | Lane tree & ownership marker | `reconciler/`, `tools/provision/`, `validators/drift/` | `bash reconciler/scripts/check-handoff.sh` | `HANDOFF OK` | **PASS** | Three owned roots present. |
 | `L3-P0-02` | Package skeleton & dependencies | `reconciler/__init__.py` | `python -c "import reconciler; print('OK')"` | `OK` | **PASS** | Zero-pip standard library dependencies. |
-| `L3-P0-03` | Contract map module | `reconciler/contracts.py` | `python -m pytest reconciler/tests/test_contracts.py -q` | `7 passed in 0.08s` | **PASS** | Maps foreign contracts without reaching into trees. |
-| `L3-P0-04` | Fixture set `fixture-a` | `reconciler/fixtures/fixture-a/` | `test -d reconciler/fixtures/fixture-a && echo OK` | `OK` | **PASS** | Seeded drift fixtures for offline verification. |
-| `L3-P0-05` | Finding model & drift classes | `reconciler/finding.py` | `python -m pytest reconciler/tests/test_finding.py -q` | `10 passed in 0.09s` | **PASS** | Implements Invariant 36 severity model. |
-| `L3-P0-06` | `GitHubState` port & adapter | `reconciler/state/` | `python -m pytest reconciler/tests/test_state.py -q` | `5 passed in 0.07s` | **PASS** | Read-only state adapter; no write methods. |
-| `L3-P0-07` | Run record writer & summary | `reconciler/runrecord.py` | `python -m pytest reconciler/tests/test_runrecord.py -q` | `5 passed in 0.08s` | **PASS** | Enforces byte-exact summary grammar. |
-| `L3-P0-CMP10`| Lifecycle vs Renovate monitor | `reconciler/comparators/cmp_10_lifecycle.py` | `python -m pytest reconciler/comparators/tests/ -k cmp_10` | `4 passed in 0.06s` | **PASS** | Evaluates Renovate monitoring rules. |
-| `L3-P0-CMP12`| Shared service dependency check | `reconciler/comparators/cmp_12_dependencies.py` | `python -m pytest reconciler/comparators/tests/ -k cmp_12` | `2 passed in 0.05s` | **PASS** | Cross-checks consumer integrity. |
-| `L3-P0-AT001`| `create-product` scaffold check | `tools/provision/create_product.py` | `python -m pytest tools/provision/tests/test_create_product.py -q` | `11 passed in 0.12s` | **PASS** | 13 automated + 2 manual steps verified. |
-| `L3-P0-DEL14`| 14-day delegation warning | `reconciler/orphans/` | `python -m pytest reconciler/tests/test_delegation_expiry.py -q` | `4 passed in 0.06s` | **PASS** | Evaluates temporary delegation expiries. |
+| `L3-P0-03` | Contract map module | `reconciler/contracts_map.py` | `python -m pytest reconciler/tests/test_contracts_map.py -q` | `4 passed in 0.17s` | **PASS** | Maps foreign contracts without reaching into trees. |
+| `L3-P0-04` | Fixture set `fixture-a` | `reconciler/fixtures/fixture-a/` | `python -c "import os; print('OK' if os.path.isdir('reconciler/fixtures/fixture-a') else 'FAIL')"` | `OK` | **PASS** | Seeded drift fixtures for offline verification. |
+| `L3-P0-05` | Finding model & drift classes | `reconciler/model.py` | `python -m pytest reconciler/tests/test_model.py -q` | `6 passed in 0.17s` | **PASS** | Implements Invariant 36 severity model. |
+| `L3-P0-06` | `GitHubState` port & adapter | `reconciler/state/` | `python -m pytest reconciler/tests/test_state.py -q` | `5 passed in 0.16s` | **PASS** | Read-only state adapter; no write methods. |
+| `L3-P0-07` | Run record writer & summary | `reconciler/runrecord.py` | `python -m pytest reconciler/tests/test_runrecord.py -q` | `6 passed in 0.16s` | **PASS** | Enforces byte-exact summary grammar. |
 
 ### 3.2 Phase 1: Core Drift Comparators (`L3-P1-01` .. `L3-P1-20`)
 | Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
 |---|---|---|---|---|---|---|
 | `L3-P1-01` | Comparator registry & CLI | `reconciler/cli.py` | `python -m reconciler.cli list` | 19 comparators printed | **PASS** | CLI dispatch operational. |
-| `L3-P1-02` | CMP-01: Org membership | `reconciler/comparators/org_membership.py` | `python -m pytest reconciler/tests/test_org_membership.py -q` | `4 passed in 0.06s` | **PASS** | People.yaml vs GitHub org members. |
-| `L3-P1-03` | CMP-02: Capability authority | `reconciler/comparators/capability_authority.py` | `python -m pytest reconciler/tests/test_capability_authority.py -q` | `5 passed in 0.07s` | **PASS** | Team-implied authority verification. |
-| `L3-P1-04` | CMP-03: Team membership | `reconciler/comparators/team_membership.py` | `python -m pytest reconciler/tests/test_team_membership.py -q` | `3 passed in 0.05s` | **PASS** | Assignments vs GitHub Teams. |
-| `L3-P1-05` | CMP-04: CODEOWNERS sync | `reconciler/comparators/codeowners.py` | `python -m pytest reconciler/tests/test_codeowners.py -q` | `4 passed in 0.06s` | **PASS** | Assignments vs repo CODEOWNERS. |
-| `L3-P1-06` | CMP-05: Branch protection | `reconciler/comparators/branch_protection.py` | `python -m pytest reconciler/tests/test_branch_protection.py -q` | `5 passed in 0.07s` | **PASS** | Protection vs declared templates. |
-| `L3-P1-07` | CMP-06: Workflow version | `reconciler/comparators/workflow_version.py` | `python -m pytest reconciler/tests/test_workflow_version.py -q` | `2 passed in 0.05s` | **PASS** | Workflow tag vs committed template. |
-| `L3-P1-08` | CMP-07/08: Environments & policy | `reconciler/comparators/environments.py` | `python -m pytest reconciler/tests/test_environments.py -q` | `4 passed in 0.06s` | **PASS** | Deployment branch/tag policy checks. |
-| `L3-P1-09` | CMP: Assignment expiry | `reconciler/comparators/expiry.py` | `python -m pytest reconciler/tests/test_expiry.py -q` | `3 passed in 0.05s` | **PASS** | End-date expiry comparator. |
-| `L3-P1-10` | CMP: Workflow tag -> SHA | `reconciler/comparators/workflow_tag_sha.py` | `python -m pytest reconciler/tests/test_workflow_tag_sha.py -q` | `2 passed in 0.05s` | **PASS** | Immutable tag -> commit SHA check. |
-| `L3-P1-11` | CMP: Renovate bypass split | `reconciler/comparators/renovate_bypass.py` | `python -m pytest reconciler/tests/test_renovate_bypass.py -q` | `3 passed in 0.05s` | **PASS** | Renovate A/B ruleset boundary. |
-| `L3-P1-12` | CMP: Machine authorship | `reconciler/comparators/machine_authorship.py` | `python -m pytest reconciler/tests/test_machine_authorship.py -q` | `3 passed in 0.05s` | **PASS** | Blocks machine commits to protected paths. |
-| `L3-P1-13` | CMP: Infra attestation window | `reconciler/comparators/infra_attestation.py` | `python -m pytest reconciler/tests/test_infra_attestation.py -q` | `4 passed in 0.06s` | **PASS** | 90-day provider attestation freshness. |
-| `L3-P1-14` | CMP: Write freshness | `reconciler/comparators/write_freshness.py` | `python -m pytest reconciler/tests/test_write_freshness.py -q` | `3 passed in 0.05s` | **PASS** | Record-store append freshness check. |
-| `L3-P1-15` | CMP: `restore_tested` verification | `reconciler/comparators/restore_tested.py` | `python -m pytest reconciler/tests/test_restore_tested.py -q` | `3 passed in 0.05s` | **PASS** | Validates against restore-test records. |
-| `L3-P1-16` | Per-registry comparison counts | `reconciler/runrecord.py` | `python -m pytest reconciler/tests/test_runrecord.py -k dict` | `1 passed in 0.05s` | **PASS** | Summary records per-registry metrics. |
-| `L3-P1-17` | Seeded canary & zero-findings rule | `reconciler/canary.py` | `python -m pytest reconciler/tests/test_canary.py -q` | `4 passed in 0.06s` | **PASS** | Zero-drift run without canary fails closed. |
-| `L3-P1-18` | Run annotations | `reconciler/annotations.py` | `python -m pytest reconciler/tests/test_annotations.py -q` | `4 passed in 0.06s` | **PASS** | External cause and acknowledge stamps. |
-| `L3-P1-19` | Fail-closed matrix | `reconciler/matrix.py` | `python -m pytest reconciler/tests/test_matrix.py -q` | `5 passed in 0.07s` | **PASS** | Blocking-class check failure logic. |
-| `L3-P1-20` | SIG-13 emission on failed run | `reconciler/signals.py` | `python -m pytest reconciler/tests/test_signals.py -q` | `5 passed in 0.07s` | **PASS** | Paging signal emitted on broken state. |
+| `L3-P1-02` | CMP-01: Org membership | `reconciler/comparators/org_membership.py` | `python -m pytest reconciler/tests/test_org_membership.py -q` | `4 passed in 0.17s` | **PASS** | People.yaml vs GitHub org members. |
+| `L3-P1-03` | CMP-02: Capability authority | `reconciler/comparators/capability_authority.py` | `python -m pytest reconciler/tests/test_capability_authority.py -q` | `5 passed in 0.18s` | **PASS** | Team-implied authority verification. |
+| `L3-P1-04` | CMP-03: Team membership | `reconciler/comparators/team_membership.py` | `python -m pytest reconciler/tests/test_team_membership.py -q` | `3 passed in 0.16s` | **PASS** | Assignments vs GitHub Teams. |
+| `L3-P1-05` | CMP-04: CODEOWNERS sync | `reconciler/comparators/codeowners.py` | `python -m pytest reconciler/tests/test_codeowners.py -q` | `4 passed in 0.17s` | **PASS** | Assignments vs repo CODEOWNERS. |
+| `L3-P1-06` | CMP-05: Branch protection | `reconciler/comparators/branch_protection.py` | `python -m pytest reconciler/tests/test_branch_protection.py -q` | `5 passed in 0.17s` | **PASS** | Protection vs declared templates. |
+| `L3-P1-07` | CMP-06: Workflow version | `reconciler/comparators/workflow_version.py` | `python -m pytest reconciler/tests/test_workflow_version.py -q` | `2 passed in 0.15s` | **PASS** | Workflow tag vs committed template. |
+| `L3-P1-08` | CMP-07/08: Environments & policy | `reconciler/comparators/environments.py` | `python -m pytest reconciler/tests/test_environments.py -q` | `4 passed in 0.16s` | **PASS** | Deployment branch/tag policy checks. |
+| `L3-P1-09` | CMP: Assignment expiry | `reconciler/comparators/expiry.py` | `python -m pytest reconciler/tests/test_expiry.py -q` | `3 passed in 0.16s` | **PASS** | End-date expiry comparator. |
+| `L3-P1-10` | CMP: Workflow tag -> SHA | `reconciler/comparators/workflow_tag_sha.py` | `python -m pytest reconciler/tests/test_workflow_tag_sha.py -q` | `2 passed in 0.16s` | **PASS** | Immutable tag -> commit SHA check. |
+| `L3-P1-11` | CMP: Renovate bypass split | `reconciler/comparators/renovate_bypass.py` | `python -m pytest reconciler/tests/test_renovate_bypass.py -q` | `3 passed in 0.16s` | **PASS** | Renovate A/B ruleset boundary. |
+| `L3-P1-12` | CMP: Machine authorship | `reconciler/comparators/machine_authorship.py` | `python -m pytest reconciler/tests/test_machine_authorship.py -q` | `3 passed in 0.16s` | **PASS** | Blocks machine commits to protected paths. |
+| `L3-P1-13` | CMP: Infra attestation window | `reconciler/comparators/infra_attestation.py` | `python -m pytest reconciler/tests/test_infra_attestation.py -q` | `4 passed in 0.16s` | **PASS** | 90-day provider attestation freshness. |
+| `L3-P1-14` | CMP: Write freshness | `reconciler/comparators/write_freshness.py` | `python -m pytest reconciler/tests/test_write_freshness.py -q` | `3 passed in 0.15s` | **PASS** | Record-store append freshness check. |
+| `L3-P1-15` | CMP: `restore_tested` verification | `reconciler/comparators/restore_tested.py` | `python -m pytest reconciler/tests/test_restore_tested.py -q` | `3 passed in 0.16s` | **PASS** | Validates against restore-test records. |
+| `L3-P1-16` | Per-registry comparison counts | `reconciler/runrecord.py` | `python -m pytest reconciler/tests/test_counts.py -q` | `4 passed in 0.16s` | **PASS** | Summary records per-registry metrics. |
+| `L3-P1-17` | Seeded canary & zero-findings rule | `reconciler/canary.py` | `python -m pytest reconciler/tests/test_canary.py -q` | `4 passed in 0.16s` | **PASS** | Zero-drift run without canary fails closed. |
+| `L3-P1-18` | Run annotations | `reconciler/annotations.py` | `python -m pytest reconciler/tests/test_annotations.py -q` | `4 passed in 0.17s` | **PASS** | External cause and acknowledge stamps. |
+| `L3-P1-19` | Fail-closed matrix | `reconciler/matrix.py` | `python -m pytest reconciler/tests/test_failmode.py -q` | `6 passed in 0.17s` | **PASS** | Blocking-class check failure logic. |
+| `L3-P1-20` | SIG-13 emission on failed run | `reconciler/signals.py` | `python -m pytest reconciler/tests/test_signals.py -q` | `5 passed in 0.17s` | **PASS** | Paging signal emitted on broken state. |
 
 ### 3.3 Phase 2: Orphan Detection Framework (`L3-P2-01` .. `L3-P2-06`)
 | Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
 |---|---|---|---|---|---|---|
-| `L3-P2-01` | Orphan framework & severity map | `reconciler/orphans/framework.py` | `python -m pytest reconciler/tests/test_orphan_framework.py -q` | `8 passed in 0.09s` | **PASS** | Implements Section 12.2 severity rules. |
-| `L3-P2-02` | Orphan detectors 1–5 | `reconciler/orphans/ownership.py` | `python -m pytest reconciler/tests/test_orphan_ownership.py -q` | `6 passed in 0.08s` | **PASS** | Primary owner, responder, cross-reviewer. |
-| `L3-P2-03` | Orphan detectors 6–10 | `reconciler/orphans/assets.py` | `python -m pytest reconciler/tests/test_orphan_assets.py -q` | `5 passed in 0.07s` | **PASS** | Asset owners and commitment leads. |
-| `L3-P2-04` | Orphan detectors 11–16 | `reconciler/orphans/governance.py` | `python -m pytest reconciler/tests/test_orphan_governance.py -q` | `6 passed in 0.08s` | **PASS** | Migration, verification, temp expiry. |
-| `L3-P2-05` | Prospective orphan mode | `reconciler/orphans/prospective.py` | `python -m pytest reconciler/tests/test_orphan_prospective.py -q` | `4 passed in 0.06s` | **PASS** | Scans on `availability: departing`. |
-| `L3-P2-06` | Blocking orphans non-dismissible | `reconciler/orphans/` | `python -m pytest reconciler/tests/test_orphan_dismissal.py -q` | `4 passed in 0.06s` | **PASS** | SIG-05 emission on blocking orphans. |
+| `L3-P2-01` | Orphan framework & severity map | `reconciler/orphans/types.py` | `python -m pytest reconciler/tests/test_orphan_types.py -q` | `3 passed in 0.17s` | **PASS** | Implements Section 12.2 severity rules. |
+| `L3-P2-02` | Orphan detectors 1–5 | `reconciler/orphans/ownership.py` | `python -m pytest reconciler/tests/test_orphan_ownership.py -q` | `6 passed in 0.17s` | **PASS** | Primary owner, responder, cross-reviewer. |
+| `L3-P2-03` | Orphan detectors 6–10 | `reconciler/orphans/assets.py` | `python -m pytest reconciler/tests/test_orphan_assets.py -q` | `5 passed in 0.18s` | **PASS** | Asset owners and commitment leads. |
+| `L3-P2-04` | Orphan detectors 11–16 | `reconciler/orphans/governance.py` | `python -m pytest reconciler/tests/test_orphan_governance.py -q` | `6 passed in 0.18s` | **PASS** | Migration, verification, temp expiry. |
+| `L3-P2-05` | Prospective orphan mode | `reconciler/orphans/prospective.py` | `python -m pytest reconciler/tests/test_orphan_prospective.py -q` | `4 passed in 0.17s` | **PASS** | Scans on `availability: departing`. |
+| `L3-P2-06` | Blocking orphans non-dismissible | `reconciler/orphans/dismissal.py` | `python -m pytest reconciler/tests/test_orphan_dismissal.py -q` | `4 passed in 0.17s` | **PASS** | SIG-05 emission on blocking orphans. |
 
 ### 3.4 Phase 3: Drift Classes & Budgets (`L3-P3-01` .. `L3-P3-06`)
 | Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
 |---|---|---|---|---|---|---|
-| `L3-P3-01` | Drift-class loader | `reconciler/drift_class.py` | `python -m pytest reconciler/tests/test_drift_class.py -q` | `4 passed in 0.06s` | **PASS** | Loaded from `os-health.yaml`. |
-| `L3-P3-02` | `control-plane/blocking-drift` check-run | `reconciler/checkrun.py` | `python -m pytest reconciler/tests/test_checkrun.py -q` | `4 passed in 0.06s` | **PASS** | Emits GitHub Check Run conclusion. |
-| `L3-P3-03` | Check-run identity assertion | `reconciler/checkrun.py` | `python -m pytest reconciler/tests/test_checkrun_identity.py -q` | `3 passed in 0.05s` | **PASS** | Verified reconciler GitHub App identity. |
-| `L3-P3-04` | Drift budget counters | `reconciler/budget.py` | `python -m pytest reconciler/tests/test_budget.py -q` | `5 passed in 0.07s` | **PASS** | Amber 2/product, Red flat 3 enforced. |
-| `L3-P3-05` | Reclassification gate | `reconciler/reclassify.py` | `python -m pytest reconciler/tests/test_reclassify.py -q` | `3 passed in 0.05s` | **PASS** | Reclassifying requires Founder decision ID. |
-| `L3-P3-06` | Closure-quality audit sampler | `reconciler/audit.py` | `python -m pytest reconciler/tests/test_audit.py -q` | `4 passed in 0.06s` | **PASS** | Statistical sampling of resolved findings. |
+| `L3-P3-01` | Drift-class loader | `reconciler/driftclass.py` | `python -m pytest reconciler/tests/test_driftclass.py -q` | `5 passed in 0.17s` | **PASS** | Loaded from `os-health.yaml`. |
+| `L3-P3-02` | `control-plane/blocking-drift` check-run | `reconciler/checkrun.py` | `python -m pytest reconciler/tests/test_checkrun.py -q` | `4 passed in 0.16s` | **PASS** | Emits GitHub Check Run conclusion. |
+| `L3-P3-03` | Check-run identity assertion | `reconciler/checkrun.py` | `python -m pytest reconciler/tests/test_checkrun_identity.py -q` | `3 passed in 0.17s` | **PASS** | Verified reconciler GitHub App identity. |
+| `L3-P3-04` | Drift budget counters | `reconciler/budget.py` | `python -m pytest reconciler/tests/test_budget.py -q` | `5 passed in 0.17s` | **PASS** | Amber 2/product, Red flat 3 enforced. |
+| `L3-P3-05` | Reclassification gate | `reconciler/reclassify.py` | `python -m pytest reconciler/tests/test_reclassify.py -q` | `3 passed in 0.16s` | **PASS** | Reclassifying requires Founder decision ID. |
+| `L3-P3-06` | Closure-quality audit sampler | `reconciler/closure_audit.py` | `python -m pytest reconciler/tests/test_closure_audit.py -q` | `6 passed in 0.17s` | **PASS** | Statistical sampling of resolved findings. |
 
 ### 3.5 Phase 4: Scaffolding & Provisioning Operations (`L3-P4-01` .. `L3-P4-10`)
 | Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
 |---|---|---|---|---|---|---|
-| `L3-P4-01` | Provision CLI skeleton | `tools/provision/cli.py` | `python -m pytest tools/provision/tests/test_cli.py -q` | `10 passed in 0.12s` | **PASS** | Dry-run default, `--apply --live` gate. |
-| `L3-P4-02` | CODEOWNERS generator | `tools/provision/codeowners.py` | `python -m pytest tools/provision/tests/test_codeowners.py -q` | `6 passed in 0.08s` | **PASS** | Human identities only; rejects machines. |
-| `L3-P4-03` | Branch protection applier | `tools/provision/protection.py` | `python -m pytest tools/provision/tests/test_protection.py -q` | `6 passed in 0.08s` | **PASS** | Applies Section 11.3 rules from template. |
-| `L3-P4-04` | Environments & policy applier | `tools/provision/environments.py` | `python -m pytest tools/provision/tests/test_environments.py -q` | `6 passed in 0.08s` | **PASS** | 3 environments planned per product. |
-| `L3-P4-05` | Team creator | `tools/provision/teams.py` | `python -m pytest tools/provision/tests/test_teams.py -q` | `6 passed in 0.08s` | **PASS** | Derived strictly from people assignments. |
-| `L3-P4-06` | Repo-from-template applier | `tools/provision/repo.py` | `python -m pytest tools/provision/tests/test_repo.py -q` | `6 passed in 0.08s` | **PASS** | Required files & directory structure verified. |
-| `L3-P4-07` | `create-product` orchestrator | `tools/provision/create_product.py` | `python -m pytest tools/provision/tests/test_create_product.py -q` | `11 passed in 0.12s` | **PASS** | 13 automated + 2 manual steps planned. |
-| `L3-P4-08` | CONFIGURE checklist emitter | `tools/provision/checklists.py` | `python -m pytest tools/provision/tests/test_checklists.py -q` | `5 passed in 0.07s` | **PASS** | 7 CONFIGURE items verbatim; safe defaults. |
-| `L3-P4-09` | `add-person` orchestrator | `tools/provision/add_person.py` | `python -m pytest tools/provision/tests/test_add_person.py -q` | `8 passed in 0.10s` | **PASS** | 11-step onboarding plan generated. |
-| `L3-P4-10` | Pre-provisioning checklist | `tools/provision/preprovision.py` | `python -m pytest tools/provision/tests/test_preprovision.py -q` | `4 passed in 0.06s` | **PASS** | 6 items rendered, T-7 days due date. |
+| `L3-P4-01` | Provision CLI skeleton | `tools/provision/cli.py` | `python -m pytest tools/provision/tests/test_cli.py -q` | `10 passed in 0.28s` | **PASS** | Dry-run default, `--apply --live` gate. |
+| `L3-P4-02` | CODEOWNERS generator | `tools/provision/codeowners.py` | `python -m pytest tools/provision/tests/test_codeowners.py -q` | `6 passed in 0.19s` | **PASS** | Human identities only; rejects machines. |
+| `L3-P4-03` | Branch protection applier | `tools/provision/protection.py` | `python -m pytest tools/provision/tests/test_protection.py -q` | `6 passed in 0.23s` | **PASS** | Applies Section 11.3 rules from template. |
+| `L3-P4-04` | Environments & policy applier | `tools/provision/environments.py` | `python -m pytest tools/provision/tests/test_environments.py -q` | `6 passed in 0.22s` | **PASS** | 3 environments planned per product. |
+| `L3-P4-05` | Team creator | `tools/provision/teams.py` | `python -m pytest tools/provision/tests/test_teams.py -q` | `6 passed in 0.19s` | **PASS** | Derived strictly from people assignments. |
+| `L3-P4-06` | Repo-from-template applier | `tools/provision/repo.py` | `python -m pytest tools/provision/tests/test_repo.py -q` | `6 passed in 0.24s` | **PASS** | Required files & directory structure verified. |
+| `L3-P4-07` | `create-product` orchestrator | `tools/provision/create_product.py` | `python -m pytest tools/provision/tests/test_create_product.py -q` | `10 passed in 0.29s` | **PASS** | 13 automated + 2 manual steps planned. |
+| `L3-P4-08` | CONFIGURE checklist emitter | `tools/provision/checklists.py` | `python -m pytest tools/provision/tests/test_checklists.py -q` | `5 passed in 0.18s` | **PASS** | 7 CONFIGURE items verbatim; safe defaults. |
+| `L3-P4-09` | `add-person` orchestrator | `tools/provision/add_person.py` | `python -m pytest tools/provision/tests/test_add_person.py -q` | `8 passed in 0.25s` | **PASS** | 11-step onboarding plan generated. |
+| `L3-P4-10` | Pre-provisioning checklist | `tools/provision/preprovision.py` | `python -m pytest tools/provision/tests/test_preprovision.py -q` | `4 passed in 0.17s` | **PASS** | 6 items rendered, T-7 days due date. |
 
 ### 3.6 Phase 5: Independent Drift Verifier & Probes (`L3-P5-01` .. `L3-P5-08`)
 | Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
 |---|---|---|---|---|---|---|
-| `L3-P5-01` | Verifier skeleton | `validators/drift/verifier.py` | `python -m pytest validators/drift/tests/test_verifier.py -q` | `7 passed in 0.09s` | **PASS** | Independent verifier; separate token. |
-| `L3-P5-02` | Verifier A: CODEOWNERS humans | `validators/drift/assert_codeowners.py` | `python -m pytest validators/drift/tests/test_assert_codeowners.py -q` | `7 passed in 0.09s` | **PASS** | Machine login in CODEOWNERS fails. |
-| `L3-P5-03` | Verifier B: Protection matches template | `validators/drift/assert_protection.py` | `python -m pytest validators/drift/tests/test_assert_protection.py -q` | `7 passed in 0.09s` | **PASS** | Compares canonical JSON protection rules. |
-| `L3-P5-04` | Verifier C: Bypass actors exact | `validators/drift/assert_bypass.py` | `python -m pytest validators/drift/tests/test_assert_bypass.py -q` | `7 passed in 0.09s` | **PASS** | Bypass list exact; undeclared rules fail. |
-| `L3-P5-05` | Verifier absence Level 5 | `validators/drift/liveness.py` | `python -m pytest validators/drift/tests/test_liveness.py -q` | `4 passed in 0.06s` | **PASS** | Missing verifier cycle escalates to L5. |
-| `L3-P5-06` | AT-110 credential bounds probe | `validators/drift/credential_bounds.py` | `python -m pytest validators/drift/tests/test_credential_bounds.py -q` | `7 passed in 0.09s` | **PASS** | 6 negative attempts blocked; probe verified. |
-| `L3-P5-07` | Behavioural envelopes | `validators/drift/envelopes.py` | `python -m pytest validators/drift/tests/ -k envelope` | `3 passed in 0.05s` | **PASS** | Enforces rate & payload bounds. |
-| `L3-P5-08` | Records-repo head SHA anchor | `validators/drift/anchor.py` | `python -m pytest validators/drift/tests/ -k anchor` | `2 passed in 0.05s` | **PASS** | Anchors append-only records stream. |
+| `L3-P5-01` | Verifier skeleton | `validators/drift/verifier.py` | `python -m pytest validators/drift/tests/test_verifier.py -q` | `7 passed in 0.22s` | **PASS** | Independent verifier; separate token. |
+| `L3-P5-02` | Verifier A: CODEOWNERS humans | `validators/drift/assert_codeowners.py` | `python -m pytest validators/drift/tests/test_assert_codeowners.py -q` | `7 passed in 0.21s` | **PASS** | Machine login in CODEOWNERS fails. |
+| `L3-P5-03` | Verifier B: Protection matches template | `validators/drift/assert_protection.py` | `python -m pytest validators/drift/tests/test_assert_protection.py -q` | `7 passed in 0.22s` | **PASS** | Compares canonical JSON protection rules. |
+| `L3-P5-04` | Verifier C: Bypass actors exact | `validators/drift/assert_bypass.py` | `python -m pytest validators/drift/tests/test_assert_bypass.py -q` | `7 passed in 0.24s` | **PASS** | Bypass list exact; undeclared rules fail. |
+| `L3-P5-05` | Verifier absence Level 5 | `validators/drift/liveness.py` | `python -m pytest validators/drift/tests/test_liveness.py -q` | `4 passed in 0.18s` | **PASS** | Missing verifier cycle escalates to L5. |
+| `L3-P5-06` | AT-110 credential bounds probe | `validators/drift/credential_bounds.py` | `python -m pytest validators/drift/tests/test_credential_bounds.py -q` | `7 passed in 0.21s` | **PASS** | 6 negative attempts blocked; probe verified. |
+| `L3-P5-07` | Behavioural envelopes | `reconciler/envelope.py` | `python -m pytest reconciler/tests/test_envelope.py -q` | `8 passed in 0.17s` | **PASS** | Enforces rate & payload bounds. |
+| `L3-P5-08` | Records-repo head SHA anchor | `reconciler/anchor.py` | `python -m pytest reconciler/tests/test_anchor.py -q` | `6 passed in 0.17s` | **PASS** | Anchors append-only records stream. |
 
 ### 3.7 Phase 6: Stricter-Only Repair Automation (`L3-P6-01` .. `L3-P6-10`)
 | Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
 |---|---|---|---|---|---|---|
-| `L3-P6-01` | Stricter-only predicate | `reconciler/repair/stricter.py` | `python -m pytest reconciler/tests/test_stricter.py -q` | `10 passed in 0.12s` | **PASS** | Allows strictly tightening, never loosening. |
-| `L3-P6-02` | Repair enablement registry | `reconciler/repair/registry.py` | `python -m pytest reconciler/tests/test_repair_registry.py -q` | `5 passed in 0.07s` | **PASS** | Every class default-off per Spec §99.6. |
-| `L3-P6-03` | Repair: Team membership sync | `reconciler/repair/team_sync.py` | `python -m pytest reconciler/tests/test_repair_team_sync.py -q` | `7 passed in 0.09s` | **PASS** | Synchronizes missing assignment holders. |
-| `L3-P6-04` | Repair: CODEOWNERS regen | `reconciler/repair/codeowners_regen.py` | `python -m pytest reconciler/tests/test_repair_codeowners.py -q` | `6 passed in 0.08s` | **PASS** | Regenerates clean CODEOWNERS file. |
-| `L3-P6-05` | Repair: Re-apply protection | `reconciler/repair/protection_reapply.py` | `python -m pytest reconciler/tests/test_repair_protection.py -q` | `6 passed in 0.08s` | **PASS** | Re-applies declared branch protection. |
-| `L3-P6-06` | Repair: Expired access removal | `reconciler/repair/expiry_revoke.py` | `python -m pytest reconciler/tests/test_repair_expiry.py -q` | `5 passed in 0.07s` | **PASS** | Revokes expired contractor assignments. |
-| `L3-P6-07` | Repair: Label & board sync | `reconciler/repair/label_sync.py` | `python -m pytest reconciler/tests/test_repair_labels.py -q` | `4 passed in 0.06s` | **PASS** | Syncs standard label set. |
-| `L3-P6-08` | Repair record emitter | `reconciler/repair/records.py` | `python -m pytest reconciler/tests/test_repair_records.py -q` | `7 passed in 0.09s` | **PASS** | Emits signed repair records with prior state. |
-| `L3-P6-09` | Prohibited repair guards | `reconciler/repair/guards.py` | `python -m pytest reconciler/tests/test_repair_guards.py -q` | `6 passed in 0.08s` | **PASS** | Blocks automated data/secret modifications. |
-| `L3-P6-10` | Repeated failure escalates to L5 | `reconciler/repair/escalation.py` | `python -m pytest reconciler/tests/test_repair_escalation.py -q` | `4 passed in 0.06s` | **PASS** | Escalates failed repairs immediately. |
+| `L3-P6-01` | Stricter-only predicate | `reconciler/repair/stricter.py` | `python -m pytest reconciler/tests/test_stricter.py -q` | `12 passed in 0.18s` | **PASS** | Allows strictly tightening, never loosening. |
+| `L3-P6-02` | Repair enablement registry | `reconciler/repair/enablement.py` | `python -m pytest reconciler/tests/test_enablement.py -q` | `6 passed in 0.17s` | **PASS** | Every class default-off per Spec §99.6. |
+| `L3-P6-03` | Repair: Team membership sync | `reconciler/repair/team_sync.py` | `python -m pytest reconciler/tests/test_repair_team_sync.py -q` | `7 passed in 0.18s` | **PASS** | Synchronizes missing assignment holders. |
+| `L3-P6-04` | Repair: CODEOWNERS regen | `reconciler/repair/codeowners_regen.py` | `python -m pytest reconciler/tests/test_repair_codeowners.py -q` | `6 passed in 0.18s` | **PASS** | Regenerates clean CODEOWNERS file. |
+| `L3-P6-05` | Repair: Re-apply protection | `reconciler/repair/protection_reapply.py` | `python -m pytest reconciler/tests/test_repair_protection.py -q` | `6 passed in 0.18s` | **PASS** | Re-applies declared branch protection. |
+| `L3-P6-06` | Repair: Expired access removal | `reconciler/repair/expiry_revoke.py` | `python -m pytest reconciler/tests/test_repair_expiry.py -q` | `5 passed in 0.18s` | **PASS** | Revokes expired contractor assignments. |
+| `L3-P6-07` | Repair: Label & board sync | `reconciler/repair/label_sync.py` | `python -m pytest reconciler/tests/test_repair_labels.py -q` | `4 passed in 0.16s` | **PASS** | Syncs standard label set. |
+| `L3-P6-08` | Repair record emitter | `reconciler/repair/records.py` | `python -m pytest reconciler/tests/test_repair_records.py -q` | `7 passed in 0.18s` | **PASS** | Emits signed repair records with prior state. |
+| `L3-P6-09` | Prohibited repair guards | `reconciler/repair/guards.py` | `python -m pytest reconciler/tests/test_repair_guards.py -q` | `6 passed in 0.18s` | **PASS** | Blocks automated data/secret modifications. |
+| `L3-P6-10` | Repeated failure escalates to L5 | `reconciler/repair/escalation.py` | `python -m pytest reconciler/tests/test_repair_escalation.py -q` | `4 passed in 0.17s` | **PASS** | Escalates failed repairs immediately. |
 
 ### 3.8 Phase 7: Lifecycle Operations (`L3-P7-01` .. `L3-P7-05`)
 | Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
 |---|---|---|---|---|---|---|
-| `L3-P7-01` | `change-role` operation | `tools/provision/change_role.py` | `python -m pytest tools/provision/tests/test_change_role.py -q` | `6 passed in 0.08s` | **PASS** | Generates atomic role transition plan. |
-| `L3-P7-02` | `remove-person` operation | `tools/provision/remove_person.py` | `python -m pytest tools/provision/tests/test_remove_person.py -q` | `9 passed in 0.11s` | **PASS** | 11-step offboarding plan; never deletes ID. |
-| `L3-P7-03` | Registry-edit canary staging | `reconciler/staging.py` | `python -m pytest reconciler/tests/test_staging.py -q` | `8 passed in 0.10s` | **PASS** | Fleet gated on clean canary product run. |
-| `L3-P7-04` | Authority-delta detector | `validators/drift/authority_delta.py` | `python -m pytest validators/drift/tests/test_authority_delta.py -q` | `7 passed in 0.09s` | **PASS** | Delta without decision record fails. |
-| `L3-P7-05` | Temporary-person expiry exit | `tools/provision/temp_expiry.py` | `python -m pytest tools/provision/tests/test_temp_expiry.py -q` | `6 passed in 0.08s` | **PASS** | Treated as automated offboarding plan. |
+| `L3-P7-01` | `change-role` operation | `tools/provision/change_role.py` | `python -m pytest tools/provision/tests/test_change_role.py -q` | `6 passed in 0.19s` | **PASS** | Generates atomic role transition plan. |
+| `L3-P7-02` | `remove-person` operation | `tools/provision/remove_person.py` | `python -m pytest tools/provision/tests/test_remove_person.py -q` | `9 passed in 0.27s` | **PASS** | 11-step offboarding plan; never deletes ID. |
+| `L3-P7-03` | Registry-edit canary staging | `reconciler/staging.py` | `python -m pytest reconciler/tests/test_staging.py -q` | `8 passed in 0.19s` | **PASS** | Fleet gated on clean canary product run. |
+| `L3-P7-04` | Authority-delta detector | `validators/drift/authority_delta.py` | `python -m pytest validators/drift/tests/test_authority_delta.py -q` | `7 passed in 0.22s` | **PASS** | Delta without decision record fails. |
+| `L3-P7-05` | Temporary-person expiry exit | `tools/provision/temp_expiry.py` | `python -m pytest tools/provision/tests/test_temp_expiry.py -q` | `6 passed in 0.20s` | **PASS** | Treated as automated offboarding plan. |
 
 ### 3.9 Phase 8: Gap Replay & Acceptance Suite (`L3-P8-01` .. `L3-P8-06`)
 | Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
 |---|---|---|---|---|---|---|
-| `L3-P8-01` | Gap detector & expiry replay | `reconciler/gap/detector.py` | `python -m pytest reconciler/tests/test_gap_detector.py -q` | `6 passed in 0.08s` | **PASS** | Replays missed expiries during downtime. |
-| `L3-P8-02` | Gap diff-audit | `reconciler/gap/audit.py` | `python -m pytest reconciler/tests/test_gap_audit.py -q` | `4 passed in 0.06s` | **PASS** | Audits unobserved commit history. |
-| `L3-P8-03` | `gap-window` marking | `reconciler/gap/marking.py` | `python -m pytest reconciler/tests/test_gap_marking.py -q` | `4 passed in 0.06s` | **PASS** | Marks records produced during gap window. |
-| `L3-P8-04` | Wrong-repair freeze & revert | `reconciler/gap/wrong_repair.py` | `python -m pytest reconciler/tests/test_wrong_repair.py -q` | `9 passed in 0.11s` | **PASS** | Freezes repair class and creates revert branch. |
-| `L3-P8-05` | Acceptance matrix runner | `reconciler/acceptance/run_matrix.py` | `python -m pytest reconciler/tests/test_acceptance_matrix.py -q` | `5 passed in 0.07s` | **PASS** | Complete 11-AT matrix execution engine. |
+| `L3-P8-01` | Gap detector & expiry replay | `reconciler/gap/detect.py` | `python -m pytest reconciler/tests/test_gap_detect.py -q` | `7 passed in 0.18s` | **PASS** | Replays missed expiries during downtime. |
+| `L3-P8-02` | Gap diff-audit | `reconciler/gap/audit.py` | `python -m pytest reconciler/tests/test_gap_audit.py -q` | `4 passed in 0.17s` | **PASS** | Audits unobserved commit history. |
+| `L3-P8-03` | `gap-window` marking | `reconciler/gap/marking.py` | `python -m pytest reconciler/tests/test_gap_marking.py -q` | `4 passed in 0.17s` | **PASS** | Marks records produced during gap window. |
+| `L3-P8-04` | Wrong-repair freeze & revert | `reconciler/gap/wrong_repair.py` | `python -m pytest reconciler/tests/test_wrong_repair.py -q` | `9 passed in 0.19s` | **PASS** | Freezes repair class and creates revert branch. |
+| `L3-P8-05` | Acceptance matrix runner | `reconciler/acceptance/run_matrix.py` | `python -m reconciler.acceptance.run_matrix --summary` | `MATRIX passed=11 total=11` | **PASS** | Complete 11-AT matrix execution engine. |
 | `L3-P8-06` | Lane handoff manifest | `reconciler/HANDOFF.md`, `check-handoff.sh` | `bash reconciler/scripts/check-handoff.sh` | `HANDOFF OK` | **PASS** | Downstream consumers verified; zero foreign writes. |
+
+---
+
+### 3.10 Session 12 Un-Indexed Tasks Tracking (4 Tasks)
+These four tasks were ported from superseded phase files in Session 12 (`L3-06-tasks.md` Section 1.5) and are not indexed in the 78-task Section 2 table:
+
+| Task ID | Scope / Description | Key Files Touched | Proving Command | Actual Output | Verdict | Notes |
+|---|---|---|---|---|---|---|
+| `L3-P0-CMP10` | Lifecycle vs Renovate monitor | `reconciler/comparators/cmp_10_lifecycle.py` | `python -m pytest reconciler/comparators/tests/test_cmp_10.py -q` | `6 passed in 0.19s` | **PASS** | Ported from `L3-01-12`. Evaluates Renovate monitoring rules. |
+| `L3-P0-CMP12` | Shared Service registry dependency check | `reconciler/comparators/cmp_12_dependencies.py` | `python -m pytest reconciler/comparators/tests/test_cmp_11_12.py -q` | `6 passed in 0.22s` | **PASS** | Ported from `L3-01-14`. Cross-checks consumer integrity without API call. |
+| `L3-P0-AT001` | `create-product` scaffold conformance verifier | `tools/provision/create_product.py`, `tools/provision/tests/test_verify_surfaces.py` | `python -m pytest tools/provision/tests/test_verify_surfaces.py -q` | `12 passed in 0.17s` | **PASS** | Ported from `L3-04-12`. Surface verifier proves no hard-coded product list. (`test_create_product.py` also passes 10 tests). |
+| `L3-P0-DEL14` | 14-day delegation expiry warning | `reconciler/expiry/warnings.py`, `reconciler/orphans/decisions.py` | `python -c "import reconciler.orphans.decisions as d; print('DELEG-DR', d.DELEGATION_WARNING_TYPES is not None)"` | `DELEG-DR True` | **PENDING** | Ported from `L3-05-26`. Blocker DR-L3-05-B resolved via FD-129 constant; task files (`warnings.py`, `test_delegation_warning.py`, and fixtures) remain unbuilt. |
 
 ---
 
@@ -274,6 +280,6 @@ Authoritative task mapping from `lanes/L3-06-tasks.md` and `lanes/L3-CONCORDANCE
 - **Step 5: Cross-Check Against Master Document (`MultiProduct_MasterSpec_v4.0.md`):**  
   Validated Section 11 (Repository Protections), Section 12 (Orphan Governance), Section 19 (Provisioning Automation), Section 53 (Drift Comparators), Section 99.6 (Reconciliation Risk & Stricter-Only Discipline), and Invariants 7, 23, 24, 36, 110.
 - **Step 6: Cross-Check Implementation Against Build Lanes (`L3`):**  
-  Verified all 82 canonical master tasks tracked in `L3-CONCORDANCE.md` and `L3-06-tasks.md`. `_concordance-check.sh` confirmed 82 index tasks, 194 bodies, and 0 residue.
+  Verified all 78 canonical master tasks tracked in `L3-06-tasks.md` Section 2 and `L3-CONCORDANCE.md`. `_concordance-check.sh` confirmed 78 index tasks, 194 bodies, and 0 residue. 4 un-indexed Session 12 tasks tracked in Section 3.10.
 - **Step 7: Cross-Check Code & Live Infrastructure:**  
   Confirmed `git status` clean, branch protections aligned, zero committed secrets, read-only `GitHubState` port without live mutation leaks, and verified human reviewer routing (`@bendrohit-eng`).
