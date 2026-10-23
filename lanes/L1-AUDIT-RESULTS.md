@@ -59,7 +59,7 @@ Prior review `lanes/L1-98-DEEP-REVIEW.md` (dated 2026-09-16) was a pre-implement
 |---|:---:|---|
 | **PASS** | **59** | Substantive real code/schemas matching specification, with passing tests and verified non-stub content. |
 | **FAIL** | **0** | All discovered defects resolved and verified passing with live execution evidence. |
-| **PENDING** | **2** | Legitimate architectural blockers awaiting Founder/L0 decisions: `L1-103` (Section 8 founder default vs D106, escalated in `CCR-003`) and `L1-308` (library conformance evidence & customer-hosted recovery in exceptions.yaml). |
+| **PENDING** | **2** | Legitimate architectural blockers awaiting Founder/L0 decisions: `L1-103` (Section 8 founder default vs D106, escalated in `CCR-003`) and `L1-308` (library conformance evidence & customer-hosted recovery in exceptions.yaml, escalated in `CCR-004`). |
 | **TOTAL** | **61** | Complete canonical task set per `L1-05-tasks.md` and `L1-CONCORDANCE.md`. |
 
 ---
@@ -119,6 +119,7 @@ Per `AGENTS.md` Step 1 & Step 2, a green checkmark is never taken at face value.
 - **Details:**
   1. Section 15.7 requires "Registry version plus consumer contract tests" for the `library` conformance profile. However, `product.contract.v2.schema.json` schema has no field for `consumer_contract_tests` (which lives in `service.yaml` under §20.1). Pending an L0/Founder decision whether to extend `product.contract.v2.schema.json` or require a companion `service.yaml`.
   2. Section 15.7 permits `customer-hosted` to satisfy recovery obligations with "a recorded exemption with a compensating control" in `exceptions.yaml`. `R-PRD-23` currently requires recovery non-null unconditionally and does not resolve cross-repo exceptions. Awaiting L0 cross-repo resolution mechanism.
+  Formally escalated in [CCR-004-l1-308-conformance-profile-evidence.md](file:///c:/D_Drive/PS/MultiProduct/Code/implementation/control-plane/docs/escalation/CCR-004-l1-308-conformance-profile-evidence.md).
 
 ---
 
@@ -155,7 +156,7 @@ Authoritative task mapping from `lanes/L1-05-tasks.md` and `lanes/L1-CONCORDANCE
 | `L1-305` | Operations block & detection rule | `validators/registry/rules/r_prd_05.py` | `python -m pytest validators/registry/tests/test_r_prd_05.py -q` | `12 passed in 0.10s` | **PASS** | Validates SLA & SLO alignment. |
 | `L1-306` | Commitments block & conflict rule | `validators/registry/rules/r_prd_06.py` | `python -m pytest validators/registry/tests/test_r_prd_06.py -q` | `11 passed in 0.09s` | **PASS** | R-PRD-06 commitments conflict check. |
 | `L1-307` | Recovery block & restore cadence | `validators/registry/rules/r_prd_07.py` | `python -m pytest validators/registry/tests/test_r_prd_07.py -q` | `16 passed in 0.12s` | **PASS** | Enforces RTO/RPO and restore rotation. |
-| `L1-308` | Conformance-profile equivalent evidence | `validators/registry/rules/r_prd_08.py` | `python -m pytest validators/registry/tests/test_r_prd_08.py -q` | `19 passed, 2 xfailed` | **PENDING** | Profiles operational; library/customer-hosted pending L0. |
+| `L1-308` | Conformance-profile equivalent evidence | `validators/registry/rules/r_prd_08.py` | `python -m pytest validators/registry/tests/test_r_prd_08.py -q` | `17 passed, 2 xfailed` | **PENDING** | Profiles operational; library/customer-hosted pending L0 (escalated in `docs/escalation/CCR-004-l1-308-conformance-profile-evidence.md`). |
 | `L1-309` | `product.yaml` v1 schema frozen | `schemas/product/product.contract.v1.schema.json` | `python -m pytest validators/registry/tests/test_product_v1.py -q` | `9 passed in 0.08s` | **PASS** | Frozen v1 schema verified immutable. |
 | `L1-310` | Cross-file referential integrity (§15.5) | `validators/registry/rules/r_ref_*.py` | `python -m pytest validators/registry/tests/test_referential_integrity.py -q` | `26 passed in 0.18s` | **PASS** | All 6 cross-file referential integrity rules. |
 | `L1-311` | Coverage-window rota rule | `validators/registry/rules/r_prd_11.py` | `python -m pytest validators/registry/tests/test_r_prd_11.py -q` | `10 passed in 0.11s` | **PASS** | AT-047 24x7 & extended rota verified. |
