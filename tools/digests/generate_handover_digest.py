@@ -86,13 +86,40 @@ def scan_expiring_exceptions(root: str, start_dt: datetime.date, end_dt: datetim
     return results
 
 
+def get_project_config(root: str) -> Dict[str, str]:
+    config_path = os.path.join(root, "contracts", "project-config.sh")
+    config = {
+        "ORG": os.environ.get("ORG", "lumiverse-org"),
+        "CP": os.environ.get("CP", "control-plane"),
+        "CPR": os.environ.get("CPR", "control-plane-records"),
+    }
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("export "):
+                        line = line[len("export "):].strip()
+                    if "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.split("#")[0].strip().strip('"').strip("'")
+                        if k in config:
+                            config[k] = v
+        except Exception:
+            pass
+    return config
+
+
 def build_digest(
     person_id: str,
     role: str,
     start_str: str,
     end_str: str,
     proposal_source: str,
-    expiring_exceptions: List[Dict[str, str]]
+    expiring_exceptions: List[Dict[str, str]],
+    org: str = "lumiverse-org",
+    cp: str = "control-plane",
 ) -> str:
     generated_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -135,8 +162,8 @@ def build_digest(
         "> Per **Invariant D72**, this digest is a wait-surface convenience, never replacement state.",
         "> Operating System boards remain the authoritative source of execution truth.",
         "",
-        "- [ ] Active Pull Requests & Review Matrix assignments: [View Control-Plane PRs](https://github.com/pareshp-org/control-plane/pulls)",
-        "- [ ] Open Sprint & Work Items: [View Operations Board](https://github.com/orgs/pareshp-org/projects)",
+        f"- [ ] Active Pull Requests & Review Matrix assignments: [View Control-Plane PRs](https://github.com/{org}/{cp}/pulls)",
+        f"- [ ] Open Sprint & Work Items: [View Operations Board](https://github.com/orgs/{org}/projects)",
         "- [ ] Verification Block Records (QA): Ensure all open blocks are transferred or resolved prior to departure.",
         "",
         "## 4. Verification Blocks & Release Sign-Off Transition (Spec §27)",
@@ -168,6 +195,7 @@ def main():
         print(f"Error parsing dates: {e}", file=sys.stderr)
         return 1
 
+    cfg = get_project_config(args.root)
     expiring = scan_expiring_exceptions(args.root, start_dt, end_dt)
     digest_md = build_digest(
         person_id=args.person_id,
@@ -175,7 +203,9 @@ def main():
         start_str=args.leave_start,
         end_str=args.leave_end,
         proposal_source=args.proposal_source,
-        expiring_exceptions=expiring
+        expiring_exceptions=expiring,
+        org=cfg.get("ORG", "lumiverse-org"),
+        cp=cfg.get("CP", "control-plane"),
     )
 
     if args.output:

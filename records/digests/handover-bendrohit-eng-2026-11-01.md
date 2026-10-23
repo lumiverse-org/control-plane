@@ -2,7 +2,7 @@
 
 **Role:** `team-lead`  
 **Leave Window:** `2026-11-01` through `2026-11-15`  
-**Generated At:** `2026-10-23T03:59:18Z` (UTC)  
+**Generated At:** `2026-10-23T04:15:50Z` (UTC)  
 **Proposal Source:** `hermes-background-worker` (Dispatched per Spec §13.2 / D71)  
 **Enforcement:** Platform-executed workflow (`generate-handover-digest.yml`)  
 
@@ -25,8 +25,8 @@ No active exceptions in `registries/exceptions.yaml` are scheduled to expire bet
 > Per **Invariant D72**, this digest is a wait-surface convenience, never replacement state.
 > Operating System boards remain the authoritative source of execution truth.
 
-- [ ] Active Pull Requests & Review Matrix assignments: [View Control-Plane PRs](https://github.com/pareshp-org/control-plane/pulls)
-- [ ] Open Sprint & Work Items: [View Operations Board](https://github.com/orgs/pareshp-org/projects)
+- [ ] Active Pull Requests & Review Matrix assignments: [View Control-Plane PRs](https://github.com/lumiverse-org/control-plane/pulls)
+- [ ] Open Sprint & Work Items: [View Operations Board](https://github.com/orgs/lumiverse-org/projects)
 - [ ] Verification Block Records (QA): Ensure all open blocks are transferred or resolved prior to departure.
 
 ## 4. Verification Blocks & Release Sign-Off Transition (Spec §27)
