@@ -30,8 +30,17 @@ cp_assert CP-0003 "pilot product absent before the run (first-run only)" \
 
 # CP-0004 Every reusable workflow tag the estate consumes resolves to the SHA platform.yaml records
 #         (Section 33.2; invariant #85; the tag-ruleset row of Section 53.1).
-cp_assert CP-0004 "consumed workflow tags match platform.yaml pins" \
-  ./tools/verify-workflow-tag-pins.sh --strict
+if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ]; then
+  if ./tools/verify-workflow-tag-pins.sh --strict >"${E2E_OUT}/evidence/CP-0004.out" 2>&1; then
+    cp_pass CP-0004 "consumed workflow tags match platform.yaml pins"
+  else
+    _emit CP-0004 FAIL "consumed workflow tags match platform.yaml pins — evidence: ${E2E_OUT}/evidence/CP-0004.out"
+    printf '  FAIL CP-0004  consumed workflow tags match platform.yaml pins — evidence: %s/evidence/CP-0004.out\n' "${E2E_OUT}"
+  fi
+else
+  cp_assert CP-0004 "consumed workflow tags match platform.yaml pins" \
+    ./tools/verify-workflow-tag-pins.sh --strict
+fi
 
 # CP-0005 Friday-freeze awareness. A production deploy must START by 15:00 Friday and finish smoke and its
 #         observation window inside core hours (Section 34.2). The run refuses to start where E2E-09 could

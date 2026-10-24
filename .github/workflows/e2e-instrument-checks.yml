@@ -34,8 +34,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch integration ref
+      - name: Fetch integration ref and tags
         run: |
+          git fetch --tags origin
           git fetch origin integration:refs/remotes/origin/integration 2>/dev/null || true
 
       - name: Tool diagnostic inspection (CP-0006 environment probe)
@@ -60,7 +61,7 @@ jobs:
           STATUS=$?
           echo "E2E instrument checks finished with status code: $STATUS"
 
-      - name: Report checkpoint log and CP-0006 evidence
+      - name: Report checkpoint log and evidence files
         if: always()
         run: |
           echo "=========================================================="
@@ -73,11 +74,12 @@ jobs:
             fi
           done
           echo "=========================================================="
-          echo "CP-0006 EVIDENCE"
+          echo "CHECKPOINT EVIDENCE FILES"
           echo "=========================================================="
-          for ev in e2e/out/*/evidence/CP-0006.out; do
+          for ev in e2e/out/*/evidence/*.out; do
             if [ -f "$ev" ]; then
-              echo "Evidence file: $ev"
+              echo "--- $(basename "$ev") ---"
               cat "$ev"
+              echo ""
             fi
           done
