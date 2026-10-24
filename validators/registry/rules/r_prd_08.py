@@ -82,6 +82,10 @@ not instead of one).
 """
 from __future__ import annotations
 
+from datetime import date
+from pathlib import Path
+import yaml
+
 RULE_ID_SERVICE = "R-PRD-08"
 RULE_ID_CLIENT_APP = "R-PRD-20"
 RULE_ID_LIBRARY = "R-PRD-21"
@@ -165,23 +169,25 @@ def check_r_prd_20(product_doc: dict) -> list[str]:
 
 
 def check_r_prd_21(product_doc: dict) -> list[str]:
-    """R-PRD-21 -- library: verification.automated == 'required'.
-
-    STOP 1 (module docstring): Section 15.7 also requires "Registry
-    version plus consumer contract tests" for library, and product.yaml
-    has no field to carry that evidence. That half is intentionally NOT
-    checked here -- see BLOCKER L1 L1-308 (consumer_contract_tests) and
-    the strict xfail in test_r_prd_08.py that documents the gap."""
+    """R-PRD-21 -- library: verification.automated == 'required' AND
+    verification.consumer_contract_tests == 'required' (Section 15.7; CCR-004 resolved).
+    """
     if product_doc.get("conformance_profile") != "library":
         return []
     verification = product_doc.get("verification") or {}
     pid = _product_id(product_doc)
+    findings = []
     if verification.get("automated") != "required":
-        return [
+        findings.append(
             f"R-PRD-21 {pid}: library product declares verification.automated "
             f"'{verification.get('automated')}', not 'required'; Section 15.7"
-        ]
-    return []
+        )
+    if verification.get("consumer_contract_tests") != "required":
+        findings.append(
+            f"R-PRD-21 {pid}: library product declares verification.consumer_contract_tests "
+            f"'{verification.get('consumer_contract_tests')}', not 'required'; Section 15.7"
+        )
+    return findings
 
 
 def check_r_prd_22(product_doc: dict) -> list[str]:
@@ -199,25 +205,144 @@ def check_r_prd_22(product_doc: dict) -> list[str]:
     return []
 
 
-def check_r_prd_23(product_doc: dict) -> list[str]:
-    """R-PRD-23 -- customer-hosted: recovery non-null, shipped
-    unconditionally.
+def _load_exceptions_registry() -> dict | None:
+    for candidate in [
+        Path("registries/exceptions.yaml"),
+        Path("exceptions.yaml"),
+        Path(__file__).resolve().parents[4] / "registries" / "exceptions.yaml",
+    ]:
+        if candidate.exists() and candidate.is_file():
+            try:
+                return yaml.safe_load(candidate.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+    return None
 
-    STOP 2 (module docstring): Section 15.7 also permits an
-    exceptions.yaml-recorded exemption with a compensating control to
-    satisfy this clause instead of a non-null recovery block.
-    exceptions.yaml (Section 54.1) is a different file in a different
-    repository path; that cross-file lookup is intentionally NOT
-    implemented here -- see BLOCKER L1 L1-308 (exceptions.yaml routing)
-    and the strict xfail in test_r_prd_08.py that documents the gap."""
+
+def resolve_recovery_exemption(
+    product_doc: dict,
+    exceptions_doc: dict | None = None,
+    as_of: str | date | None = None,
+) -> tuple[bool, str | None]:
+    """Cross-file resolver connecting product.yaml's recovery value to
+    exceptions.yaml exemption records (Section 15.7, Section 54.1; CCR-004 resolved).
+    """
+    pid = _product_id(product_doc)
+    recovery = product_doc.get("recovery")
+
+    # If recovery is a non-null object, local recovery declarations are satisfied
+    if isinstance(recovery, dict):
+        return True, None
+
+    target_exemption_id = recovery.strip() if isinstance(recovery, str) else None
+
+    if exceptions_doc is None:
+        exceptions_doc = _load_exceptions_registry()
+
+    if not exceptions_doc or not isinstance(exceptions_doc, dict):
+        if target_exemption_id:
+            return (
+                False,
+                f"R-PRD-23 {pid}: customer-hosted product references exemption '{target_exemption_id}', "
+                f"but exceptions.yaml was not found; Section 15.7"
+            )
+        return (
+            False,
+            f"R-PRD-23 {pid}: customer-hosted product declares a null recovery "
+            f"and exceptions.yaml was not found; Section 15.7"
+        )
+
+    matching_exc = None
+    for exc in exceptions_doc.get("exceptions", []) or []:
+        if not isinstance(exc, dict):
+            continue
+        exc_id = exc.get("id")
+        if target_exemption_id:
+            if exc_id == target_exemption_id:
+                matching_exc = exc
+                break
+        else:
+            affected = exc.get("affected") or {}
+            prods = affected.get("products") or []
+            if pid in prods:
+                matching_exc = exc
+                break
+
+    if matching_exc is None:
+        if target_exemption_id:
+            return (
+                False,
+                f"R-PRD-23 {pid}: customer-hosted product references exemption '{target_exemption_id}' "
+                f"which does not exist in exceptions.yaml; Section 15.7"
+            )
+        return (
+            False,
+            f"R-PRD-23 {pid}: customer-hosted product declares a null recovery "
+            f"with no matching exemption in exceptions.yaml; Section 15.7"
+        )
+
+    exc_id = matching_exc.get("id", "<unknown>")
+
+    # 1. Closure check
+    closure = matching_exc.get("closure")
+    if closure is not None:
+        return (
+            False,
+            f"R-PRD-23 {pid}: customer-hosted product references exemption '{exc_id}' "
+            f"which is closed ({closure}); Section 15.7, Section 54.2"
+        )
+
+    # 2. Compensating control check
+    comp_control = matching_exc.get("compensating_control")
+    if not comp_control or (isinstance(comp_control, str) and comp_control.strip().lower() in ("none", "")):
+        return (
+            False,
+            f"R-PRD-23 {pid}: customer-hosted product references exemption '{exc_id}' "
+            f"which lacks a compensating control; Section 15.7 requires a recorded exemption with a compensating control"
+        )
+
+    # 3. Expiry check
+    expiry = matching_exc.get("expiry")
+    if expiry is None:
+        return (
+            False,
+            f"R-PRD-23 {pid}: customer-hosted product references exemption '{exc_id}' "
+            f"which has no expiry; Section 54.2, Invariant 77"
+        )
+    if as_of:
+        try:
+            today_date = as_of if isinstance(as_of, date) else date.fromisoformat(str(as_of))
+            expiry_date = expiry if isinstance(expiry, date) else date.fromisoformat(str(expiry))
+            if expiry_date < today_date:
+                return (
+                    False,
+                    f"R-PRD-23 {pid}: customer-hosted product references exemption '{exc_id}' "
+                    f"which expired on {expiry}; Section 54.2"
+                )
+        except (ValueError, TypeError):
+            pass
+
+    # 4. Scope verification
+    affected = matching_exc.get("affected") or {}
+    prods = affected.get("products") or []
+    if prods and pid not in prods:
+        return (
+            False,
+            f"R-PRD-23 {pid}: exemption '{exc_id}' affected.products does not include '{pid}'; Section 54.1"
+        )
+
+    return True, None
+
+
+def check_r_prd_23(product_doc: dict, exceptions_doc: dict | None = None) -> list[str]:
+    """R-PRD-23 -- customer-hosted: recovery non-null OR a valid recorded
+    exemption in exceptions.yaml with a compensating control (Section 15.7; CCR-004 resolved).
+    """
     if product_doc.get("conformance_profile") != "customer-hosted":
         return []
-    pid = _product_id(product_doc)
-    if product_doc.get("recovery") is None:
-        return [
-            f"R-PRD-23 {pid}: customer-hosted product declares a null "
-            f"recovery; Section 15.7"
-        ]
+    valid, finding = resolve_recovery_exemption(product_doc, exceptions_doc=exceptions_doc)
+    if not valid and finding:
+        return [finding]
     return []
 
 
@@ -279,7 +404,7 @@ def check_r_prd_26(product_doc: dict) -> list[str]:
     return []
 
 
-def check(product_doc: dict) -> list[str]:
+def check(product_doc: dict, exceptions_doc: dict | None = None) -> list[str]:
     """Run all eight rules in the task's own table order and return the
     combined findings."""
     findings = []
@@ -287,7 +412,7 @@ def check(product_doc: dict) -> list[str]:
     findings.extend(check_r_prd_20(product_doc))
     findings.extend(check_r_prd_21(product_doc))
     findings.extend(check_r_prd_22(product_doc))
-    findings.extend(check_r_prd_23(product_doc))
+    findings.extend(check_r_prd_23(product_doc, exceptions_doc=exceptions_doc))
     findings.extend(check_r_prd_24(product_doc))
     findings.extend(check_r_prd_25(product_doc))
     findings.extend(check_r_prd_26(product_doc))

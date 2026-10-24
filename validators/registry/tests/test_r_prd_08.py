@@ -63,8 +63,13 @@ def _errors_for(case):
     return list(validator.iter_errors(doc))
 
 
-def _findings_for(case):
-    return r_prd_08.check(_load_fixture(case))
+def _findings_for(case, exceptions_doc=None):
+    if exceptions_doc is None:
+        exc_path = os.path.join(FIXTURES_DIR, case, "exceptions.yaml")
+        if os.path.exists(exc_path):
+            with open(exc_path, encoding="utf-8") as f:
+                exceptions_doc = yaml.safe_load(f)
+    return r_prd_08.check(_load_fixture(case), exceptions_doc=exceptions_doc)
 
 
 # ---------------------------------------------------------------------------
@@ -210,25 +215,10 @@ def test_stages_not_ending_100_triggers_r_prd_26():
 
 
 # ---------------------------------------------------------------------------
-# invalid, xfail (2)
+# CCR-004 resolved test cases & negative coverage
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BLOCKER L1 L1-308: the library conformance profile needs "
-        "consumer_contract_tests evidence that product.yaml has no field "
-        "for. Section 15.7 requires 'Registry version plus consumer "
-        "contract tests' for library; product.yaml has no field to carry "
-        "that evidence (Section 20.1's service.yaml has "
-        "verification.consumer_contract_tests, product.yaml does not), so "
-        "R-PRD-21 cannot check it yet. Not resolved here -- pending an L0 "
-        "decision between (a) adding the field to the v2 product schema "
-        "(Section 60.2) or (b) requiring a library product to also carry "
-        "a service.yaml."
-    ),
-)
 def test_library_missing_consumer_contract_tests_triggers_r_prd_21():
     case = "library_missing_consumer_contract_tests"
     assert _errors_for(case) == []
@@ -238,20 +228,62 @@ def test_library_missing_consumer_contract_tests_triggers_r_prd_21():
     assert "consumer_contract_tests" in findings[0] or "consumer contract" in findings[0]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BLOCKER L1 L1-308: customer-hosted recovery exemption requires "
-        "cross-file resolution into exceptions.yaml. Section 15.7 permits "
-        "customer-hosted to satisfy recovery with 'a recorded exemption "
-        "with a compensating control', which is an exceptions.yaml entry "
-        "(Section 54.1) in a different repository path. R-PRD-23 as "
-        "shipped requires recovery non-null unconditionally and does not "
-        "consult exceptions.yaml. Not resolved here -- pending an L0 "
-        "decision on how Lane 1 is meant to read exceptions.yaml."
-    ),
-)
 def test_customer_hosted_recovery_exempted_is_not_flagged():
     case = "customer_hosted_recovery_exempted"
     assert _errors_for(case) == []
     assert _findings_for(case) == []
+
+
+def test_customer_hosted_recovery_missing_exemption_fails():
+    doc = _load_fixture("customer_hosted_recovery_exempted")
+    # Point recovery to an exemption id that does not exist in exceptions.yaml
+    doc["recovery"] = "EXC-2026-999"
+    exc_path = os.path.join(FIXTURES_DIR, "customer_hosted_recovery_exempted", "exceptions.yaml")
+    with open(exc_path, encoding="utf-8") as f:
+        exc_doc = yaml.safe_load(f)
+    findings = r_prd_08.check(doc, exceptions_doc=exc_doc)
+    assert len(findings) == 1
+    assert "R-PRD-23" in findings[0]
+    assert "does not exist in exceptions.yaml" in findings[0]
+
+
+def test_customer_hosted_recovery_closed_exemption_fails():
+    doc = _load_fixture("customer_hosted_recovery_exempted")
+    exc_doc = {
+        "registry_version": 1,
+        "exceptions": [
+            {
+                "id": "EXC-2026-001",
+                "type": "policy_waiver",
+                "affected": {"products": ["conf-cust-hosted-exempted"], "repositories": ["acme/conf-fixture"]},
+                "compensating_control": "Quarterly review",
+                "expiry": "2027-01-01",
+                "closure": "remediated",
+            }
+        ],
+    }
+    findings = r_prd_08.check(doc, exceptions_doc=exc_doc)
+    assert len(findings) == 1
+    assert "R-PRD-23" in findings[0]
+    assert "is closed" in findings[0]
+
+
+def test_customer_hosted_recovery_exemption_missing_compensating_control_fails():
+    doc = _load_fixture("customer_hosted_recovery_exempted")
+    exc_doc = {
+        "registry_version": 1,
+        "exceptions": [
+            {
+                "id": "EXC-2026-001",
+                "type": "policy_waiver",
+                "affected": {"products": ["conf-cust-hosted-exempted"], "repositories": ["acme/conf-fixture"]},
+                "compensating_control": None,
+                "expiry": "2027-01-01",
+                "closure": None,
+            }
+        ],
+    }
+    findings = r_prd_08.check(doc, exceptions_doc=exc_doc)
+    assert len(findings) == 1
+    assert "R-PRD-23" in findings[0]
+    assert "compensating control" in findings[0]

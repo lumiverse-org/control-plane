@@ -1,0 +1,24 @@
+registry_version: 1
+exceptions:
+  - id: EXC-2026-001
+    type: policy_waiver
+    reason: "Customer-hosted infrastructure recovery managed under customer SLA"
+    requester: lead-1
+    authority: founder
+    affected:
+      products:
+        - conf-cust-hosted-exempted
+      repositories:
+        - acme/conf-fixture
+    scope: "Recovery non-null waived per Section 15.7"
+    start: "2026-01-01"
+    expiry: "2027-01-01"
+    compensating_control: "Annual customer restore drill verification and runbook review"
+    compensating_control_record: records/restore-tests/
+    compensating_control_cadence: annual
+    owner: lead-1
+    review_date: "2026-12-01"
+    renewals: 0
+    became_permanent: false
+    closure: null
+    deactivation_trigger: null

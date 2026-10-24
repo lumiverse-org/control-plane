@@ -96,6 +96,7 @@ security:
   secrets_location: vault:/acme/conf-fixture
 verification:
   automated: required
+  consumer_contract_tests: required
   contract_path: verification/contract.yaml
   manual_uat: not-applicable
   performance: optional

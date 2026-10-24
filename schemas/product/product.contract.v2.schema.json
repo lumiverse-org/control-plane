@@ -154,7 +154,8 @@
         "manual_uat": { "type": "string", "enum": ["required", "not-applicable"] },
         "smoke_tests": { "type": "string", "enum": ["required", "optional", "not-applicable"] },
         "performance": { "type": "string", "enum": ["required", "optional", "not-applicable"] },
-        "contract_path": { "type": "string", "minLength": 1 }
+        "contract_path": { "type": "string", "minLength": 1 },
+        "consumer_contract_tests": { "type": "string", "enum": ["required", "optional", "not-applicable"] }
       }
     },
     "environments": {
@@ -504,6 +505,7 @@
     "recovery": {
       "oneOf": [
         { "type": "null" },
+        { "type": "string", "pattern": "^EXC-\\d{4}-\\d{3}$" },
         {
           "type": "object",
           "additionalProperties": false,

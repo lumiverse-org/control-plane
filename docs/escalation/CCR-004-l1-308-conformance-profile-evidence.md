@@ -68,5 +68,4 @@ BLAST RADIUS I CAN OBSERVE
 - `lanes/L1-05-tasks.md` (task L1-308 specification)
 - `lanes/L1-AUDIT-RESULTS.md` (audit finding and pending task row)
 
-I HAVE NOT EDITED contracts/**.
-STATUS: PENDING FOUNDER REVIEW (escalated to L0)
+STATUS: RESOLVED 2026-10-24 — Founder decisions: (a) add consumer_contract_tests directly to the v2 product schema under verification (not requiring companion service.yaml); (b) build a real cross-file resolver connecting product.yaml's recovery value to exceptions.yaml exemption records (not an inline token). Both decisions implemented and verified with zero xfails.
