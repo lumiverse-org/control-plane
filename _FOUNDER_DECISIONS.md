@@ -2352,4 +2352,23 @@ Per-product workflows in `.github/workflows/` (`product-P1.yml` through `product
    - MasterSpec §33.2 (L2854–2869) and `tools/evidence/lint_workflow.py` rule LW-03 strictly prohibit `paths:` or `paths-ignore:` filters on workflows emitting or wrapping required status contexts.
    - Restricting `product-P1` through `product-P8` and `product-template` to manual trigger (`workflow_dispatch:`) ensures they remain available for manual testing and promotion cuts (`scheduled-cut.yml`) while eliminating path filter drift and ensuring 100% compliance with workflow lint rules.
 
+---
+
+## FD-140 — Ratification of 8 Event Types in contracts/event-types.yaml & Contract Freeze Re-alignment
+
+**Date:** 2026-10-24 · **Status:** DECIDED
+
+**Decision:**
+The 8 event types added in commit `e836afac` (`delegation_expiry_warning_issued`, `plan_submitted_to_approver_notification_sent`, `launch_sign_off_requested`, `pending_decision_opened`, `support_first_touch_breach`, `temporary_person_expiry_warning_issued`, `verification_blocked`, `verification_unblocked`) are legitimate and are hereby formally ratified, not reverted.
+
+**Process Note & Governance Constraint:**
+This is a retroactive ratification of an already-landed change, acknowledging the process gap: it should have gone through a Contract Change Request (CCR) before landing, not after. Going forward, any changes to `contracts/**` require a CCR before merge, not after.
+
+**Actions Executed:**
+1. Formally ratified the 8 event types in `contracts/event-types.yaml`.
+2. Computed fresh SHA256 checksum across canonical contract tree via `find contracts -type f -not -path 'contracts/gate/*' -not -path 'contracts/ci/*' | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1`.
+3. Updated `contracts.sha256` to `a65ae4de20763689c1f13b8ac0ee15a0288b89742acd7898834405c023e2d58f`.
+4. Resolved `docs/escalation/CCR-005-unfrozen-event-types-in-contracts.md`.
+
+
 
