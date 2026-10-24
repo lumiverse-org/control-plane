@@ -1,0 +1,6 @@
+{
+  "customer_id": "cust_12345",
+  "name": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "credit_card": "4111-2222-3333-4444"
+}

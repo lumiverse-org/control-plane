@@ -6,3 +6,4 @@ __pycache__/
 *.swo
 .DS_Store_gravity-handoff/
 .gate/
+e2e/out/

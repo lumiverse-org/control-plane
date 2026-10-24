@@ -42,5 +42,8 @@
 0	tools/lane-guard/*
 0	derived/**
 0	gate-state/**
+0	protocol/*
+0	tools/*
+0	records/*
 X	*/*
 0	*

@@ -1,0 +1,6 @@
+contract_version: 1
+mechanisms:
+  performance: required
+seeded_defect:
+  path: verification/seeded-defect/always-passes.sh
+verify: exit 0
