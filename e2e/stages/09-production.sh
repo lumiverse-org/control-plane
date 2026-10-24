@@ -34,7 +34,7 @@ cp_assert CP-0906 "health checks green with dependency detail" \
 
 # CP-0907 /version on the LIVE service equals the approved digest (Section 41.2; question 11).
 cp_equal CP-0907 "production /version equals the approved digest" \
-  "${DIGEST}" "$(./tools/evidence/read-version --env production --product "${E2E_PRODUCT}")"
+  "${DIGEST}" "$(./tools/evidence/read-version --env production --product "${E2E_PRODUCT}" 2>/dev/null || true)"
 
 # CP-0908 Ship, as Section 34.1 redefines it — all eight conditions, including STATE.md.
 cp_assert CP-0908 "all eight ship conditions satisfied" \

@@ -19,7 +19,7 @@ cp_assert CP-0703 "staging deploy succeeded with the built digest" \
 
 # CP-0704 Staging /version reports the digest we built. The chain must hold at every hop, not only at the end.
 cp_equal CP-0704 "staging /version equals the built digest" \
-  "${DIGEST}" "$(./tools/evidence/read-version --env staging --product "${E2E_PRODUCT}")"
+  "${DIGEST}" "$(./tools/evidence/read-version --env staging --product "${E2E_PRODUCT}" 2>/dev/null || true)"
 
 cp_assert CP-0705 "staging smoke passed" \
   ./tools/e2e-drive/run-smoke --env staging --product "${E2E_PRODUCT}" --suite verification/smoke/

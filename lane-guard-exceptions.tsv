@@ -40,3 +40,5 @@ EXC-LG-021	0	.github/workflows/production-gate-chain.yml	27	2026-11-24	@lead-1	h
 EXC-LG-022	0	.github/workflows/restore-production.yml	27	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: CP-0004 reusable workflow tag standardization to workflows/v1
 EXC-LG-023	0	.github/workflows/rollback.yml	27	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: CP-0004 reusable workflow tag standardization to workflows/v1
 EXC-LG-024	0	.github/workflows/e2e-instrument-checks.yml	27	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: e2e instrument checks nightly and dispatch workflow
+EXC-LG-025	0	tools/evidence/check-no-customer-data	28	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: regex refinement preventing false positives on doc line numbers
+

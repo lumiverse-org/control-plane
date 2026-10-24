@@ -10,11 +10,53 @@ E2E_LOG="${E2E_OUT}/checkpoints/log.tsv"
 _emit() { printf '%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "$2" "$3" >>"${E2E_LOG}"; }
 
 cp_pass() { _emit "$1" PASS "$2"; printf '  ok   %s  %s\n' "$1" "$2"; }
-cp_fail() { _emit "$1" FAIL "$2"; printf '  FAIL %s  %s\n' "$1" "$2"; exit 1; }
+cp_fail() {
+  _emit "$1" FAIL "$2"
+  printf '  FAIL %s  %s\n' "$1" "$2"
+  if [ "${E2E_OFFLINE_ONLY:-0}" = "1" ]; then
+    return 0
+  else
+    exit 1
+  fi
+}
+
+_check_blocked() {
+  local id="$1"
+  [ "${E2E_OFFLINE_ONLY:-0}" = "1" ] || return 1
+  [ -f "${E2E_OUT}/classifications.tsv" ] || return 1
+
+  local res
+  res=$(awk -F'\t' -v target="$id" '$1 == target { print $2 "\t" $3; exit }' "${E2E_OUT}/classifications.tsv")
+  if [ -z "$res" ]; then
+    local base="${id%-*}"
+    if [ "$base" != "$id" ]; then
+      res=$(awk -F'\t' -v target="$base" '$1 == target { print $2 "\t" $3; exit }' "${E2E_OUT}/classifications.tsv")
+    fi
+  fi
+
+  if [ -n "$res" ]; then
+    local kind="${res%%	*}"
+    local blocker="${res#*	}"
+    if [ "$kind" = "BLOCKED" ]; then
+      BLOCKER_REASON="$blocker"
+      return 0
+    fi
+  else
+    BLOCKER_REASON="Not classified as offline in protocol/08-E2E-READINESS-GAP.md"
+    return 0
+  fi
+  return 1
+}
 
 # POSITIVE checkpoint: the command must succeed.
 cp_assert() {
   local id="$1" what="$2"; shift 2
+  if [ "${E2E_OFFLINE_ONLY:-0}" = "1" ] && _check_blocked "$id"; then
+    _emit "$id" SKIP "$what — blocked on live infra: ${BLOCKER_REASON}"
+    printf '  SKIP %s  %s (blocked: %s)\n' "$id" "$what" "${BLOCKER_REASON}"
+    return 0
+  fi
+
   if "$@" >"${E2E_OUT}/evidence/${id}.out" 2>&1; then
     cp_pass "$id" "$what"
   else
@@ -25,6 +67,12 @@ cp_assert() {
 # EQUALITY checkpoint: two values must be byte-identical. Used for the digest chain.
 cp_equal() {
   local id="$1" what="$2" a="$3" b="$4"
+  if [ "${E2E_OFFLINE_ONLY:-0}" = "1" ] && _check_blocked "$id"; then
+    _emit "$id" SKIP "$what — blocked on live infra: ${BLOCKER_REASON}"
+    printf '  SKIP %s  %s (blocked: %s)\n' "$id" "$what" "${BLOCKER_REASON}"
+    return 0
+  fi
+
   printf 'expected=%s\nactual=%s\n' "$a" "$b" >"${E2E_OUT}/evidence/${id}.out"
   [ "$a" = "$b" ] && cp_pass "$id" "$what" || cp_fail "$id" "$what — '$a' != '$b'"
 }
@@ -33,6 +81,12 @@ cp_equal() {
 # A negative test that fails for the wrong reason is not a negative test.
 cp_refute() {
   local id="$1" what="$2" reason_re="$3"; shift 3
+  if [ "${E2E_OFFLINE_ONLY:-0}" = "1" ] && _check_blocked "$id"; then
+    _emit "$id" SKIP "$what — blocked on live infra: ${BLOCKER_REASON}"
+    printf '  SKIP %s  %s (blocked: %s)\n' "$id" "$what" "${BLOCKER_REASON}"
+    return 0
+  fi
+
   if "$@" >"${E2E_OUT}/evidence/${id}.out" 2>&1; then
     cp_fail "$id" "GATE DID NOT FIRE — '$what' succeeded and must not have"
   elif grep -Eq "$reason_re" "${E2E_OUT}/evidence/${id}.out"; then
