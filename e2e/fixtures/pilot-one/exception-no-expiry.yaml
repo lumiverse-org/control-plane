@@ -1,0 +1,4 @@
+id: EXC-TEST-NO-EXPIRY
+owner: lead-1
+reason: "test exception without expiry"
+# deliberately missing expiry field per NEG-25
