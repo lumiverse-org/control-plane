@@ -77,7 +77,15 @@ The 14 failures are completely authentic, truthful results reflecting real opera
    - **Reason:** Current execution occurred on a Saturday (DOW 6), which is outside core working hours per `records/leave/company-calendar.yaml`. The tool truthfully refused to authorize deployment.
 
 3. **`CP-0006` (Operator Runner Toolset):**
-   - **Reason:** While `gh`, `curl`, `base64`, and `git` are present on the local Windows runner, `jq` and `yq` (specifically mikefarah Go implementation) are missing from the local runner environment. (CP-0006 passes in real CI where runners have all binaries pre-installed).
+   - **What the Harness Actually Executed & Found:** In `e2e/stages/00-preflight.sh`, CP-0006 executes a sequential loop over `gh jq yq curl base64 git` that exits immediately on the first missing tool (`for t in gh jq yq curl base64 git; do command -v "$t" >/dev/null 2>&1 || { echo "missing required tool: $t"; exit 1; }; done`). During harness execution, it confirmed `gh` at `/usr/local/bin/gh`, then immediately failed at `jq` with `missing required tool: jq`, writing that single line to `CP-0006.out` and terminating with exit code 1. The script never evaluated `yq`, `curl`, `base64`, `git`, or `yq --version`.
+   - **Independent Probe Results:** Testing each of the six tools individually via `command -v <tool>` reveals the complete environment picture:
+     - `gh`: **PRESENT** (`/usr/local/bin/gh`)
+     - `jq`: **MISSING** (not found on PATH)
+     - `yq`: **MISSING** (not found on PATH)
+     - `curl`: **PRESENT** (`/usr/bin/curl`)
+     - `base64`: **PRESENT** (`/usr/bin/base64`)
+     - `git`: **PRESENT** (`/usr/bin/git`)
+     While both `jq` and `yq` are indeed absent from PATH on this local Windows operator environment, the harness check specifically halted at `jq` on early exit without reaching `yq`. (In GitHub Actions CI, all required binaries are pre-installed on the runner and CP-0006 passes).
 
 4. **11 Record & Event Query Checkpoints (`CP-0405`, `CP-0506`, `CP-0604`, `CP-0708`, `CP-0804`, `CP-0904`, `CP-1016`, `CP-1103`, `CP-1106`, `CP-1107`, `CP-1204`):**
    - **Reason:** The query tools behind these checkpoints (`tools/records/find-event`, `tools/records/find-record`, `tools/records/check-write-freshness`, `validators/drift/check-restore-tested`) were fully implemented and run offline without errors. However, each queries for an event or record (`plan_approved`, `gate_2_approval`, `artifact_built`, UAT record, `production_approval_granted`, deployment record, rollback event, restore test record, reconciliation report) that is emitted by an upstream live pipeline action (`CP-0404`, `CP-0505`, `CP-0601`, `CP-0707`, `CP-0802`, `CP-0902`, `CP-1101`, `CP-1105`, `CP-1201`). Because those upstream actions are genuinely blocked on live multi-tenant cloud infrastructure and were skipped, no events/records were written during the offline run. The query tools truthfully and properly reported `FAIL: no matching record/event found`.
