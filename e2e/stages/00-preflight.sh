@@ -31,7 +31,7 @@ cp_assert CP-0003 "pilot product absent before the run (first-run only)" \
 # CP-0004 Every reusable workflow tag the estate consumes resolves to the SHA platform.yaml records
 #         (Section 33.2; invariant #85; the tag-ruleset row of Section 53.1).
 if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ]; then
-  if ./tools/verify-workflow-tag-pins.sh --strict >"${E2E_OUT}/evidence/CP-0004.out" 2>&1; then
+  if bash ./tools/verify-workflow-tag-pins.sh --strict >"${E2E_OUT}/evidence/CP-0004.out" 2>&1; then
     cp_pass CP-0004 "consumed workflow tags match platform.yaml pins"
   else
     _emit CP-0004 FAIL "consumed workflow tags match platform.yaml pins — evidence: ${E2E_OUT}/evidence/CP-0004.out"
@@ -39,14 +39,14 @@ if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ]; then
   fi
 else
   cp_assert CP-0004 "consumed workflow tags match platform.yaml pins" \
-    ./tools/verify-workflow-tag-pins.sh --strict
+    bash ./tools/verify-workflow-tag-pins.sh --strict
 fi
 
 # CP-0005 Friday-freeze awareness. A production deploy must START by 15:00 Friday and finish smoke and its
 #         observation window inside core hours (Section 34.2). The run refuses to start where E2E-09 could
 #         not complete inside the window.
 if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ] || [ "${E2E_NON_BLOCKING_PREFLIGHT:-0}" = "1" ]; then
-  if ./tools/freeze-window-check.sh --need-minutes 90 >"${E2E_OUT}/evidence/CP-0005.out" 2>&1; then
+  if bash ./tools/freeze-window-check.sh --need-minutes 90 >"${E2E_OUT}/evidence/CP-0005.out" 2>&1; then
     cp_pass CP-0005 "run window admits a compliant production deploy"
   else
     _emit CP-0005 FAIL "outside compliant production deploy window (freeze/hours) — non-blocking observation: ${E2E_OUT}/evidence/CP-0005.out"
@@ -54,7 +54,7 @@ if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ] || [ "${E2E_NON_BLOCKING_PREFLIGHT:-0
   fi
 else
   cp_assert CP-0005 "run window admits a compliant production deploy" \
-    ./tools/freeze-window-check.sh --need-minutes 90
+    bash ./tools/freeze-window-check.sh --need-minutes 90
 fi
 
 # CP-0006 Every tool this harness shells out to (gh, jq, yq, curl, base64, git) is present, and yq is
