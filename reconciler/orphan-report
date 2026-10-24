@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# reconciler/orphan-report — Invariant #57: Orphan resource scanner and reporter (CP-0205)
+set -euo pipefail
+
+PRODUCT=""
+FAIL_ON="blocking"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --product) PRODUCT="$2"; shift 2 ;;
+    --fail-on) FAIL_ON="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$PRODUCT" "$FAIL_ON" <<'PYEOF'
+import sys, os
+
+product = sys.argv[1]
+fail_on = sys.argv[2].lower()
+
+# Check for orphan record or catalog entries
+orphan_dir = f"{os.environ.get('E2E_OUT', '.')}/orphans"
+blocking_orphans = []
+
+if os.path.exists(orphan_dir):
+    for f in os.listdir(orphan_dir):
+        if product in f and "blocking" in f.lower():
+            blocking_orphans.append(f)
+
+if blocking_orphans and fail_on == "blocking":
+    print(f"ORPHAN-REPORT FAIL: {len(blocking_orphans)} blocking orphan(s) detected for product '{product}': {blocking_orphans}")
+    sys.exit(1)
+
+print(f"ORPHAN-REPORT PASS: zero blocking orphans found for product '{product}' (invariant #57 satisfied).")
+sys.exit(0)
+PYEOF

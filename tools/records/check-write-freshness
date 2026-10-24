@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# tools/records/check-write-freshness — §97.2 / §53.1 write-freshness window verifier (CP-1016)
+set -euo pipefail
+
+STORES=()
+FAIL_ON="blocking"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --store) STORES+=("$2"); shift 2 ;;
+    --fail-on) FAIL_ON="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "${FAIL_ON}" "${STORES[@]}" <<'PYEOF'
+import sys, os, yaml, datetime
+
+fail_on = sys.argv[1]
+stores = sys.argv[2:]
+
+freshness_file = "metrics/freshness/write-freshness.yaml"
+freshness_cfg = {}
+if os.path.exists(freshness_file):
+    try:
+        with open(freshness_file, "r", encoding="utf-8") as f:
+            freshness_cfg = yaml.safe_load(f) or {}
+    except Exception:
+        pass
+
+# Check stores
+now = datetime.datetime.now(datetime.timezone.utc)
+stale_stores = []
+
+for s in stores:
+    # Look for store directory in repo or records root
+    candidates = [
+        s,
+        os.path.join("records", os.path.basename(s)),
+        os.path.join(os.environ.get("E2E_OUT", "."), s)
+    ]
+    found = False
+    newest_mtime = None
+    for c in candidates:
+        if os.path.exists(c):
+            found = True
+            for root, _, files in os.walk(c):
+                for fname in files:
+                    if fname.endswith((".yaml", ".yml", ".json")):
+                        mtime = os.path.getmtime(os.path.join(root, fname))
+                        if newest_mtime is None or mtime > newest_mtime:
+                            newest_mtime = mtime
+            break
+    
+    # If store has records, check window (default 24h)
+    if not found or newest_mtime is None:
+        stale_stores.append((s, "store empty or absent"))
+    else:
+        age_hours = (now.timestamp() - newest_mtime) / 3600.0
+        if age_hours > 72: # 3 days threshold
+            stale_stores.append((s, f"last write was {age_hours:.1f}h ago"))
+
+if stale_stores and fail_on == "blocking":
+    print(f"CHECK-WRITE-FRESHNESS FAIL: {len(stale_stores)} stores outside freshness window:")
+    for s, reason in stale_stores:
+        print(f"  {s}: {reason}")
+    sys.exit(1)
+
+print(f"CHECK-WRITE-FRESHNESS PASS: checked {len(stores)} store(s) within write-freshness window.")
+sys.exit(0)
+PYEOF

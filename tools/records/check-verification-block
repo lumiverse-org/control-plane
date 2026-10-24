@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# tools/records/check-verification-block — Check for active verification blocks (§27, CP-0801)
+set -euo pipefail
+
+PRODUCT=""
+EXPECT="none"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --product) PRODUCT="$2"; shift 2 ;;
+    --expect) EXPECT="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$PRODUCT" "$EXPECT" <<'PYEOF'
+import sys, os, yaml
+
+product = sys.argv[1]
+expect = sys.argv[2]
+
+block_dirs = [
+    f"{os.environ.get('E2E_OUT', '.')}/verification-blocks",
+    "records/verification-blocks"
+]
+
+open_blocks = []
+for bdir in block_dirs:
+    if not os.path.exists(bdir):
+        continue
+    for fname in os.listdir(bdir):
+        if not fname.endswith((".yaml", ".yml")):
+            continue
+        fpath = os.path.join(bdir, fname)
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+            if data.get("product") == product or fname.startswith(product):
+                if data.get("status", "open") == "open":
+                    open_blocks.append((fpath, data))
+        except Exception:
+            continue
+
+if expect == "none":
+    if open_blocks:
+        print(f"VERIFICATION-BLOCK FAIL: open verification block exists for product '{product}': {open_blocks[0][0]}")
+        sys.exit(1)
+    print(f"VERIFICATION-BLOCK PASS: no open verification block found for product '{product}' (none).")
+    sys.exit(0)
+else:
+    if not open_blocks:
+        print(f"VERIFICATION-BLOCK FAIL: expected open verification block for product '{product}' but none found.")
+        sys.exit(1)
+    print(f"VERIFICATION-BLOCK PASS: open verification block confirmed for '{product}'.")
+    sys.exit(0)
+PYEOF

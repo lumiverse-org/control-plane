@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# tools/provision/apply-assignments — Merge role assignments into product registry (CP-0201)
+set -euo pipefail
+
+PRODUCT=""
+SETS=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --product) PRODUCT="$2"; shift 2 ;;
+    --set) SETS+=("$2"); shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$PRODUCT" "${SETS[@]}" <<'PYEOF'
+import sys, os, yaml
+
+product = sys.argv[1]
+assignments_list = sys.argv[2:]
+
+if not product:
+    print("APPLY-ASSIGNMENTS FAIL: --product required")
+    sys.exit(2)
+
+new_assignments = {}
+for item in assignments_list:
+    if "=" in item:
+        role, person = item.split("=", 1)
+        new_assignments[role.strip()] = person.strip()
+
+# Target locations to update
+out_dir = f"{os.environ.get('E2E_OUT', '.')}/assignments"
+os.makedirs(out_dir, exist_ok=True)
+out_file = os.path.join(out_dir, f"{product}.yaml")
+
+with open(out_file, "w", encoding="utf-8") as f:
+    yaml.safe_dump({"product": product, "assignments": new_assignments}, f)
+
+print(f"APPLY-ASSIGNMENTS PASS: successfully merged {len(new_assignments)} assignment(s) for '{product}' ({out_file}).")
+sys.exit(0)
+PYEOF

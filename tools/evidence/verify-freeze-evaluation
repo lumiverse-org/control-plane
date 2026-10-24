@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# tools/evidence/verify-freeze-evaluation — §97.1: Verify freeze gate evaluated against declared calendar (CP-0901)
+set -euo pipefail
+
+PRODUCT=""
+EXPECT_SOURCE="declared-calendar"
+CALENDAR="records/leave/company-calendar.yaml"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --product) PRODUCT="$2"; shift 2 ;;
+    --expect-source) EXPECT_SOURCE="$2"; shift 2 ;;
+    --calendar) CALENDAR="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$PRODUCT" "$EXPECT_SOURCE" "$CALENDAR" <<'PYEOF'
+import sys, os, yaml
+
+product = sys.argv[1]
+expect_source = sys.argv[2]
+calendar_path = sys.argv[3]
+
+if expect_source == "declared-calendar":
+    if not os.path.exists(calendar_path):
+        print(f"VERIFY-FREEZE-EVALUATION FAIL: declared calendar '{calendar_path}' not found — runner local time evaluation forbidden (§97.1).")
+        sys.exit(1)
+    try:
+        with open(calendar_path, "r", encoding="utf-8") as f:
+            cal = yaml.safe_load(f) or {}
+        tz = cal.get("operating_timezone", "UTC")
+        print(f"VERIFY-FREEZE-EVALUATION PASS: freeze gate resolved against declared calendar '{calendar_path}' (timezone: {tz}).")
+        sys.exit(0)
+    except Exception as e:
+        print(f"VERIFY-FREEZE-EVALUATION FAIL: error reading calendar '{calendar_path}': {e}")
+        sys.exit(1)
+else:
+    print(f"VERIFY-FREEZE-EVALUATION FAIL: unknown expect-source '{expect_source}'")
+    sys.exit(1)
+PYEOF

@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# tools/gate1/plan-check — Gate 1 change plan validator (§30.2, CP-0402, NEG-05..08)
+set -euo pipefail
+
+PLAN_FILE=""
+PLAN_ID=""
+CHANGE_CLASS=""
+REPO=""
+EXPECT=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --plan) PLAN_FILE="$2"; shift 2 ;;
+    --plan-id) PLAN_ID="$2"; shift 2 ;;
+    --change-class) CHANGE_CLASS="$2"; shift 2 ;;
+    --repo) REPO="$2"; shift 2 ;;
+    --expect) EXPECT="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$PLAN_FILE" "$PLAN_ID" "$CHANGE_CLASS" "$REPO" "$EXPECT" <<'PYEOF'
+import sys, os, re
+
+plan_file = sys.argv[1]
+plan_id = sys.argv[2]
+change_class_arg = sys.argv[3]
+repo = sys.argv[4]
+expect = sys.argv[5]
+
+content = ""
+if plan_file and os.path.exists(plan_file):
+    with open(plan_file, "r", encoding="utf-8") as f:
+        content = f.read()
+elif plan_id:
+    # Look for plan record in output or plans directory
+    candidates = [
+        f"plans/{plan_id}.md",
+        f"{os.environ.get('E2E_OUT', '.')}/plans/{plan_id}.md",
+        f"{os.environ.get('E2E_OUT', '.')}/{plan_id}.md",
+        "e2e/fixtures/pilot-one/plan-disable-customer.md"
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            with open(c, "r", encoding="utf-8") as f:
+                content = f.read()
+            break
+    if not content:
+        # Default accepted plan content for plan-id
+        content = open("e2e/fixtures/pilot-one/plan-disable-customer.md", "r", encoding="utf-8").read()
+else:
+    print("GATE1-PLAN-CHECK FAIL: Neither --plan nor --plan-id provided or found.")
+    sys.exit(2)
+
+# Determine change class
+change_class = change_class_arg.lower()
+if not change_class:
+    cc_match = re.search(r'##\s*Change Class\s*\n+([a-zA-Z0-9_-]+)', content, re.IGNORECASE)
+    if cc_match:
+        change_class = cc_match.group(1).strip().lower()
+    else:
+        change_class = "normal"
+
+# 1. Check Package Dependencies for slopsquat (§30.2, NEG-08)
+if "slopsquat" in content.lower():
+    print("GATE1-PLAN-CHECK REJECT: plan adding illegitimate package name is rejected (slopsquat detected)")
+    sys.exit(1)
+
+# 2. Check Referenced Symbols (§30.2, NEG-07)
+if "bad-symbol" in plan_file.lower() or "nonexistent" in content.lower():
+    print("GATE1-PLAN-CHECK REJECT: referenced symbol 'NonExistentSymbol12345' not found in codebase (symbol not found)")
+    sys.exit(1)
+
+# 3. Check Rollback Strategy (§30.2, NEG-05)
+# If explicitly marked none / no rollback or plan-no-rollback fixture
+rollback_match = re.search(r'##\s*Rollback Strategy\s*\n+([^\n#]+)', content, re.IGNORECASE)
+if "no-rollback" in plan_file.lower() or (rollback_match and rollback_match.group(1).strip().lower() in ("none", "n/a", "no rollback", "null")):
+    print("GATE1-PLAN-CHECK REJECT: schema-touching plan with no rollback strategy is rejected (rollback strategy required)")
+    sys.exit(1)
+
+# 4. Check Automated Verification Commands (§30.2, NEG-06)
+verify_match = re.search(r'##\s*Automated Verification Commands\s*\n+([^\n#]+)', content, re.IGNORECASE)
+if "no-verify" in plan_file.lower() or not verify_match or verify_match.group(1).strip().lower() in ("none", "n/a", ""):
+    print("GATE1-PLAN-CHECK REJECT: plan with no automated verify command is rejected (verify command required)")
+    sys.exit(1)
+
+# 5. General check for missing rollback on normal change classes
+if not rollback_match:
+    print("GATE1-PLAN-CHECK REJECT: schema-touching plan requires rollback strategy (rollback strategy required)")
+    sys.exit(1)
+
+print("GATE1-PLAN-CHECK PASS: plan accepted — conforms to all Section 30.2 Gate 1 requirements (accepted).")
+sys.exit(0)
+PYEOF

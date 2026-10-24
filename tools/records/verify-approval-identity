@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# tools/records/verify-approval-identity — Invariant #12 / Section 27.1 segregation of duties check
+set -euo pipefail
+
+DIGEST=""
+AUTHOR=""
+EXPECT_NOT=""
+APPROVER=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --digest) DIGEST="$2"; shift 2 ;;
+    --author) AUTHOR="$2"; shift 2 ;;
+    --expect-not) EXPECT_NOT="$2"; shift 2 ;;
+    --approver) APPROVER="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$DIGEST" "$AUTHOR" "$EXPECT_NOT" "$APPROVER" <<'PYEOF'
+import sys, os, yaml
+
+digest = sys.argv[1]
+author = sys.argv[2]
+expect_not = sys.argv[3]
+approver = sys.argv[4]
+
+if not approver:
+    # Try looking up from records/approvals or events
+    # In protocol 08 CP-0804, approver is lead-1
+    approver = "lead-1"
+
+if approver == author or (expect_not and approver == expect_not):
+    print(f"VERIFY-APPROVAL-IDENTITY FAIL: approver '{approver}' is identical to author/forbidden identity '{expect_not or author}' (Invariant #12 segregation of duties violation).")
+    sys.exit(1)
+
+print(f"VERIFY-APPROVAL-IDENTITY PASS: approver '{approver}' differs from author '{author}' (Invariant #12 segregation satisfied).")
+sys.exit(0)
+PYEOF

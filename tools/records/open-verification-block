@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# tools/records/open-verification-block — Open a verification block (§27, NEG-15)
+set -euo pipefail
+
+PRODUCT=""
+REASON="unspecified"
+ACTOR="system"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --product) PRODUCT="$2"; shift 2 ;;
+    --reason) REASON="$2"; shift 2 ;;
+    --as) ACTOR="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$PRODUCT" "$REASON" "$ACTOR" <<'PYEOF'
+import sys, os, datetime, yaml
+
+product = sys.argv[1] or "all"
+reason = sys.argv[2]
+actor = sys.argv[3]
+
+out_dir = f"{os.environ.get('E2E_OUT', '.')}/verification-blocks"
+os.makedirs(out_dir, exist_ok=True)
+
+block_data = {
+    "product": product,
+    "status": "open",
+    "reason": reason,
+    "opened_by": actor,
+    "opened_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+}
+
+out_file = os.path.join(out_dir, f"{product}.yaml")
+with open(out_file, "w", encoding="utf-8") as f:
+    yaml.safe_dump(block_data, f)
+
+print(f"VERIFICATION-BLOCK OPENED: verification block opened for '{product}' by {actor} ({out_file}).")
+sys.exit(0)
+PYEOF

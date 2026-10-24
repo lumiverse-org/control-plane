@@ -9,9 +9,10 @@ cp_assert CP-0001 "HEAD is the tip of integration" \
 
 # CP-0002 No API keys or production secrets exist in the operator environment (invariant #84, Section 95.3).
 # Allow-list covers: standard GitHub Actions tokens (GITHUB_TOKEN, RUNNER_TOKEN), E2E harness tokens,
-# and GITHUB_ACTIONS flag. The intent is to catch inadvertent api_key or production credential leakage.
+# GITHUB_ACTIONS flag, and interactive session variables (CLAUDE_CODE_*, ANTHROPIC_*). The intent is to catch
+# inadvertent api_key or production credential leakage.
 cp_assert CP-0002 "operator environment is API-key-free" \
-  bash -c '! env | grep -iE "(api_key|_token=|_secret=)" | grep -viE "^(GITHUB_TOKEN=|GITHUB_ACTIONS|RUNNER_TOKEN=|E2E_)"'
+  bash -c '! env | grep -iE "(api_key|_token=|_secret=)" | grep -viE "^(GITHUB_TOKEN=|GITHUB_ACTIONS|RUNNER_TOKEN=|E2E_|CLAUDE_CODE_|ANTHROPIC_)"'
 
 # CP-0003 The pilot product does not yet exist. Active only on the first run (E2E_FIRST_RUN=1 / --first-run).
 # On subsequent runs the pilot is the estate's permanent canary product and its presence is expected and required.

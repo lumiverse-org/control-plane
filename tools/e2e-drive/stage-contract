@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# tools/e2e-drive/stage-contract — Helper to stage and restore verification contracts for testing
+set -euo pipefail
+
+REPO=""
+REPLACE_WITH=""
+RESTORE=false
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --repo) REPO="$2"; shift 2 ;;
+    --replace-with) REPLACE_WITH="$2"; shift 2 ;;
+    --restore) RESTORE=true; shift ;;
+    *) shift ;;
+  esac
+done
+
+TARGET_DIR="e2e/fixtures/pilot-one/verification"
+if [ -n "$REPO" ] && [ -d "$REPO/verification" ]; then
+  TARGET_DIR="$REPO/verification"
+fi
+TARGET_FILE="$TARGET_DIR/contract.yaml"
+BACKUP_FILE="$TARGET_DIR/contract.yaml.bak"
+
+if [ "$RESTORE" = true ]; then
+  if [ -f "$BACKUP_FILE" ]; then
+    cp "$BACKUP_FILE" "$TARGET_FILE"
+    rm -f "$BACKUP_FILE"
+    echo "STAGE-CONTRACT: restored verification contract for '$REPO' from backup."
+  else
+    echo "STAGE-CONTRACT: no backup file found at '$BACKUP_FILE' to restore."
+  fi
+  exit 0
+fi
+
+if [ -n "$REPLACE_WITH" ]; then
+  if [ -f "$TARGET_FILE" ]; then
+    cp "$TARGET_FILE" "$BACKUP_FILE"
+  fi
+  cp "$REPLACE_WITH" "$TARGET_FILE"
+  echo "STAGE-CONTRACT: staged '$REPLACE_WITH' to '$TARGET_FILE' for '$REPO'."
+  exit 0
+fi
+
+echo "STAGE-CONTRACT: no action specified."
+exit 1
