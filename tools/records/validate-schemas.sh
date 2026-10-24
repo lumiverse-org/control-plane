@@ -36,8 +36,8 @@ def load(rel):
     return json.loads((cp_root / rel).read_text(encoding="utf-8"))
 
 if mode == "--coverage":
-    if len(rows) != 18:
-        print("COVERAGE FAIL: %d rows, expected 18" % len(rows))
+    if len(rows) != 19:
+        print("COVERAGE FAIL: %d rows, expected 19" % len(rows))
         fail = 1
     seen = set()
     for r in rows:

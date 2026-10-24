@@ -62,9 +62,9 @@ This document catalogs all 44 items from `_gravity-handoff/batch-3/pool.json` th
 ---
 
 ### `tools/records/store-inventory.yaml` (satisfies L4-P2-25)
-> **Status (2026-10-23):** CORRECTLY NOT BUILT — struck by Decision D21 in lanes/L4-99-review.md line 409 in favor of `schemas/records/store-map.yaml` (which exists and has 18 store definitions, verified 2026-10-23); remains out of scope.
+> **Status (2026-10-23):** CORRECTLY NOT BUILT — struck by Decision D21 in lanes/L4-99-review.md line 409 in favor of `schemas/records/store-map.yaml` (which exists and has 19 store definitions, verified 2026-10-24); remains out of scope.
 - **Pool Item:** 29 (`tools/records/store-inventory.yaml`)
-- **Evidence:** Explicitly STRUCK by Decision D21 in `lanes/L4-99-review.md` line 409: "store-inventory.yaml is struck; schemas/records/store-map.yaml is the single authoritative store deliverable." `schemas/records/store-map.yaml` was verified and already exists with 18 rows.
+- **Evidence:** Explicitly STRUCK by Decision D21 in `lanes/L4-99-review.md` line 409: "store-inventory.yaml is struck; schemas/records/store-map.yaml is the single authoritative store deliverable." `schemas/records/store-map.yaml` was verified and already exists with 19 rows per FD-059.
 - **Decision Required:** Mark Item 29 as obsolete/superseded by `store-map.yaml`.
 
 ---
