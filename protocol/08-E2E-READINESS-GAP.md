@@ -18,8 +18,8 @@
 | Category | Buildable Now, Offline | Genuinely Blocked on Live Infrastructure | Total |
 |---|---|---|---|
 | **Positive Checkpoints (E2E-00 .. E2E-13)** | 29 | 103 | 132 |
-| **Negative Gate Tests (NEG-01 .. NEG-28)** | 9 | 20 | 29 |
-| **Combined Total** | **38** | **123** | **161** |
+| **Negative Gate Tests (NEG-01 .. NEG-28)** | 10 | 19 | 29 |
+| **Combined Total** | **39** | **122** | **161** |
 
 ---
 
@@ -188,7 +188,7 @@
 | `NEG-19` | Required-check integrity: path filter on required job rejected | `tools/e2e-drive/path-filter-probe` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §33.2: executes `path-filter-probe`; requires real GitHub repository and check-run conclusion inspection |
 | `NEG-20` | Tag pin integrity: tag ruleset blocks moving workflows/* tag | `tools/e2e-drive/move-workflow-tag` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §33.2, §53.1: requires GitHub Tag Protection Ruleset enforcement |
 | `NEG-21` | Renovate path guard: non-Renovate author pushing lockfile rejected | `tools/e2e-drive/push-commit` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §33.2: executes `push-commit`; requires pushing to real remote repository `renovate/deps` branch |
-| `NEG-22` | Friday freeze: deploy dispatched at 15:30 Friday declared time rejected | `tools/e2e-drive/run-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §34.2, §97.1: executes `run-workflow deploy-production.yml`; requires live GitHub Actions workflow runner |
+| `NEG-22` | Friday freeze: deploy dispatched at 15:30 Friday declared time rejected | `tools/freeze-window-check.sh` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L2** | §34.2, §97.1: evaluated via tools/freeze-window-check.sh --simulate-calendar-time "friday 15:30" |
 | `NEG-23` | Machine authority: machine account cannot merge/approve/deploy | `tools/e2e-drive/machine-action` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L5** | Inv #18, §37.3: requires GitHub-side actor gate permissions |
 | `NEG-24` | Parity: staging-only env var causes parity violation blocking deploy | `tools/evidence/check-parity` | **MISSING** | `BUILDABLE NOW, OFFLINE` | **L2** | §33.1: environment variable comparison across environments |
 | `NEG-25` | Exception expiry: exception without expiry date fails validation | `validators/registry/validate-exceptions` | **MISSING** | `BUILDABLE NOW, OFFLINE` | **L1** | Inv #77: offline schema validation of exceptions.yaml |
@@ -206,11 +206,11 @@
 |---|---|---|---|---|---|---|
 | **L0** | 25 | 5 | **30** | 12 | 18 | Harness, Gate 1, Preflight, Evidence Assembly |
 | **L1** | 4 | 2 | **6** | 4 | 2 | Schemas, Contracts, Registries, Exception Validation |
-| **L2** | 41 | 12 | **53** | 3 | 50 | Workflows, Pipelines, Builds, Deploys, Branch Protections |
+| **L2** | 41 | 12 | **53** | 4 | 49 | Workflows, Pipelines, Builds, Deploys, Branch Protections |
 | **L3** | 39 | 3 | **42** | 5 | 37 | Provisioning CLI, Reconciler, Drift, Catalog Scaffolding |
 | **L4** | 15 | 3 | **18** | 12 | 6 | Records Store, Events, Freshness, Verification Blocks |
 | **L5** | 8 | 4 | **12** | 2 | 10 | Access, Cage, VM, Boundaries, Customer Data Guard |
-| **Total** | **132** | **29** | **161** | **38** | **123** | **Full Estate Exit Gate Surface** |
+| **Total** | **132** | **29** | **161** | **39** | **122** | **Full Estate Exit Gate Surface** |
 
 ### 4.2 Lane Deliverables Backlog
 
@@ -218,7 +218,7 @@
 |---|---|---|
 | **L0** | `tools/verify-workflow-tag-pins.sh`, `tools/freeze-window-check.sh`, `tools/gate1/plan-check`, `tools/gate1/submit-plan` | Gate 1 push notification service, multi-actor approval (`lead-1` vs `dev-a`), `evidence-chain` multi-API aggregator |
 | **L1** | `validators/registry/validate-verification-contract`, `validators/registry/validate-exceptions`, coverage map validator | Live verification contract evaluation against deployed services |
-| **L2** | Static AST / if: condition verifiers (`check-conclusions`), offline parity check, commit/author guards | `org/pilot-one-api` repo, GitHub Actions runners, GHCR container push/pull, staging/production deployments |
+| **L2** | Static AST / if: condition verifiers (`check-conclusions`), offline parity check, commit/author guards, `tools/freeze-window-check.sh` (calendar freeze gate) | `org/pilot-one-api` repo, GitHub Actions runners, GHCR container push/pull, staging/production deployments |
 | **L3** | `tools/verify-no-product-list.sh`, `apply-assignments`, orphan reporting | Live GitHub Org scaffolding (`create-product` shell executor), GitHub Teams, live Reconciler canary execution (AT-102, AT-110) |
 | **L4** | `tools/records/find-record`, `tools/records/find-event`, `check-write-freshness`, verification block logic | `control-plane-records` repository, GitHub App `records-writer[bot]` token execution |
 | **L5** | PII / customer data pattern detector (`check-no-customer-data`) | Linux cage worker isolation (AT-109), Founder ops console (AT-108), GitHub machine account restrictions (Invariant #18) |
@@ -229,7 +229,7 @@
 
 1. **Scaffolding Complete:** All 14 stage scripts and 28 negative scripts are written, syntactically valid, and bound to protocol 08 primitives.
 2. **Real Tooling Built:** `tools/verify-workflow-tag-pins.sh --strict` and `tools/freeze-window-check.sh --need-minutes 90` are fully implemented with real logic.
-3. **True Current State (Harness Execution):** The true execution of `bash e2e/run.sh --bootstrap` halts immediately at **CP-0001** ("HEAD is the tip of integration") with 1 checkpoint failure (as verified in `e2e/out/*/checkpoints/log.tsv`), because the branch is unmerged. Once merged into integration, diagnostic isolated probing demonstrates that preflight will subsequently fail at **CP-0004** (unpinned workflow tags in templates), **CP-0005** (execution outside core working hours per calendar), and **CP-0006** (missing `jq` and `yq` on operator runner). Beyond Preflight, 103 positive checkpoints and 20 negative tests (123 total across the estate) are genuinely blocked on live multi-tenant infrastructure.
+3. **True Current State (Harness Execution):** The true execution of `bash e2e/run.sh --bootstrap` halts immediately at **CP-0001** ("HEAD is the tip of integration") with 1 checkpoint failure (as verified in `e2e/out/*/checkpoints/log.tsv`), because the branch is unmerged. Once merged into integration, diagnostic isolated probing demonstrates that preflight will subsequently fail at **CP-0004** (unpinned workflow tags in templates), **CP-0005** (execution outside core working hours per calendar), and **CP-0006** (missing `jq` and `yq` on operator runner). Beyond Preflight, 103 positive checkpoints and 19 negative tests (122 total across the estate) are genuinely blocked on live multi-tenant infrastructure.
 4. **Anti-Hallucination Integrity:** Per `AGENTS.md`, zero stubs or mocks were introduced to fake passes against unbuilt infrastructure. The harness reports failures accurately and truthfully.
 
 ---
@@ -254,5 +254,5 @@ The table below catalogs every stage in `protocol/08-smoke-and-e2e.md` (stages `
 | **E2E-11** | Rollback & Restore | `CP-1101` (`run-workflow rollback.yml`) | Real production environment and live GitHub Actions Runner | 0 checkpoints |
 | **E2E-12** | Reconciliation & Drift | `CP-1201` (`reconciler/run`) | Live GitHub Organization audit API and permanent seeded canary probe (AT-102) | 0 checkpoints |
 | **E2E-13** | Access & Boundaries | `CP-1310` (`at-108-ops-console.sh`) | Live Ops VM Linux environment, read-only Layer A socket, and cage host cgroups (AT-108/AT-109) | 0 checkpoints |
-| **Negative Suite** | Negative Gate Tests (`NEG-01` .. `NEG-28`) | `NEG-01` (`build-unverified-digest`) | Real pilot repository, live GHCR container push, and live deploy workflow runner | 0 in serial sequence (9 pass in isolated offline execution) |
+| **Negative Suite** | Negative Gate Tests (`NEG-01` .. `NEG-28`) | `NEG-01` (`build-unverified-digest`) | Real pilot repository, live GHCR container push, and live deploy workflow runner | 0 in serial sequence (10 pass in isolated offline execution) |
 
