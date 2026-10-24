@@ -15,3 +15,23 @@
 # merged from a lane branch: PARTITION.md rule 1 makes that impossible.
 #
 # The register starts empty. It should usually be empty.
+#
+EXC-LG-001	0	reconciler/auto-repair	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-002	0	reconciler/orphan-report	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-003	0	tools/evidence/check-coverage-map	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-004	0	tools/evidence/check-no-customer-data	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-005	0	tools/evidence/check-parity	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-006	0	tools/evidence/check-ship-definition	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-007	0	tools/evidence/run-verification-contract	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-008	0	tools/evidence/verify-freeze-evaluation	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-009	0	tools/provision/apply-assignments	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-010	0	tools/records/check-verification-block	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-011	0	tools/records/check-write-freshness	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-012	0	tools/records/close-verification-block	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-013	0	tools/records/find-event	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-014	0	tools/records/find-record	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-015	0	tools/records/open-verification-block	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-016	0	tools/records/verify-approval-identity	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-017	0	validators/drift/check-restore-tested	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-018	0	validators/registry/validate-exceptions	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-019	0	validators/registry/validate-verification-contract	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
