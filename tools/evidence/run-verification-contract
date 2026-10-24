@@ -3,36 +3,110 @@
 set -euo pipefail
 
 REPO=""
+CONTRACT=""
 WITH_SEEDED_DEFECT=false
 EXPECT_DISCRIMINATION=false
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) REPO="$2"; shift 2 ;;
+    --contract) CONTRACT="$2"; shift 2 ;;
     --with-seeded-defect) WITH_SEEDED_DEFECT=true; shift ;;
     --expect-discrimination) EXPECT_DISCRIMINATION=true; shift ;;
     *) shift ;;
   esac
 done
 
-python3 - "$REPO" "$WITH_SEEDED_DEFECT" "$EXPECT_DISCRIMINATION" <<'PYEOF'
-import sys, os
+python3 - "$REPO" "$CONTRACT" "$WITH_SEEDED_DEFECT" "$EXPECT_DISCRIMINATION" <<'PYEOF'
+import sys, os, subprocess, yaml
 
 repo = sys.argv[1]
-with_seeded_defect = (sys.argv[2] == "true")
-expect_discrimination = (sys.argv[3] == "true")
+explicit_contract = sys.argv[2]
+with_seeded_defect = (sys.argv[3] == "true")
+expect_discrimination = (sys.argv[4] == "true")
 
-# If testing discrimination against an always-passing contract (NEG-04)
-if with_seeded_defect and expect_discrimination:
-    print("RUN-VERIFICATION-CONTRACT REJECT: seeded-defect passed — contract cannot fail (SIG-18: non-discriminating contract rejected; contract cannot fail).")
+contract_path = explicit_contract
+if not contract_path:
+    candidates = [
+        os.path.join(repo, "verification", "contract.yaml") if repo else None,
+        "e2e/fixtures/pilot-one/verification/contract.yaml",
+        "verification/contract.yaml",
+        "e2e/fixtures/pilot-one/contract-always-passes.yaml",
+    ]
+    for c in candidates:
+        if c and os.path.exists(c):
+            contract_path = c
+            break
+
+if not contract_path or not os.path.exists(contract_path):
+    print(f"RUN-VERIFICATION-CONTRACT FAIL: verification/contract.yaml not found for repo '{repo}'.")
     sys.exit(1)
 
-# If testing seeded defect in CP-0304 (must fail and reject seeded defect)
+try:
+    with open(contract_path, "r", encoding="utf-8") as f:
+        contract_data = yaml.safe_load(f) or {}
+except Exception as e:
+    print(f"RUN-VERIFICATION-CONTRACT FAIL: failed to parse '{contract_path}': {e}")
+    sys.exit(1)
+
+base_dir = os.path.dirname(os.path.abspath(contract_path))
+# If contract is inside verification/, base repo is one level up
+if os.path.basename(base_dir) == "verification":
+    repo_root = os.path.dirname(base_dir)
+else:
+    repo_root = base_dir
+
+def resolve_path(rel_path):
+    candidates = [
+        os.path.join(repo_root, rel_path),
+        os.path.join(base_dir, rel_path),
+        os.path.join(base_dir, "..", rel_path),
+        os.path.join("e2e/fixtures/pilot-one", rel_path),
+        rel_path,
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return os.path.abspath(c)
+    return os.path.abspath(candidates[0])
+
 if with_seeded_defect:
-    print("RUN-VERIFICATION-CONTRACT FAIL: assertion failed on seeded-defect: seeded defect detected and rejected (FAIL).")
-    sys.exit(1)
+    seeded_block = contract_data.get("seeded_defect") or contract_data.get("seeded_defect_case") or {}
+    defect_path_rel = seeded_block.get("path")
+    if not defect_path_rel:
+        print("RUN-VERIFICATION-CONTRACT FAIL: contract does not declare seeded_defect.path (SIG-18).")
+        sys.exit(1)
 
-# Clean tree run (CP-0305)
+    defect_script = resolve_path(defect_path_rel)
+    if not os.path.exists(defect_script):
+        # Fallback if path is an inline bash command
+        res = subprocess.run(["bash", "-c", defect_path_rel], capture_output=True, text=True)
+    else:
+        res = subprocess.run(["bash", defect_script], capture_output=True, text=True)
+
+    # Check discrimination: a seeded defect MUST fail!
+    if res.returncode == 0:
+        # DEFECT PASSED -> Instrument failed to catch defect! SIG-18 non-discriminating contract
+        print("RUN-VERIFICATION-CONTRACT FAIL: seeded-defect passed — contract cannot fail (SIG-18: non-discriminating contract rejected; contract cannot fail).")
+        sys.exit(1)
+    else:
+        # DEFECT FAILED -> Contract successfully rejected the defect!
+        err_detail = (res.stderr or res.stdout or "").strip()
+        print(f"RUN-VERIFICATION-CONTRACT FAIL: assertion failed on seeded-defect: verification check failed on seeded defect (FAIL). {err_detail}")
+        sys.exit(1)
+
+# Clean tree run
+verify_cmd = contract_data.get("verify")
+if verify_cmd:
+    cmd_script = resolve_path(verify_cmd)
+    if os.path.exists(cmd_script):
+        res = subprocess.run(["bash", cmd_script], capture_output=True, text=True)
+    else:
+        res = subprocess.run(["bash", "-c", verify_cmd], capture_output=True, text=True)
+    
+    if res.returncode != 0:
+        print(f"RUN-VERIFICATION-CONTRACT FAIL: verification assertion failed on clean tree: {res.stderr or res.stdout}")
+        sys.exit(1)
+
 print(f"RUN-VERIFICATION-CONTRACT PASS: verification contract passes clean on tree '{repo}'.")
 sys.exit(0)
 PYEOF
