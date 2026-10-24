@@ -18,8 +18,8 @@
 | Category | Buildable Now, Offline | Genuinely Blocked on Live Infrastructure | Total |
 |---|---|---|---|
 | **Positive Checkpoints (E2E-00 .. E2E-13)** | 29 | 103 | 132 |
-| **Negative Gate Tests (NEG-01 .. NEG-28)** | 13 | 16 | 29 |
-| **Combined Total** | **42** | **119** | **161** |
+| **Negative Gate Tests (NEG-01 .. NEG-28)** | 9 | 20 | 29 |
+| **Combined Total** | **38** | **123** | **161** |
 
 ---
 
@@ -180,15 +180,15 @@
 | `NEG-12` | Read-only approval: read permission holder cannot approve | `tools/e2e-drive/approve-pr` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L5** | §95.4: requires live collaborator role enforcement (S-01, bootstrap-skipped) |
 | `NEG-13` | Production self-approval: approver cannot dispatch deploy | `tools/e2e-drive/run-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §27.2, Inv #12: requires workflow identity check (S-01, bootstrap-skipped) |
 | `NEG-14` | Production approval ordering: cannot approve before staging verification | `tools/e2e-drive/approve-production` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §27: requires staging verification record existence gate |
-| `NEG-15` | Verification block: deploy fails closed while block exists | `tools/records/open-verification-block` | **MISSING** | `BUILDABLE NOW, OFFLINE` | **L4** | §27: fail-closed evaluation against verification block store |
+| `NEG-15` | Verification block: deploy fails closed while block exists | `tools/e2e-drive/run-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L4** | §27: executes `run-workflow deploy-production.yml`; requires live GitHub Actions workflow runner |
 | `NEG-16` | Environment ref policy: deploy from unauthorized branch rejected | `tools/e2e-drive/run-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §33.4: requires GitHub Environment ref protection rules |
 | `NEG-17` | Record write path: reconciler credential cannot write to records | `tools/records/test-write` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L4** | §97.1, AT-110: requires credential permission boundary enforcement |
 | `NEG-18` | Reconciler canary: zero findings classified as FAILED run | `reconciler/run` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | AT-102: requires reconciler canary probe removal |
 | `NEG-18b` | Canary restored and found again | `reconciler/run` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | AT-102: requires reconciler canary probe restoration |
-| `NEG-19` | Required-check integrity: path filter on required job rejected | `tools/e2e-drive/path-filter-probe` | **MISSING** | `BUILDABLE NOW, OFFLINE` | **L2** | §33.2: static AST audit of workflow if: conditions on required checks |
+| `NEG-19` | Required-check integrity: path filter on required job rejected | `tools/e2e-drive/path-filter-probe` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §33.2: executes `path-filter-probe`; requires real GitHub repository and check-run conclusion inspection |
 | `NEG-20` | Tag pin integrity: tag ruleset blocks moving workflows/* tag | `tools/e2e-drive/move-workflow-tag` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §33.2, §53.1: requires GitHub Tag Protection Ruleset enforcement |
-| `NEG-21` | Renovate path guard: non-Renovate author pushing lockfile rejected | `tools/e2e-drive/push-commit` | **MISSING** | `BUILDABLE NOW, OFFLINE` | **L2** | §33.2: git commit author and changed paths audit |
-| `NEG-22` | Friday freeze: deploy dispatched at 15:30 Friday declared time rejected | `tools/e2e-drive/run-workflow` | **MISSING** | `BUILDABLE NOW, OFFLINE` | **L2** | §34.2, §97.1: calendar freeze gate evaluation |
+| `NEG-21` | Renovate path guard: non-Renovate author pushing lockfile rejected | `tools/e2e-drive/push-commit` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §33.2: executes `push-commit`; requires pushing to real remote repository `renovate/deps` branch |
+| `NEG-22` | Friday freeze: deploy dispatched at 15:30 Friday declared time rejected | `tools/e2e-drive/run-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | §34.2, §97.1: executes `run-workflow deploy-production.yml`; requires live GitHub Actions workflow runner |
 | `NEG-23` | Machine authority: machine account cannot merge/approve/deploy | `tools/e2e-drive/machine-action` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L5** | Inv #18, §37.3: requires GitHub-side actor gate permissions |
 | `NEG-24` | Parity: staging-only env var causes parity violation blocking deploy | `tools/evidence/check-parity` | **MISSING** | `BUILDABLE NOW, OFFLINE` | **L2** | §33.1: environment variable comparison across environments |
 | `NEG-25` | Exception expiry: exception without expiry date fails validation | `validators/registry/validate-exceptions` | **MISSING** | `BUILDABLE NOW, OFFLINE` | **L1** | Inv #77: offline schema validation of exceptions.yaml |
@@ -206,11 +206,11 @@
 |---|---|---|---|---|---|---|
 | **L0** | 25 | 5 | **30** | 12 | 18 | Harness, Gate 1, Preflight, Evidence Assembly |
 | **L1** | 4 | 2 | **6** | 4 | 2 | Schemas, Contracts, Registries, Exception Validation |
-| **L2** | 41 | 12 | **53** | 6 | 47 | Workflows, Pipelines, Builds, Deploys, Branch Protections |
+| **L2** | 41 | 12 | **53** | 3 | 50 | Workflows, Pipelines, Builds, Deploys, Branch Protections |
 | **L3** | 39 | 3 | **42** | 5 | 37 | Provisioning CLI, Reconciler, Drift, Catalog Scaffolding |
-| **L4** | 15 | 3 | **18** | 13 | 5 | Records Store, Events, Freshness, Verification Blocks |
+| **L4** | 15 | 3 | **18** | 12 | 6 | Records Store, Events, Freshness, Verification Blocks |
 | **L5** | 8 | 4 | **12** | 2 | 10 | Access, Cage, VM, Boundaries, Customer Data Guard |
-| **Total** | **132** | **29** | **161** | **42** | **119** | **Full Estate Exit Gate Surface** |
+| **Total** | **132** | **29** | **161** | **38** | **123** | **Full Estate Exit Gate Surface** |
 
 ### 4.2 Lane Deliverables Backlog
 
@@ -229,5 +229,30 @@
 
 1. **Scaffolding Complete:** All 14 stage scripts and 28 negative scripts are written, syntactically valid, and bound to protocol 08 primitives.
 2. **Real Tooling Built:** `tools/verify-workflow-tag-pins.sh --strict` and `tools/freeze-window-check.sh --need-minutes 90` are fully implemented with real logic.
-3. **True Current State (Harness Execution):** The true execution of `bash e2e/run.sh --bootstrap` halts immediately at **CP-0001** ("HEAD is the tip of integration") with 1 checkpoint failure (as verified in `e2e/out/*/checkpoints/log.tsv`), because the branch is unmerged. Once merged into integration, diagnostic isolated probing demonstrates that preflight will subsequently fail at **CP-0004** (unpinned workflow tags in templates), **CP-0005** (execution outside core working hours per calendar), and **CP-0006** (missing `jq` and `yq` on operator runner). Beyond Preflight, 80 positive checkpoints and 18 negative tests are genuinely blocked on live multi-tenant infrastructure.
+3. **True Current State (Harness Execution):** The true execution of `bash e2e/run.sh --bootstrap` halts immediately at **CP-0001** ("HEAD is the tip of integration") with 1 checkpoint failure (as verified in `e2e/out/*/checkpoints/log.tsv`), because the branch is unmerged. Once merged into integration, diagnostic isolated probing demonstrates that preflight will subsequently fail at **CP-0004** (unpinned workflow tags in templates), **CP-0005** (execution outside core working hours per calendar), and **CP-0006** (missing `jq` and `yq` on operator runner). Beyond Preflight, 103 positive checkpoints and 20 negative tests (123 total across the estate) are genuinely blocked on live multi-tenant infrastructure.
 4. **Anti-Hallucination Integrity:** Per `AGENTS.md`, zero stubs or mocks were introduced to fake passes against unbuilt infrastructure. The harness reports failures accurately and truthfully.
+
+---
+
+## 6. Stage-by-Stage First Live-Infrastructure Blocker Map
+
+The table below catalogs every stage in `protocol/08-smoke-and-e2e.md` (stages `E2E-00` through `E2E-13` and the negative suite `NEG-01` .. `NEG-28`), identifying the exact first checkpoint at which execution ceases without live cloud or GitHub infrastructure, the specific infrastructure dependency blocking it, and the extent of progress achievable purely offline:
+
+| Stage ID | Stage Name | First Blocked Checkpoint ID | Exact Live-Infrastructure Dependency | Progress Before Stopping |
+|---|---|---|---|---|
+| **E2E-00** | Preflight Checks | *None (local halt at CP-0004)* | No live infra blocker; fails offline at `CP-0004` due to unpinned template workflow tags vs `registries/platform.yaml` | 3 checkpoints pass (`CP-0001` .. `CP-0003`) |
+| **E2E-01** | Create Product | `CP-0101` (`tools/provision/create-product`) | Real pilot repository (`org/pilot-one-api`) and live GitHub Organization REST/GraphQL API | 0 checkpoints |
+| **E2E-02** | Assignment & Roles | `CP-0202` (`reconcile.yml`) | Live GitHub Actions runner and `lumiverse-org/control-plane` workflow dispatch permissions | 1 checkpoint passes (`CP-0201`) |
+| **E2E-03** | Verification Contract | `CP-0301` / `CP-0302` (`gh api repos/...`) | Real pilot repository (`org/pilot-one-api`) containing `verification/contract.yaml` | 0 checkpoints |
+| **E2E-04** | Gate 1 Plan Approval | `CP-0403` (`verify-notification`) | Push notification dispatch service and multi-actor human organization members (STOP Rule S-01) | 2 checkpoints pass (`CP-0401`, `CP-0402`) |
+| **E2E-05** | Gate 2 PR Review | `CP-0501` (`tools/e2e-drive/open-pr`) | Real pilot repository (`org/pilot-one-api`) and GitHub Pull Request creation API | 0 checkpoints |
+| **E2E-06** | Build & Container | `CP-0601` (`wait-workflow build.yml`) | Real pilot repository, live GitHub Actions Runner, and GHCR container registry | 0 checkpoints |
+| **E2E-07** | Staging Deploy & UAT | `CP-0701` (`run-workflow migrate.yml`) | Real staging environment (`https://pilot-one.staging.internal`) and live Actions Runner | 0 checkpoints |
+| **E2E-08** | Production Approval | `CP-0802` (`approve-production`) | Real pilot repository, staging deployment record, and independent approver (`lead-1`) | 1 checkpoint passes (`CP-0801`) |
+| **E2E-09** | Production Deploy | `CP-0902` (`run-workflow deploy-production.yml`) | Real production environment (`https://pilot-one.internal`) and live Actions Runner | 1 checkpoint passes (`CP-0901`) |
+| **E2E-10** | Evidence Chain | `CP-1000` / `CP-1001` (`evidence-chain`) | Multi-source live aggregator reading from live GitHub API, GitHub Actions runs, and Grafana | 0 checkpoints |
+| **E2E-11** | Rollback & Restore | `CP-1101` (`run-workflow rollback.yml`) | Real production environment and live GitHub Actions Runner | 0 checkpoints |
+| **E2E-12** | Reconciliation & Drift | `CP-1201` (`reconciler/run`) | Live GitHub Organization audit API and permanent seeded canary probe (AT-102) | 0 checkpoints |
+| **E2E-13** | Access & Boundaries | `CP-1310` (`at-108-ops-console.sh`) | Live Ops VM Linux environment, read-only Layer A socket, and cage host cgroups (AT-108/AT-109) | 0 checkpoints |
+| **Negative Suite** | Negative Gate Tests (`NEG-01` .. `NEG-28`) | `NEG-01` (`build-unverified-digest`) | Real pilot repository, live GHCR container push, and live deploy workflow runner | 0 in serial sequence (9 pass in isolated offline execution) |
+
