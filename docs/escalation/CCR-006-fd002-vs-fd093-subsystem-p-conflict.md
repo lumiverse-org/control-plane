@@ -17,16 +17,16 @@ THE GAP, STATED AS A FACT
 Both FD-002 and FD-093 are marked formally DECIDED in `_FOUNDER_DECISIONS.md`. They directly contradict each other regarding the ownership of Subsystem P (People Intelligence / Capacity Profile):
 1. FD-002 assigns Subsystem P strictly to L0 as non-delegable to any other lane under any option.
 2. FD-093 assigns Subsystem P to L4 without citing FD-002, without stating whether it supersedes FD-002 in whole or in part (e.g. narrowly amending it for the Capacity Profile metric slice while keeping the design-open attention classifier with L0), and without formal reconciliation.
-3. Crucially, commit `d098bf2` previously modified `PARTITION.md` (line 20: adding subsystem P to Lane 4) and `metrics/attention/HANDOFF-P.md` (naming L4 as Subsystem P owner) under the assumption that the later decision (FD-093) won. This change is live in the working tree and branch `gravity/batch-3`, but remains contingent upon the Founder's explicit reconciliation of FD-002 vs FD-093. If the Founder rules that FD-002 stands or that Subsystem P belongs to L0, those modifications in commit `d098bf2` must be reverted.
-4. Regarding `lane-paths.tsv`: FD-093 action item 2 specified adding a row for the Capacity Profile path. In `lane-paths.tsv`, rule `4\tmetrics/*` (line 28) already structurally covers `metrics/attention/**` (where capacity profile outputs are derived) so no syntax error or unassigned path currently occurs; however, path ownership of any non-metrics Subsystem P components remains unresolved.
+3. Commit `d098bf2` previously modified `PARTITION.md` (line 20: adding subsystem P to Lane 4) and `metrics/attention/HANDOFF-P.md` (naming L4 as Subsystem P owner). Per Founder Decision FD-141, these edits are confirmed final and correct (not contingent).
+4. Regarding `lane-paths.tsv`: FD-093 action item 2 specified adding a row for the Capacity Profile path. In `lane-paths.tsv`, rule `4\tmetrics/*` (line 28) structurally and completely covers `metrics/attention/**` (where capacity profile outputs are derived) as verified live against lane-guard.
 
 BLAST RADIUS I CAN OBSERVE
-- `_FOUNDER_DECISIONS.md` (FD-002 line 57 vs FD-093 line 1764)
-- `.planning/INGEST-CONFLICTS.md` (standing warning at lines 19-22)
-- `PARTITION.md` (line 20 updated to include subsystem P for L4 in commit d098bf2)
-- `metrics/attention/HANDOFF-P.md` (updated to claim L4 ownership per FD-093 in commit d098bf2)
-- `lane-paths.tsv` (covered under `4\tmetrics/*`; contingent on Subsystem P ownership)
-- `CODEOWNERS` (contingent on Subsystem P code path ownership)
+- `_FOUNDER_DECISIONS.md` (FD-002 line 57 vs FD-093 line 1764 — reconciled by FD-141)
+- `.planning/INGEST-CONFLICTS.md` (reconciled by FD-141)
+- `PARTITION.md` (line 20 updated to include subsystem P for L4 — confirmed final per FD-141)
+- `metrics/attention/HANDOFF-P.md` (naming L4 as Subsystem P owner — confirmed final per FD-141)
+- `lane-paths.tsv` (covered under `4\tmetrics/*`)
+- `CODEOWNERS` (unaffected; remains in solo-founder mode)
 
-I HAVE NOT REVERTED PARTITION.MD OR HANDOFF-P.MD.
-STATUS: PENDING FOUNDER RECONCILIATION (escalated to L0)
+STATUS: RESOLVED 2026-10-24 — Founder decided: FD-093 governs; Lane 4 owns Subsystem P per FD-141
+

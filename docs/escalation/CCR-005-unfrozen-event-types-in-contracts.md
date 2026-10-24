@@ -28,13 +28,15 @@ Recipe (`make promote-check` / `make freeze`):
 - Recomputed at commit `0e21095` (with 8 new event types in `contracts/event-types.yaml`): `b9a5f4225335be13f65a38b6dc1f8ba5ec75bb86e149b7f51af118277974e77e`
 - Recomputed at current `HEAD` (with FD-115 `pilot_products` addition to `contracts/v1-scope.yaml` in commit `d098bf2`): `f60b583cde54fba9f26f85f68072c2511c543c31d9a9df18b30db11cdf54d6aa`
 
+- Refrozen in `contracts.sha256` (commit `gravity/batch-4` / FD-140): `a65ae4de20763689c1f13b8ac0ee15a0288b89742acd7898834405c023e2d58f`
+
 BLAST RADIUS I CAN OBSERVE
 - contracts/event-types.yaml (canonical contract modified from 111 to 119 identifiers)
-- contracts.sha256 (frozen contract checksum mismatch)
+- contracts.sha256 (frozen contract checksum mismatch — refrozen per FD-140)
 - registries/platform.yaml (modified in commit e836afac to mirror the 8 event types)
 - notify/tools/check_push_list.py (depends on 119 event types passing TAXONOMY-RESOLUTION)
 - lanes/L5-AUDIT-RESULTS.md (Subsystem K finding cites 119 event types)
 - tests/integration/test_event_type_enum.py (tests canonical event-type list properties)
 
-I HAVE NOT EDITED contracts/**.
-STATUS: PENDING FOUNDER REVIEW (escalated to L0)
+STATUS: RESOLVED 2026-10-24 — Founder decided: formally ratify the 8 event types per FD-140 and refreeze contracts.sha256
+

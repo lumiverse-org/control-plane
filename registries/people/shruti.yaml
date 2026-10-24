@@ -1,0 +1,9 @@
+# Schema: schemas/registry/people.v1.schema.json
+# Authorized under FD-142 (2026-10-24).
+# NOTE: 'role: developer' is a provisional placeholder pending Founder confirmation
+# of her actual role, capabilities, and lane assignments.
+id: shruti
+name: Shruti
+github_login: shru-k-23
+role: developer
+lane_assignments: []

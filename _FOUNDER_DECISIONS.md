@@ -2352,4 +2352,58 @@ Per-product workflows in `.github/workflows/` (`product-P1.yml` through `product
    - MasterSpec §33.2 (L2854–2869) and `tools/evidence/lint_workflow.py` rule LW-03 strictly prohibit `paths:` or `paths-ignore:` filters on workflows emitting or wrapping required status contexts.
    - Restricting `product-P1` through `product-P8` and `product-template` to manual trigger (`workflow_dispatch:`) ensures they remain available for manual testing and promotion cuts (`scheduled-cut.yml`) while eliminating path filter drift and ensuring 100% compliance with workflow lint rules.
 
+---
+
+## FD-140 — Ratification of 8 Event Types in contracts/event-types.yaml & Contract Freeze Re-alignment
+
+**Date:** 2026-10-24 · **Status:** DECIDED
+
+**Decision:**
+The 8 event types added in commit `e836afac` (`delegation_expiry_warning_issued`, `plan_submitted_to_approver_notification_sent`, `launch_sign_off_requested`, `pending_decision_opened`, `support_first_touch_breach`, `temporary_person_expiry_warning_issued`, `verification_blocked`, `verification_unblocked`) are legitimate and are hereby formally ratified, not reverted.
+
+**Process Note & Governance Constraint:**
+This is a retroactive ratification of an already-landed change, acknowledging the process gap: it should have gone through a Contract Change Request (CCR) before landing, not after. Going forward, any changes to `contracts/**` require a CCR before merge, not after.
+
+**Actions Executed:**
+1. Formally ratified the 8 event types in `contracts/event-types.yaml`.
+2. Computed fresh SHA256 checksum across canonical contract tree via `find contracts -type f -not -path 'contracts/gate/*' -not -path 'contracts/ci/*' | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1`.
+3. Updated `contracts.sha256` to `a65ae4de20763689c1f13b8ac0ee15a0288b89742acd7898834405c023e2d58f`.
+4. Resolved `docs/escalation/CCR-005-unfrozen-event-types-in-contracts.md`.
+
+---
+
+## FD-141 — Subsystem P Ownership Reconciled: FD-093 Supersedes FD-002
+
+**Date:** 2026-10-24 · **Status:** DECIDED
+
+**Decision:**
+FD-093 (2026-09-08) formally supersedes FD-002 (2026-09-02) for Subsystem P (People Intelligence / Capacity Profile) ownership, per the Founder's direct ruling today. Lane 4 owns Subsystem P in full as FD-093 stated, not a narrower carve-out.
+
+**Reconciliation & Architectural Findings:**
+1. **Supersession:** FD-002 originally assigned Subsystem P strictly to L0 (the Founder) as non-delegable at early Phase 0. FD-093 subsequently assigned Subsystem P to Lane 4 (Option A: capacity planning is a metric aggregate, and L4 is the metrics lane). The Founder today explicitly confirms that FD-093 governs.
+2. **Partition & Manifest Confirmation:**
+   - `PARTITION.md` line 20 assigns Subsystems `I, N, P` to Lane 4: confirmed final and correct (not contingent).
+   - `metrics/attention/HANDOFF-P.md` naming L4 as owner of Subsystem P: confirmed final and correct.
+   - `lane-paths.tsv` line 28 (`4\tmetrics/*`) structurally and completely covers all Subsystem P paths (`metrics/attention/**`, `metrics/compute/**`, etc.).
+3. **CODEOWNERS Status:**
+   - Unaffected; repository remains in solo-founder mode (`@bendrohit-eng` across all trees).
+
+**Actions Executed:**
+1. Formally recorded FD-141 in `_FOUNDER_DECISIONS.md`.
+2. Updated `docs/escalation/CCR-006-fd002-vs-fd093-subsystem-p-conflict.md` to RESOLVED.
+
+---
+
+## FD-142 — Onboarding of New Team Member Shruti (shru-k-23)
+
+**Date:** 2026-10-24 · **Status:** DECIDED
+
+**Decision:**
+The Founder directly authorized onboarding Shruti (`shru-k-23`) as a new hire in the people registry on 2026-10-24.
+
+**Implementation Details:**
+- Created `registries/people/shruti.yaml` conforming to `schemas/registry/people.v1.schema.json`.
+- Recorded `github_login: "shru-k-23"`.
+- Set `role: developer` as a provisional placeholder pending Founder confirmation of her actual role, capabilities, and lane assignments.
+- `CODEOWNERS` and multi-person review remain in solo-founder mode until all team member logins are collected and active.
 

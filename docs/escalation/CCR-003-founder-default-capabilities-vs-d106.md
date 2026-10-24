@@ -23,5 +23,5 @@ BLAST RADIUS I CAN OBSERVE
 - lanes/L1-05-tasks.md (L1-103 and L1-202 task specifications)
 - lanes/L0-01-phase-0-contracts.md (untracked local note D-L0-09)
 
-I HAVE NOT EDITED registries/roles.yaml.
-STATUS: PENDING FOUNDER DECISION RECORD (D106 DECIDED IN MASTERSPEC §101, ROLES.YAML NOT YET RECONCILED IN CANONICAL REGISTER)
+STATUS: RESOLVED 2026-10-24 — Founder decided: strip the 3 capabilities, matching D106
+RESOLUTION NOTE: The three dangerous capabilities (lifecycle-decision, exceptional-approval, people-intelligence) were stripped from registries/roles.yaml founder default_capabilities; test_r_cap_02.py's xfail was removed and all tests pass cleanly.
