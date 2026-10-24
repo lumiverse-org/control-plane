@@ -24,8 +24,9 @@ supported_contract_versions:
   people_registry: [1]
   service: [1]
 reusable_workflow_versions:
-  current: null
-  supported: []
+  current: "workflows/v1"
+  supported:
+    - "workflows/v1"
   deprecated: []
   deprecation_deadline: {}
 canary_set: []

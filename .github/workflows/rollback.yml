@@ -96,7 +96,7 @@ jobs:
   # ---- Section 27.2: the one check the exemption does not lift. -------------
   actor-gate:
     name: actor-gate
-    uses: lumiverse-org/control-plane/.github/workflows/actor-gate.yml@workflows/v1.0.0
+    uses: lumiverse-org/control-plane/.github/workflows/actor-gate.yml@workflows/v1
     with:
       required_capabilities: incident-response,production-approval
       actor: ${{ inputs.actor }}
@@ -109,7 +109,7 @@ jobs:
   runner-tier-assert:
     name: runner-tier-assert
     needs: actor-gate
-    uses: lumiverse-org/control-plane/.github/workflows/runner-tier-assert.yml@workflows/v1.0.0
+    uses: lumiverse-org/control-plane/.github/workflows/runner-tier-assert.yml@workflows/v1
     with:
       runner_label: ${{ inputs.runner_label }}
       privileged_self_hosted_declared: ${{ inputs.privileged_self_hosted_declared }}
@@ -118,7 +118,7 @@ jobs:
   env-policy-assert:
     name: env-policy-assert
     needs: runner-tier-assert
-    uses: lumiverse-org/control-plane/.github/workflows/env-policy-assert.yml@workflows/v1.0.0
+    uses: lumiverse-org/control-plane/.github/workflows/env-policy-assert.yml@workflows/v1
     with:
       environment_name: ${{ inputs.environment_name }}
       target_repo: ${{ inputs.target_repo }}
