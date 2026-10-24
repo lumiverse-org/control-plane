@@ -2,8 +2,8 @@
 
 **Canonical Spec:** `protocol/08-smoke-and-e2e.md` (1,256 lines)  
 **Gap Inventory:** `protocol/08-E2E-READINESS-GAP.md`  
-**Execution Timestamp:** 2026-10-24T13:43:25Z  
-**Run ID:** `20261024T134325Z-e24a907`  
+**Execution Timestamp:** 2026-10-24T16:42:34Z  
+**Run ID:** `20261024T164234Z-93ebdd0`  
 **Branch:** `gravity/batch-8` (based on `origin/integration` @ `e24a907`)  
 **Invocation:** `bash e2e/run.sh --offline-only`  
 **Discipline:** AGENTS.md Radical Honesty & Anti-Green-Checkmark Standard  
@@ -16,12 +16,12 @@ Per §7.2 of `protocol/08-smoke-and-e2e.md`, **offline subset execution NEVER em
 
 ```
 ================================================================================
-OFFLINE-SUBSET RESULT: total=161 offline_ran=39 offline_pass=26 offline_fail=13 skipped=122
-  Positive: ran=29 passed=16 failed=13
+OFFLINE-SUBSET RESULT: total=161 offline_ran=39 offline_pass=25 offline_fail=14 skipped=122
+  Positive: ran=29 passed=15 failed=14
   Negative: ran=10 passed=10 failed=0
   Skipped (blocked on live infra): 122
 NOTE: Per §7.2 of protocol/08-smoke-and-e2e.md, offline subset execution NEVER emits 'VERDICT: PASS'.
-GATE-RESULT gate=OFFLINE-SUBSET level=T2 total=161 offline_ran=39 passed=26 failures=13 skipped=122
+GATE-RESULT gate=OFFLINE-SUBSET level=T2 total=161 offline_ran=39 passed=25 failures=14 skipped=122
 ================================================================================
 ```
 
@@ -29,8 +29,8 @@ GATE-RESULT gate=OFFLINE-SUBSET level=T2 total=161 offline_ran=39 passed=26 fail
 |---|---|---|---|
 | **Total Cataloged Estate** | 132 | 29 | **161** |
 | **Offline Buildable Checkpoints** | 29 | 10 | **39** |
-| **Offline Execution: Passed** | 16 | 10 | **26** |
-| **Offline Execution: Failed** | 13 | 0 | **13** |
+| **Offline Execution: Passed** | 15 | 10 | **25** |
+| **Offline Execution: Failed** | 14 | 0 | **14** |
 | **Genuinely Blocked on Live Infra (Skipped)** | 103 | 19 | **122** |
 
 ---
@@ -50,8 +50,7 @@ All 10 offline negative gate tests passed strictly and for the exact required re
 - `NEG-26`: Auto-repair engine refusing to loosen controls (`stricter-only policy; cannot relax control`).
 - `NEG-28`: Customer data detector detecting and rejecting PII fixtures (`customer data / PII detected`).
 
-### 2.2 16 Passing Offline Positive Checkpoints (When at Integration Tip)
-- `CP-0001`: Integration branch tip verification (passes when HEAD equals `origin/integration`; on an unmerged branch like `gravity/batch-8`, CP-0001 truthfully reports failure until merged into integration, giving 25 PASS / 14 FAIL).
+### 2.2 15 Passing Offline Positive Checkpoints
 - `CP-0002`: Operator environment is API-key-free (clean of leaks).
 - `CP-0003`: First-run conditional check.
 - `CP-0004`: Reusable workflow tag pins match `registries/platform.yaml` (resolved in PR #27).
@@ -68,16 +67,19 @@ All 10 offline negative gate tests passed strictly and for the exact required re
 - `CP-0908`: All eight Section 34.1 ship conditions satisfied.
 - `CP-1313`: Invariant #111 customer data / PII check clean across codebase.
 
-### 2.3 Detailed Analysis of the 13 Offline Failures
-The 13 failures are completely authentic, truthful results reflecting real operational state and missing live upstream events:
+### 2.3 Detailed Analysis of the 14 Offline Failures
+The 14 failures are completely authentic, truthful results reflecting real operational state, unmerged branch location, and missing live upstream events:
 
-1. **`CP-0005` (Time-Dependent Deployment Freeze):**
+1. **`CP-0001` (Unmerged Branch Tip Check):**
+   - **Reason:** HEAD (`93ebdd0`) is not the tip of `origin/integration` (`e24a907`) on unmerged feature branch `gravity/batch-8`. CP-0001 verifies that HEAD is at the tip of `origin/integration`. Because this PR has not yet been merged into integration, CP-0001 truthfully reports `FAIL`. (Once merged into integration, `CP-0001` passes, shifting the headline count to 26 PASS / 13 FAIL).
+
+2. **`CP-0005` (Time-Dependent Deployment Freeze):**
    - **Reason:** Current execution occurred on a Saturday (DOW 6), which is outside core working hours per `records/leave/company-calendar.yaml`. The tool truthfully refused to authorize deployment.
 
-2. **`CP-0006` (Operator Runner Toolset):**
+3. **`CP-0006` (Operator Runner Toolset):**
    - **Reason:** While `gh`, `curl`, `base64`, and `git` are present on the local Windows runner, `jq` and `yq` (specifically mikefarah Go implementation) are missing from the local runner environment. (CP-0006 passes in real CI where runners have all binaries pre-installed).
 
-3. **11 Record & Event Query Checkpoints (`CP-0405`, `CP-0506`, `CP-0604`, `CP-0708`, `CP-0804`, `CP-0904`, `CP-1016`, `CP-1103`, `CP-1106`, `CP-1107`, `CP-1204`):**
+4. **11 Record & Event Query Checkpoints (`CP-0405`, `CP-0506`, `CP-0604`, `CP-0708`, `CP-0804`, `CP-0904`, `CP-1016`, `CP-1103`, `CP-1106`, `CP-1107`, `CP-1204`):**
    - **Reason:** The query tools behind these checkpoints (`tools/records/find-event`, `tools/records/find-record`, `tools/records/check-write-freshness`, `validators/drift/check-restore-tested`) were fully implemented and run offline without errors. However, each queries for an event or record (`plan_approved`, `gate_2_approval`, `artifact_built`, UAT record, `production_approval_granted`, deployment record, rollback event, restore test record, reconciliation report) that is emitted by an upstream live pipeline action (`CP-0404`, `CP-0505`, `CP-0601`, `CP-0707`, `CP-0802`, `CP-0902`, `CP-1101`, `CP-1105`, `CP-1201`). Because those upstream actions are genuinely blocked on live multi-tenant cloud infrastructure and were skipped, no events/records were written during the offline run. The query tools truthfully and properly reported `FAIL: no matching record/event found`.
 
 ---
@@ -86,12 +88,12 @@ The 13 failures are completely authentic, truthful results reflecting real opera
 
 | Checkpoint ID | Category | Stage | Description | Result | Details / Blocker Citation |
 |---|---|---|---|---|---|
-| `CP-0001` | Positive | **E2E-00** | HEAD is the tip of integration | **PASS** | HEAD is the tip of integration |
+| `CP-0001` | Positive | **E2E-00** | HEAD is the tip of integration | **FAIL** | HEAD (93ebdd0) is not tip of origin/integration (e24a907) — unmerged branch |
 | `CP-0002` | Positive | **E2E-00** | Operator environment is API-key-free | **PASS** | operator environment is API-key-free |
 | `CP-0003` | Positive | **E2E-00** | Pilot product absent before the run | **PASS** | pilot product absent before the run (first-run only) |
 | `CP-0004` | Positive | **E2E-00** | Consumed workflow tags match platform.yaml pins | **PASS** | consumed workflow tags match platform.yaml pins |
-| `CP-0005` | Positive | **E2E-00** | Run window admits a compliant production deploy | **FAIL** | outside compliant production deploy window (freeze/hours) — non-blocking observation: e2e/out/20261024T133214Z-e24a907/evidence/CP-0005.out |
-| `CP-0006` | Positive | **E2E-00** | Required tools present (gh, jq, yq mikefarah, curl, base64, git) | **FAIL** | required tools present and yq is the mikefarah implementation — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-0006.out |
+| `CP-0005` | Positive | **E2E-00** | Run window admits a compliant production deploy | **FAIL** | outside compliant production deploy window (freeze/hours) — non-blocking observation: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-0005.out |
+| `CP-0006` | Positive | **E2E-00** | Required tools present (gh, jq, yq mikefarah, curl, base64, git) | **FAIL** | required tools present and yq is the mikefarah implementation — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-0006.out |
 | `CP-0101` | Positive | **E2E-01** | create-product completes | **SKIP** | create-product completes — blocked on live infra: Requires live GitHub organization API to provision repo org/pilot-one-api |
 | `CP-0102-setup` | Positive | **E2E-01** | Makefile exposes setup | **SKIP** | Makefile exposes setup — blocked on live infra: Requires real org/pilot-one-api repo contents on GitHub |
 | `CP-0102-dev` | Positive | **E2E-01** | Makefile exposes dev | **SKIP** | Makefile exposes dev — blocked on live infra: Requires real org/pilot-one-api repo contents on GitHub |
@@ -136,7 +138,7 @@ The 13 failures are completely authentic, truthful results reflecting real opera
 | `CP-0402` | Positive | **E2E-04** | Plan-checker accepts a well-formed plan | **PASS** | plan-checker accepts a well-formed plan |
 | `CP-0403` | Positive | **E2E-04** | Approver resolved from capability and notified | **SKIP** | approver resolved from capability and notified — blocked on live infra: Requires live notification mechanism (push/webhook/email) |
 | `CP-0404` | Positive | **E2E-04** | Gate 1 approved by lead-1 | **SKIP** | Gate 1 approved by lead-1 — blocked on live infra: Requires distinct lead-1 authenticated identity (§2.2, S-01) |
-| `CP-0405` | Positive | **E2E-04** | plan_approved event written with envelope and agent_authored flag | **FAIL** | plan_approved event written with envelope and agent_authored flag — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-0405.out |
+| `CP-0405` | Positive | **E2E-04** | plan_approved event written with envelope and agent_authored flag | **FAIL** | plan_approved event written with envelope and agent_authored flag — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-0405.out |
 | `CP-0406` | Positive | **E2E-04** | Computed requirement set rendered on Gate 1 surface | **SKIP** | computed requirement set rendered on the Gate 1 surface — blocked on live infra: Requires live Gate 1 rendering surface |
 | `CP-0501` | Positive | **E2E-05** | Branch pushed and PR opened by dev-a | **SKIP** | branch pushed and PR opened by dev-a — blocked on live infra: Requires live org/pilot-one-api repo and dev-a identity |
 | `CP-0502` | Positive | **E2E-05** | No required check reports skipped or neutral | **SKIP** | no required check reports skipped or neutral — blocked on live infra: Requires real PR check runs on GitHub Actions |
@@ -151,12 +153,12 @@ The 13 failures are completely authentic, truthful results reflecting real opera
 | `CP-0503-verification-contract` | Positive | **E2E-05** | CI job verification-contract concluded success | **SKIP** | CI job verification-contract concluded success — blocked on live infra: Requires live CI runner execution on GitHub Actions |
 | `CP-0504` | Positive | **E2E-05** | Environment parity clean | **SKIP** | environment parity clean — blocked on live infra: Requires live CI parity check result |
 | `CP-0505` | Positive | **E2E-05** | Gate 2 approved by independent reviewer dev-b | **SKIP** | Gate 2 approved by an independent reviewer — blocked on live infra: Requires distinct real reviewer identity dev-b on GitHub |
-| `CP-0506` | Positive | **E2E-05** | gate_2_approval event carries reviewer role | **FAIL** | gate_2_approval event carries the reviewer role — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-0506.out |
+| `CP-0506` | Positive | **E2E-05** | gate_2_approval event carries reviewer role | **FAIL** | gate_2_approval event carries the reviewer role — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-0506.out |
 | `CP-0507` | Positive | **E2E-05** | Merge succeeds once protection is satisfied | **SKIP** | merge succeeds once protection is satisfied — blocked on live infra: Requires real PR merge on GitHub |
 | `CP-0601` | Positive | **E2E-06** | Build workflow produced an artifact | **SKIP** | build workflow produced an artifact — blocked on live infra: Requires live GitHub Actions build workflow run |
 | `CP-0602` | Positive | **E2E-06** | Digest recorded and well-formed | **SKIP** | digest recorded and well-formed — blocked on live infra: Requires live artifact digest from build run |
 | `CP-0603` | Positive | **E2E-06** | SBOM recorded beside the digest | **SKIP** | SBOM recorded beside the digest — blocked on live infra: Requires live SBOM artifact generation |
-| `CP-0604` | Positive | **E2E-06** | artifact_built event carries the digest | **FAIL** | artifact_built event carries the digest — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-0604.out |
+| `CP-0604` | Positive | **E2E-06** | artifact_built event carries the digest | **FAIL** | artifact_built event carries the digest — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-0604.out |
 | `CP-0605` | Positive | **E2E-06** | Registry refuses to overwrite pushed digest tag | **SKIP** | registry refuses to overwrite the pushed digest tag — blocked on live infra: Requires live OCI registry (ghcr.io) tag immutability check |
 | `CP-0701` | Positive | **E2E-07** | Migration applied through CI, not by hand | **SKIP** | migration applied through CI, not by hand — blocked on live infra: Requires live staging database and migration workflow |
 | `CP-0702` | Positive | **E2E-07** | Previous digest runs against new schema | **SKIP** | previous digest runs against the new schema — blocked on live infra: Requires live staging environment backward compatibility test |
@@ -165,16 +167,16 @@ The 13 failures are completely authentic, truthful results reflecting real opera
 | `CP-0705` | Positive | **E2E-07** | Staging smoke passed | **SKIP** | staging smoke passed — blocked on live infra: Requires live staging service endpoint |
 | `CP-0706` | Positive | **E2E-07** | Performance assertions within declared thresholds | **SKIP** | performance assertions within declared thresholds — blocked on live infra: Requires live load/performance test runner against staging |
 | `CP-0707` | Positive | **E2E-07** | UAT result recorded via RECORD-VERIFICATION-RESULT | **SKIP** | UAT result recorded via RECORD-VERIFICATION-RESULT — blocked on live infra: Requires live GitHub Actions dispatch and qa-1 human actor |
-| `CP-0708` | Positive | **E2E-07** | records/uat/ carries the run's UAT record | **FAIL** | records/uat/ carries the run's UAT record — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-0708.out |
+| `CP-0708` | Positive | **E2E-07** | records/uat/ carries the run's UAT record | **FAIL** | records/uat/ carries the run's UAT record — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-0708.out |
 | `CP-0709` | Positive | **E2E-07** | UAT record authored by records-writer in control-plane-records | **SKIP** | UAT record authored by records-writer in control-plane-records — blocked on live infra: Requires git commit provenance check on control-plane-records repo |
 | `CP-0801` | Positive | **E2E-08** | No open verification-block record | **PASS** | no open verification-block record |
 | `CP-0802` | Positive | **E2E-08** | Production approval recorded against staging-verified digest | **SKIP** | production approval recorded against the staging-verified digest — blocked on live infra: Requires distinct lead-1 human approval event |
 | `CP-0803` | Positive | **E2E-08** | Production approver differs from change author | **PASS** | production approver differs from the change author |
-| `CP-0804` | Positive | **E2E-08** | production_approval_granted event distinct from gate_2_approval | **FAIL** | production_approval_granted event distinct from gate_2_approval — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-0804.out |
+| `CP-0804` | Positive | **E2E-08** | production_approval_granted event distinct from gate_2_approval | **FAIL** | production_approval_granted event distinct from gate_2_approval — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-0804.out |
 | `CP-0901` | Positive | **E2E-09** | Freeze gate resolved against declared calendar | **PASS** | freeze gate resolved against the declared calendar |
 | `CP-0902` | Positive | **E2E-09** | Production deploy succeeded | **SKIP** | production deploy succeeded — blocked on live infra: Requires live production deployment workflow |
 | `CP-0903` | Positive | **E2E-09** | Production job pulled digest and ran no build step | **SKIP** | production job pulled the digest and ran no build step — blocked on live infra: Requires live production workflow run logs analysis |
-| `CP-0904` | Positive | **E2E-09** | Deployment record written to records/deployments/ | **FAIL** | deployment record written to records/deployments/ — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-0904.out |
+| `CP-0904` | Positive | **E2E-09** | Deployment record written to records/deployments/ | **FAIL** | deployment record written to records/deployments/ — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-0904.out |
 | `CP-0905` | Positive | **E2E-09** | Production smoke passed | **SKIP** | production smoke passed — blocked on live infra: Requires live production service endpoint |
 | `CP-0906` | Positive | **E2E-09** | Health checks green with dependency detail | **SKIP** | health checks green with dependency detail — blocked on live infra: Requires live production /health endpoint with mTLS scrape cert |
 | `CP-0907` | Positive | **E2E-09** | Production /version equals approved digest | **SKIP** | production /version equals the approved digest — blocked on live infra: Requires live production /version endpoint |
@@ -195,19 +197,19 @@ The 13 failures are completely authentic, truthful results reflecting real opera
 | `CP-1013` | Positive | **E2E-10** | Production digest equals staging-verified digest | **SKIP** | production digest equals staging-verified digest — blocked on live infra: Invariant #22: requires live deployment records |
 | `CP-1014` | Positive | **E2E-10** | verify-digest-chain sweep reports zero mismatches | **SKIP** | verify-digest-chain sweep reports zero mismatches — blocked on live infra: Requires sweep across live deployed services |
 | `CP-1015` | Positive | **E2E-10** | Every answer names a canonical record store | **SKIP** | every answer names a canonical record store — blocked on live infra: Requires assembled chain from live run |
-| `CP-1016` | Positive | **E2E-10** | events/, records/deployments/, records/uat/ within write-freshness window | **FAIL** | events/, records/deployments/ and records/uat/ are within their write-freshness window — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-1016.out |
+| `CP-1016` | Positive | **E2E-10** | events/, records/deployments/, records/uat/ within write-freshness window | **FAIL** | events/, records/deployments/ and records/uat/ are within their write-freshness window — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-1016.out |
 | `CP-1101` | Positive | **E2E-11** | Rollback to previous approved digest succeeds | **SKIP** | rollback to the previous approved digest succeeds — blocked on live infra: Requires live rollback.yml execution on production |
 | `CP-1102` | Positive | **E2E-11** | /version reports rolled-back digest | **SKIP** | /version reports the rolled-back digest — blocked on live infra: Requires live production /version query |
-| `CP-1103` | Positive | **E2E-11** | Rollback recorded as exceptional auth with from/to digest | **FAIL** | rollback recorded as an exceptional authorisation with from- and to-digest — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-1103.out |
+| `CP-1103` | Positive | **E2E-11** | Rollback recorded as exceptional auth with from/to digest | **FAIL** | rollback recorded as an exceptional authorisation with from- and to-digest — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-1103.out |
 | `CP-1104` | Positive | **E2E-11** | Roll forward to approved digest | **SKIP** | roll forward to the approved digest — blocked on live infra: Requires live production re-deploy |
 | `CP-1105` | Positive | **E2E-11** | restore-production.yml runs with scoped identity and no human credential | **SKIP** | restore-production.yml runs with a scoped run identity and no human credential — blocked on live infra: AT-103: requires live production restore execution |
-| `CP-1106` | Positive | **E2E-11** | restore-test record carries integrity_check and named verifier | **FAIL** | restore-test record carries integrity_check and a named verifier — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-1106.out |
-| `CP-1107` | Positive | **E2E-11** | restore_tested date matches a passing record | **FAIL** | restore_tested date matches a passing record — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-1107.out |
+| `CP-1106` | Positive | **E2E-11** | restore-test record carries integrity_check and named verifier | **FAIL** | restore-test record carries integrity_check and a named verifier — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-1106.out |
+| `CP-1107` | Positive | **E2E-11** | restore_tested date matches a passing record | **FAIL** | restore_tested date matches a passing record — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-1107.out |
 | `CP-1108` | Positive | **E2E-11** | Planted defect regression test fails without fix | **SKIP** | the planted defect's regression test fails without the fix — blocked on live infra: Invariant #2: requires test execution in repo |
 | `CP-1201` | Positive | **E2E-12** | Reconciliation found seeded canary | **SKIP** | reconciliation found the seeded canary — blocked on live infra: AT-102: requires reconciler run against live GitHub estate |
 | `CP-1202` | Positive | **E2E-12** | Zero-finding run classified failed, not clean | **SKIP** | a zero-finding run would be classified failed, not clean — blocked on live infra: Requires live reconciliation run output |
 | `CP-1203` | Positive | **E2E-12** | Per-registry comparison counts recorded and non-zero | **SKIP** | per-registry comparison counts recorded and non-zero — blocked on live infra: Requires live reconciliation run output |
-| `CP-1204` | Positive | **E2E-12** | Run result written whether or not findings exist | **FAIL** | run result written whether or not findings exist — evidence: e2e/out/20261024T133214Z-e24a907/evidence/CP-1204.out |
+| `CP-1204` | Positive | **E2E-12** | Run result written whether or not findings exist | **FAIL** | run result written whether or not findings exist — evidence: e2e/out/20261024T164234Z-93ebdd0/evidence/CP-1204.out |
 | `CP-1205` | Positive | **E2E-12** | Stricter-than-declared control is raised, not relaxed | **SKIP** | stricter-than-declared control is raised, not relaxed — blocked on live infra: AT-033: requires mutation of live GitHub repo branch protection |
 | `CP-1206` | Positive | **E2E-12** | Operating system reports failure in its own health job | **SKIP** | the operating system reports a failure in its own health job — blocked on live infra: AT-032: requires deliberate fault injection in live health job |
 | `CP-1207` | Positive | **E2E-12** | Independent control verifier result present and externally written | **SKIP** | independent control verifier result present and externally written — blocked on live infra: Requires off-VM execution and external credential write |
