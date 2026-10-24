@@ -35,3 +35,7 @@ EXC-LG-016	0	tools/records/verify-approval-identity	26	2026-11-24	@lead-1	harnes
 EXC-LG-017	0	validators/drift/check-restore-tested	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
 EXC-LG-018	0	validators/registry/validate-exceptions	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
 EXC-LG-019	0	validators/registry/validate-verification-contract	26	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: protocol/08-smoke-and-e2e.md coherent cross-lane instrument
+EXC-LG-020	0	registries/platform.yaml	27	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: CP-0004 reusable workflow version registration in platform.yaml
+EXC-LG-021	0	.github/workflows/production-gate-chain.yml	27	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: CP-0004 reusable workflow tag standardization to workflows/v1
+EXC-LG-022	0	.github/workflows/restore-production.yml	27	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: CP-0004 reusable workflow tag standardization to workflows/v1
+EXC-LG-023	0	.github/workflows/rollback.yml	27	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-24: CP-0004 reusable workflow tag standardization to workflows/v1
