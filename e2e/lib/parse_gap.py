@@ -27,7 +27,7 @@ def parse_gap(gap_file):
                 lane = parts[5].strip("` *") if len(parts) > 5 else ""
                 blocker = parts[6].strip("` *") if len(parts) > 6 else ""
 
-                kind = "OFFLINE" if "BUILDABLE NOW, OFFLINE" in readiness else "BLOCKED"
+                kind = "BLOCKED" if "GENUINELY BLOCKED" in readiness else "OFFLINE"
                 entries[cid] = (kind, blocker, desc, tool)
 
     return entries

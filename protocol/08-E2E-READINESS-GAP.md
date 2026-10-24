@@ -15,11 +15,16 @@
 - **Actor Constraint (STOP Rule S-01):** Active GitHub organization (`lumiverse-org`) holds **2 members** (`bendrohit-eng`, `pbhayashri`), failing the minimum 3-human Write requirement for armed gate independence.
 - **Harness Scaffolding Completed:** 100% of canonical files transcribed and syntax-validated (`e2e/lib/checkpoint.sh`, `e2e/run.sh`, `e2e/verdict.sh`, `e2e/lib/parse_gap.py`, 14 stage scripts, 28 negative scripts, fixtures).
 
-| Category | Buildable Now, Offline | Genuinely Blocked on Live Infrastructure | Total |
-|---|---|---|---|
-| **Positive Checkpoints (E2E-00 .. E2E-13)** | 29 | 103 | 132 |
-| **Negative Gate Tests (NEG-01 .. NEG-28)** | 10 | 19 | 29 |
-| **Combined Total** | **39** | **122** | **161** |
+| Category | Genuinely Offline-Passable | Offline-Buildable (Tool Only, Needs Live Data) | Genuinely Blocked on Live Infrastructure | Total |
+|---|---|---|---|---|
+| **Positive Checkpoints (E2E-00 .. E2E-13)** | 18 | 11 | 103 | 132 |
+| **Negative Gate Tests (NEG-01 .. NEG-28)** | 10 | 0 | 19 | 29 |
+| **Combined Total** | **28** | **11** | **122** | **161** |
+
+> **3-Way Readiness Architecture:**
+> 1. **Genuinely Offline-Passable (28 Checkpoints: 18 Positive, 10 Negative):** Static checks, registries, contracts, and negative refutation gates that can cleanly evaluate and pass without any live cloud or multi-tenant infrastructure.
+> 2. **Offline-Buildable — Tool Only, Cannot Pass Without Live Upstream Data (11 Checkpoints, All Positive):** Query tools (`find-event`, `find-record`, `check-write-freshness`, `check-restore-tested`) are 100% written, valid, and execute offline, but query records/events emitted by upstream live pipeline actions (e.g. Gate 1 approval, UAT, production deploy). Offline execution executes them cleanly, but they report failure because no live action occurred to produce the target data.
+> 3. **Genuinely Blocked on Live Infrastructure (122 Checkpoints: 103 Positive, 19 Negative):** Checkpoints requiring live GitHub repositories, branch protections, Actions runners, GHCR registries, Ops VM, Linux cages, or multi-human actors. Skipped in offline runs with explicit blocker citations.
 
 ---
 
@@ -77,7 +82,7 @@
 | `CP-0402` | Plan-checker accepts a well-formed plan | `tools/gate1/plan-check` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L0** | Static plan markdown parser and rule checker (§30.2) |
 | `CP-0403` | Approver resolved from capability and notified | `tools/gate1/verify-notification` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L0** | Requires live notification mechanism (push/webhook/email) |
 | `CP-0404` | Gate 1 approved by lead-1 | `tools/gate1/approve` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L0** | Requires distinct lead-1 authenticated identity (§2.2, S-01) |
-| `CP-0405` | plan_approved event written with envelope and agent_authored flag | `tools/records/find-event` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline event log search in records store |
+| `CP-0405` | plan_approved event written with envelope and agent_authored flag | `tools/records/find-event` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L4** | Offline event log search in records store (requires live Gate 1 approval event) |
 | `CP-0406` | Computed requirement set rendered on Gate 1 surface | `tools/gate1/verify-requirement-set` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L0** | Requires live Gate 1 rendering surface |
 | `CP-0501` | Branch pushed and PR opened by dev-a | `tools/e2e-drive/open-pr` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live org/pilot-one-api repo and dev-a identity |
 | `CP-0502` | No required check reports skipped or neutral | `tools/evidence/check-conclusions` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires real PR check runs on GitHub Actions |
@@ -92,12 +97,12 @@
 | `CP-0503-verification-contract` | CI job verification-contract concluded success | `tools/evidence/check-job` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live CI runner execution on GitHub Actions |
 | `CP-0504` | Environment parity clean | `tools/evidence/check-job` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live CI parity check result |
 | `CP-0505` | Gate 2 approved by independent reviewer dev-b | `tools/e2e-drive/approve-pr` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires distinct real reviewer identity dev-b on GitHub |
-| `CP-0506` | gate_2_approval event carries reviewer role | `tools/records/find-event` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline event search in records store |
+| `CP-0506` | gate_2_approval event carries reviewer role | `tools/records/find-event` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L4** | Offline event search in records store (requires live Gate 2 approval event) |
 | `CP-0507` | Merge succeeds once protection is satisfied | `tools/e2e-drive/merge-pr` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires real PR merge on GitHub |
 | `CP-0601` | Build workflow produced an artifact | `tools/e2e-drive/wait-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live GitHub Actions build workflow run |
 | `CP-0602` | Digest recorded and well-formed | `tools/evidence/read-digest` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live artifact digest from build run |
 | `CP-0603` | SBOM recorded beside the digest | `tools/evidence/check-sbom` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live SBOM artifact generation |
-| `CP-0604` | artifact_built event carries the digest | `tools/records/find-event` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline event search in records store |
+| `CP-0604` | artifact_built event carries the digest | `tools/records/find-event` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L4** | Offline event search in records store (requires live build workflow event) |
 | `CP-0605` | Registry refuses to overwrite pushed digest tag | `tools/e2e-drive/attempt-tag-overwrite` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live OCI registry (ghcr.io) tag immutability check |
 | `CP-0701` | Migration applied through CI, not by hand | `tools/e2e-drive/run-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live staging database and migration workflow |
 | `CP-0702` | Previous digest runs against new schema | `tools/e2e-drive/compat-probe` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live staging environment backward compatibility test |
@@ -106,16 +111,16 @@
 | `CP-0705` | Staging smoke passed | `tools/e2e-drive/run-smoke` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live staging service endpoint |
 | `CP-0706` | Performance assertions within declared thresholds | `tools/evidence/run-performance` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live load/performance test runner against staging |
 | `CP-0707` | UAT result recorded via RECORD-VERIFICATION-RESULT | `gh workflow run record-verification-result.yml` | **EXISTS (gh)** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L4** | Requires live GitHub Actions dispatch and qa-1 human actor |
-| `CP-0708` | records/uat/ carries the run's UAT record | `tools/records/find-record` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline record search in control-plane-records store |
+| `CP-0708` | records/uat/ carries the run's UAT record | `tools/records/find-record` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L4** | Offline record search in records store (requires live UAT RECORD-VERIFICATION-RESULT) |
 | `CP-0709` | UAT record authored by records-writer in control-plane-records | `tools/records/verify-author` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L4** | Requires git commit provenance check on control-plane-records repo |
 | `CP-0801` | No open verification-block record | `tools/records/check-verification-block` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline verification-block store query |
 | `CP-0802` | Production approval recorded against staging-verified digest | `tools/e2e-drive/approve-production` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L0** | Requires distinct lead-1 human approval event |
 | `CP-0803` | Production approver differs from change author | `tools/records/verify-approval-identity` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline identity comparison between author and approver |
-| `CP-0804` | production_approval_granted event distinct from gate_2_approval | `tools/records/find-event` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline event search in records store |
+| `CP-0804` | production_approval_granted event distinct from gate_2_approval | `tools/records/find-event` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L4** | Offline event search in records store (requires live prod approval event) |
 | `CP-0901` | Freeze gate resolved against declared calendar | `tools/evidence/verify-freeze-evaluation` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L2** | Offline check verifying calendar source in deployment record |
 | `CP-0902` | Production deploy succeeded | `tools/e2e-drive/run-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live production deployment workflow |
 | `CP-0903` | Production job pulled digest and ran no build step | `tools/evidence/verify-no-rebuild` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live production workflow run logs analysis |
-| `CP-0904` | Deployment record written to records/deployments/ | `tools/records/find-record` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline record search in control-plane-records store |
+| `CP-0904` | Deployment record written to records/deployments/ | `tools/records/find-record` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L4** | Offline record search in records store (requires live deployment record) |
 | `CP-0905` | Production smoke passed | `tools/e2e-drive/run-smoke` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live production service endpoint |
 | `CP-0906` | Health checks green with dependency detail | `curl / jq` | **EXISTS (curl) / MISSING (jq)** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L5** | Requires live production /health endpoint with mTLS scrape cert |
 | `CP-0907` | Production /version equals approved digest | `tools/evidence/read-version` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live production /version endpoint |
@@ -136,19 +141,19 @@
 | `CP-1013` | Production digest equals staging-verified digest | `jq` | **MISSING (jq)** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Invariant #22: requires live deployment records |
 | `CP-1014` | verify-digest-chain sweep reports zero mismatches | `tools/evidence/verify-digest-chain` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires sweep across live deployed services |
 | `CP-1015` | Every answer names a canonical record store | `jq` | **MISSING (jq)** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L0** | Requires assembled chain from live run |
-| `CP-1016` | events/, records/deployments/, records/uat/ within write-freshness window | `tools/records/check-write-freshness` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline timestamp check on record stores |
+| `CP-1016` | events/, records/deployments/, records/uat/ within write-freshness window | `tools/records/check-write-freshness` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L4** | Offline timestamp check on record stores (requires records emitted by live run) |
 | `CP-1101` | Rollback to previous approved digest succeeds | `tools/e2e-drive/run-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live rollback.yml execution on production |
 | `CP-1102` | /version reports rolled-back digest | `tools/evidence/read-version` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live production /version query |
-| `CP-1103` | Rollback recorded as exceptional auth with from/to digest | `tools/records/find-event` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline event query in records store |
+| `CP-1103` | Rollback recorded as exceptional auth with from/to digest | `tools/records/find-event` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L4** | Offline event query in records store (requires live rollback workflow event) |
 | `CP-1104` | Roll forward to approved digest | `tools/e2e-drive/run-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires live production re-deploy |
 | `CP-1105` | restore-production.yml runs with scoped identity and no human credential | `tools/e2e-drive/run-workflow` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | AT-103: requires live production restore execution |
-| `CP-1106` | restore-test record carries integrity_check and named verifier | `tools/records/find-record` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline record query in records store |
-| `CP-1107` | restore_tested date matches a passing record | `validators/drift/check-restore-tested` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L3** | Offline product.yaml vs record comparison |
+| `CP-1106` | restore-test record carries integrity_check and named verifier | `tools/records/find-record` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L4** | Offline record query in records store (requires live restore test execution) |
+| `CP-1107` | restore_tested date matches a passing record | `validators/drift/check-restore-tested` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L3** | Offline product.yaml vs record comparison (requires live restore record) |
 | `CP-1108` | Planted defect regression test fails without fix | `tools/evidence/run-regression` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Invariant #2: requires test execution in repo |
 | `CP-1201` | Reconciliation found seeded canary | `reconciler/run / jq` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | AT-102: requires reconciler run against live GitHub estate |
 | `CP-1202` | Zero-finding run classified failed, not clean | `jq` | **MISSING (jq)** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live reconciliation run output |
 | `CP-1203` | Per-registry comparison counts recorded and non-zero | `jq` | **MISSING (jq)** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live reconciliation run output |
-| `CP-1204` | Run result written whether or not findings exist | `tools/records/find-record` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L4** | Offline query in records/reconciliation |
+| `CP-1204` | Run result written whether or not findings exist | `tools/records/find-record` | **EXISTS** | `OFFLINE-BUILDABLE — TOOL ONLY, CANNOT PASS WITHOUT LIVE UPSTREAM DATA` | **L4** | Offline query in records/reconciliation (requires live reconciliation run) |
 | `CP-1205` | Stricter-than-declared control is raised, not relaxed | `tools/e2e-drive/stricter-control-probe` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | AT-033: requires mutation of live GitHub repo branch protection |
 | `CP-1206` | Operating system reports failure in its own health job | `tools/e2e-drive/self-observability-probe` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | AT-032: requires deliberate fault injection in live health job |
 | `CP-1207` | Independent control verifier result present and externally written | `tools/records/find-record` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L4** | Requires off-VM execution and external credential write |
@@ -202,15 +207,15 @@
 
 ### 4.1 Mechanical Lane Tally (161 Total Checkpoints Across Tables 2 & 3)
 
-| Owning Lane | Positive Checks (CP) | Negative Gates (NEG) | Total Checks | Buildable Now (Offline) | Genuinely Blocked (Live Infra) | Primary Scope |
-|---|---|---|---|---|---|---|
-| **L0** | 25 | 5 | **30** | 12 | 18 | Harness, Gate 1, Preflight, Evidence Assembly |
-| **L1** | 4 | 2 | **6** | 4 | 2 | Schemas, Contracts, Registries, Exception Validation |
-| **L2** | 41 | 12 | **53** | 4 | 49 | Workflows, Pipelines, Builds, Deploys, Branch Protections |
-| **L3** | 39 | 3 | **42** | 5 | 37 | Provisioning CLI, Reconciler, Drift, Catalog Scaffolding |
-| **L4** | 15 | 3 | **18** | 12 | 6 | Records Store, Events, Freshness, Verification Blocks |
-| **L5** | 8 | 4 | **12** | 2 | 10 | Access, Cage, VM, Boundaries, Customer Data Guard |
-| **Total** | **132** | **29** | **161** | **39** | **122** | **Full Estate Exit Gate Surface** |
+| Owning Lane | Positive Checks (CP) | Negative Gates (NEG) | Total Checks | Genuinely Offline-Passable | Tool Only (Needs Live Data) | Genuinely Blocked (Live Infra) | Primary Scope |
+|---|---|---|---|---|---|---|---|
+| **L0** | 25 | 5 | **30** | 12 | 0 | 18 | Harness, Gate 1, Preflight, Evidence Assembly |
+| **L1** | 4 | 2 | **6** | 4 | 0 | 2 | Schemas, Contracts, Registries, Exception Validation |
+| **L2** | 41 | 12 | **53** | 4 | 0 | 49 | Workflows, Pipelines, Builds, Deploys, Branch Protections |
+| **L3** | 39 | 3 | **42** | 4 | 1 | 37 | Provisioning CLI, Reconciler, Drift, Catalog Scaffolding |
+| **L4** | 15 | 3 | **18** | 2 | 10 | 6 | Records Store, Events, Freshness, Verification Blocks |
+| **L5** | 8 | 4 | **12** | 2 | 0 | 10 | Access, Cage, VM, Boundaries, Customer Data Guard |
+| **Total** | **132** | **29** | **161** | **28** | **11** | **122** | **Full Estate Exit Gate Surface** |
 
 ### 4.2 Lane Deliverables Backlog
 
