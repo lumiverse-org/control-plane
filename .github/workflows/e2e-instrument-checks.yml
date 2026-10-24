@@ -1,0 +1,79 @@
+name: e2e-instrument-checks
+# =============================================================================
+# E2E Instrument Checks (Nightly & Manual Dispatch)
+# Authority: protocol/08-smoke-and-e2e.md §8.1:
+#   "Nightly on integration: Instrument checks only — the same E2E-00 … E2E-03
+#    plus NEG-04, NEG-18, NEG-19 as the merge-train-cycle row above —
+#    non-blocking, findings filed as issues"
+# Authoritative environment verification for CP-0006 (tools availability).
+# =============================================================================
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-instrument-checks-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  instrument-checks:
+    name: instrument-checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Fetch integration ref
+        run: |
+          git fetch origin integration:refs/remotes/origin/integration 2>/dev/null || true
+
+      - name: Tool diagnostic inspection (CP-0006 environment probe)
+        run: |
+          echo "=========================================================="
+          echo "Authoritative Runner Tool Diagnostic (CP-0006 verification)"
+          echo "=========================================================="
+          for t in gh jq yq curl base64 git python3; do
+            if command -v "$t" >/dev/null 2>&1; then
+              printf "%-8s: FOUND at %s\n" "$t" "$(command -v "$t")"
+              "$t" --version 2>&1 | head -n 2 || true
+            else
+              printf "%-8s: NOT FOUND\n" "$t"
+            fi
+            echo "---"
+          done
+
+      - name: Run E2E instrument checks suite
+        run: |
+          set +e
+          bash e2e/run.sh --instrument-checks
+          STATUS=$?
+          echo "E2E instrument checks finished with status code: $STATUS"
+
+      - name: Report checkpoint log and CP-0006 evidence
+        if: always()
+        run: |
+          echo "=========================================================="
+          echo "E2E CHECKPOINTS LOG (log.tsv)"
+          echo "=========================================================="
+          for log in e2e/out/*/checkpoints/log.tsv; do
+            if [ -f "$log" ]; then
+              echo "Log file: $log"
+              cat "$log"
+            fi
+          done
+          echo "=========================================================="
+          echo "CP-0006 EVIDENCE"
+          echo "=========================================================="
+          for ev in e2e/out/*/evidence/CP-0006.out; do
+            if [ -f "$ev" ]; then
+              echo "Evidence file: $ev"
+              cat "$ev"
+            fi
+          done
