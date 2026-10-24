@@ -199,14 +199,28 @@
 
 ## 4. Owning Lane Action Backlog (§8.3 Routing)
 
-| Lane | Scope | Buildable Now (Offline) Deliverables | Genuinely Blocked Deliverables (Awaiting Live Infra) |
-|---|---|---|---|
-| **L0** | Harness, Gate 1, Preflight, Evidence Assembly | `tools/verify-workflow-tag-pins.sh`, `tools/freeze-window-check.sh`, `tools/gate1/plan-check`, `tools/gate1/submit-plan` | Gate 1 push notification service, multi-actor approval (`lead-1` vs `dev-a`), `evidence-chain` multi-API aggregator |
-| **L1** | Schemas, Contracts, Registries | `validators/registry/validate-verification-contract`, `validators/registry/validate-exceptions`, coverage map validator | Live verification contract evaluation against deployed services |
-| **L2** | Workflows, Pipelines, Builds, Deploys | Static AST / if: condition verifiers (`check-conclusions`), offline parity check, commit/author guards | `org/pilot-one-api` repo, GitHub Actions runners, GHCR container push/pull, staging/production deployments |
-| **L3** | Provisioning, Reconciler, Drift | `tools/verify-no-product-list.sh`, `apply-assignments`, orphan reporting | Live GitHub Org scaffolding (`create-product` shell executor), GitHub Teams, live Reconciler canary execution (AT-102, AT-110) |
-| **L4** | Records Store, Events, Freshness | `tools/records/find-record`, `tools/records/find-event`, `check-write-freshness`, verification block logic | `control-plane-records` repository, GitHub App `records-writer[bot]` token execution |
-| **L5** | Access, Cage, VM, Boundaries | PII / customer data pattern detector (`check-no-customer-data`) | Linux cage worker isolation (AT-109), Founder ops console (AT-108), GitHub machine account restrictions (Invariant #18) |
+### 4.1 Mechanical Lane Tally (161 Total Checkpoints Across Tables 2 & 3)
+
+| Owning Lane | Positive Checks (CP) | Negative Gates (NEG) | Total Checks | Buildable Now (Offline) | Genuinely Blocked (Live Infra) | Primary Scope |
+|---|---|---|---|---|---|---|
+| **L0** | 25 | 5 | **30** | 12 | 18 | Harness, Gate 1, Preflight, Evidence Assembly |
+| **L1** | 4 | 2 | **6** | 4 | 2 | Schemas, Contracts, Registries, Exception Validation |
+| **L2** | 41 | 12 | **53** | 6 | 47 | Workflows, Pipelines, Builds, Deploys, Branch Protections |
+| **L3** | 39 | 3 | **42** | 5 | 37 | Provisioning CLI, Reconciler, Drift, Catalog Scaffolding |
+| **L4** | 15 | 3 | **18** | 13 | 5 | Records Store, Events, Freshness, Verification Blocks |
+| **L5** | 8 | 4 | **12** | 2 | 10 | Access, Cage, VM, Boundaries, Customer Data Guard |
+| **Total** | **132** | **29** | **161** | **42** | **119** | **Full Estate Exit Gate Surface** |
+
+### 4.2 Lane Deliverables Backlog
+
+| Lane | Buildable Now (Offline) Deliverables | Genuinely Blocked Deliverables (Awaiting Live Infra) |
+|---|---|---|
+| **L0** | `tools/verify-workflow-tag-pins.sh`, `tools/freeze-window-check.sh`, `tools/gate1/plan-check`, `tools/gate1/submit-plan` | Gate 1 push notification service, multi-actor approval (`lead-1` vs `dev-a`), `evidence-chain` multi-API aggregator |
+| **L1** | `validators/registry/validate-verification-contract`, `validators/registry/validate-exceptions`, coverage map validator | Live verification contract evaluation against deployed services |
+| **L2** | Static AST / if: condition verifiers (`check-conclusions`), offline parity check, commit/author guards | `org/pilot-one-api` repo, GitHub Actions runners, GHCR container push/pull, staging/production deployments |
+| **L3** | `tools/verify-no-product-list.sh`, `apply-assignments`, orphan reporting | Live GitHub Org scaffolding (`create-product` shell executor), GitHub Teams, live Reconciler canary execution (AT-102, AT-110) |
+| **L4** | `tools/records/find-record`, `tools/records/find-event`, `check-write-freshness`, verification block logic | `control-plane-records` repository, GitHub App `records-writer[bot]` token execution |
+| **L5** | PII / customer data pattern detector (`check-no-customer-data`) | Linux cage worker isolation (AT-109), Founder ops console (AT-108), GitHub machine account restrictions (Invariant #18) |
 
 ---
 
