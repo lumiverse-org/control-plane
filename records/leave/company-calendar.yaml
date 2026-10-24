@@ -1,0 +1,13 @@
+calendar_version: 1
+operating_timezone: "UTC"
+core_hours:
+  start: "09:00"
+  end: "18:00"
+friday_freeze_start: "15:00"
+working_days:
+  - Monday
+  - Tuesday
+  - Wednesday
+  - Thursday
+  - Friday
+public_holidays: []
