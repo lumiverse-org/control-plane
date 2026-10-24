@@ -2370,5 +2370,24 @@ This is a retroactive ratification of an already-landed change, acknowledging th
 3. Updated `contracts.sha256` to `a65ae4de20763689c1f13b8ac0ee15a0288b89742acd7898834405c023e2d58f`.
 4. Resolved `docs/escalation/CCR-005-unfrozen-event-types-in-contracts.md`.
 
+---
 
+## FD-141 — Subsystem P Ownership Reconciled: FD-093 Supersedes FD-002
 
+**Date:** 2026-10-24 · **Status:** DECIDED
+
+**Decision:**
+FD-093 (2026-09-08) formally supersedes FD-002 (2026-09-02) for Subsystem P (People Intelligence / Capacity Profile) ownership, per the Founder's direct ruling today. Lane 4 owns Subsystem P in full as FD-093 stated, not a narrower carve-out.
+
+**Reconciliation & Architectural Findings:**
+1. **Supersession:** FD-002 originally assigned Subsystem P strictly to L0 (the Founder) as non-delegable at early Phase 0. FD-093 subsequently assigned Subsystem P to Lane 4 (Option A: capacity planning is a metric aggregate, and L4 is the metrics lane). The Founder today explicitly confirms that FD-093 governs.
+2. **Partition & Manifest Confirmation:**
+   - `PARTITION.md` line 20 assigns Subsystems `I, N, P` to Lane 4: confirmed final and correct (not contingent).
+   - `metrics/attention/HANDOFF-P.md` naming L4 as owner of Subsystem P: confirmed final and correct.
+   - `lane-paths.tsv` line 28 (`4\tmetrics/*`) structurally and completely covers all Subsystem P paths (`metrics/attention/**`, `metrics/compute/**`, etc.).
+3. **CODEOWNERS Status:**
+   - Unaffected; repository remains in solo-founder mode (`@bendrohit-eng` across all trees).
+
+**Actions Executed:**
+1. Formally recorded FD-141 in `_FOUNDER_DECISIONS.md`.
+2. Updated `docs/escalation/CCR-006-fd002-vs-fd093-subsystem-p-conflict.md` to RESOLVED.
