@@ -2391,3 +2391,19 @@ FD-093 (2026-09-08) formally supersedes FD-002 (2026-09-02) for Subsystem P (Peo
 **Actions Executed:**
 1. Formally recorded FD-141 in `_FOUNDER_DECISIONS.md`.
 2. Updated `docs/escalation/CCR-006-fd002-vs-fd093-subsystem-p-conflict.md` to RESOLVED.
+
+---
+
+## FD-142 — Onboarding of New Team Member Shruti (shru-k-23)
+
+**Date:** 2026-10-24 · **Status:** DECIDED
+
+**Decision:**
+The Founder directly authorized onboarding Shruti (`shru-k-23`) as a new hire in the people registry on 2026-10-24.
+
+**Implementation Details:**
+- Created `registries/people/shruti.yaml` conforming to `schemas/registry/people.v1.schema.json`.
+- Recorded `github_login: "shru-k-23"`.
+- Set `role: developer` as a provisional placeholder pending Founder confirmation of her actual role, capabilities, and lane assignments.
+- `CODEOWNERS` and multi-person review remain in solo-founder mode until all team member logins are collected and active.
+
