@@ -11,6 +11,10 @@ name: e2e-instrument-checks
 on:
   schedule:
     - cron: '0 2 * * *'
+  push:
+    branches:
+      - 'gravity/*'
+      - integration
   workflow_dispatch:
 
 permissions:
