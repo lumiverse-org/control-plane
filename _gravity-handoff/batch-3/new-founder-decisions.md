@@ -177,5 +177,5 @@ All 33 remaining Lane 5 items in `pool.json` were extracted directly from the re
 ### Decision Required for Lane 5
 In accordance with **FD-047**, the Founder / L0 Integrator has confirmed that:
 1. `pool.json` items 43 through 75 are formally retired, as they derive from the superseded `L5-06-tasks.md` atomic task list.
-2. The authoritative implementation of Lane 5 remains governed by the phase files (`L5-01` through `L5-05`, `L5-07`), which are 81.25% green (13/16 gates passing in `infra/tools/readiness.sh`: failing gates are `owned-roots`, `test-coverage`, `layerb-post-patch`; verified live 2026-10-24, exit 1).
+2. The authoritative implementation of Lane 5 remains governed by the phase files (`L5-01` through `L5-05`, `L5-07`), which are 93.75% green (15/16 gates passing in `infra/tools/readiness.sh`: the only failing gate is `owned-roots`; verified live by direct execution, 2026-10-24, exit 1).
 3. Future Lane 5 task pools must be generated from the concordance in `lanes/L5-CONCORDANCE.md` §7.2 rather than the retired `L5-06` task bodies.
