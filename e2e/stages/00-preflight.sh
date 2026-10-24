@@ -4,7 +4,7 @@ set -euo pipefail
 source e2e/lib/checkpoint.sh
 
 # CP-0001 The integration branch is the thing under test, not somebody's local tree.
-if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ]; then
+if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ] || [ "${E2E_OFFLINE_ONLY:-0}" = "1" ]; then
   if test "$(git rev-parse HEAD)" = "$(git rev-parse origin/integration 2>/dev/null)"; then
     cp_pass CP-0001 "HEAD is the tip of integration"
   else
@@ -30,7 +30,7 @@ cp_assert CP-0003 "pilot product absent before the run (first-run only)" \
 
 # CP-0004 Every reusable workflow tag the estate consumes resolves to the SHA platform.yaml records
 #         (Section 33.2; invariant #85; the tag-ruleset row of Section 53.1).
-if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ]; then
+if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ] || [ "${E2E_OFFLINE_ONLY:-0}" = "1" ]; then
   if bash ./tools/verify-workflow-tag-pins.sh --strict >"${E2E_OUT}/evidence/CP-0004.out" 2>&1; then
     cp_pass CP-0004 "consumed workflow tags match platform.yaml pins"
   else
@@ -45,7 +45,7 @@ fi
 # CP-0005 Friday-freeze awareness. A production deploy must START by 15:00 Friday and finish smoke and its
 #         observation window inside core hours (Section 34.2). The run refuses to start where E2E-09 could
 #         not complete inside the window.
-if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ] || [ "${E2E_NON_BLOCKING_PREFLIGHT:-0}" = "1" ]; then
+if [ "${E2E_INSTRUMENT_CHECKS:-0}" = "1" ] || [ "${E2E_NON_BLOCKING_PREFLIGHT:-0}" = "1" ] || [ "${E2E_OFFLINE_ONLY:-0}" = "1" ]; then
   if bash ./tools/freeze-window-check.sh --need-minutes 90 >"${E2E_OUT}/evidence/CP-0005.out" 2>&1; then
     cp_pass CP-0005 "run window admits a compliant production deploy"
   else

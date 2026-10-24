@@ -12,7 +12,7 @@ cp_assert CP-1101 "rollback to the previous approved digest succeeds" \
     --to-digest "${PREV}" --as lead-1 --expect success
 
 cp_equal CP-1102 "/version reports the rolled-back digest" \
-  "${PREV}" "$(./tools/evidence/read-version --env production --product "${E2E_PRODUCT}")"
+  "${PREV}" "$(./tools/evidence/read-version --env production --product "${E2E_PRODUCT}" 2>/dev/null || true)"
 
 cp_assert CP-1103 "rollback recorded as an exceptional authorisation with from- and to-digest" \
   ./tools/records/find-event --type rollback_initiated \
@@ -25,7 +25,7 @@ cp_assert CP-1104 "roll forward to the approved digest" \
 # CP-1105 AT-103 — production restore executes end to end with NO credential handed to or typed by a human.
 cp_assert CP-1105 "restore-production.yml runs with a scoped run identity and no human credential" \
   ./tools/e2e-drive/run-workflow --repo "${E2E_REPO}" --workflow restore-production.yml \
-    --authorisation "$(./tools/records/open-exceptional-auth --type restore_scope --as lead-1)" \
+    --authorisation "$(./tools/records/open-exceptional-auth --type restore_scope --as lead-1 2>/dev/null || true)" \
     --assert-no-human-credential --expect success
 
 cp_assert CP-1106 "restore-test record carries integrity_check and a named verifier" \

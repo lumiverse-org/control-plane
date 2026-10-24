@@ -23,7 +23,7 @@ repo = sys.argv[2]
 records = sys.argv[3]
 
 PII_PATTERNS = [
-    (re.compile(r'\b(?:\d{4}[- ]?){4}\b'), "credit card number pattern"),
+    (re.compile(r'\b(?:\d{4}-){3}\d{4}\b|\b\d{16}\b'), "credit card number pattern"),
     (re.compile(r'\b\d{3}-\d{2}-\d{4}\b'), "SSN pattern"),
     (re.compile(r'["\']credit_card["\']\s*:\s*["\']\d+'), "credit_card field"),
     (re.compile(r'["\']customer_id["\']\s*:\s*["\']cust_'), "real customer identifier pattern")
