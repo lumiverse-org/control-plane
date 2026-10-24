@@ -1,7 +1,7 @@
 registry_version: 1
 roles:
   - id: founder
-    default_capabilities: [strategy, budget, hiring, lifecycle-decision, customer-commitment, exceptional-approval, people-intelligence]
+    default_capabilities: [strategy, budget, hiring, customer-commitment]
   - id: team_lead
     default_capabilities: [architecture, plan-approval, escalation, reviewer-matrix-change]
   - id: acting_team_lead

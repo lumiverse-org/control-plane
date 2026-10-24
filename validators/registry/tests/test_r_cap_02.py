@@ -9,11 +9,9 @@ precedent in r_inv_01.py / r_ppl_05.py / test_exceptions_minimal.py: FD-094
 harness written into lanes/L1-05-tasks.md.
 
 11 test functions, matching the task's own fixture-case list exactly.
-test_spec_founder_row_known_contradiction is the one xfail case: Section 8's
-own founder role default genuinely contains three dangerous capabilities, a
-live contradiction with D106 that only an L0 decision (the BLOCKER L1 L1-103
-filing) can resolve -- this is not a defect in the rule, see r_cap_02.py's
-module docstring. Expected pytest summary: 10 passed, 1 xfailed.
+test_spec_founder_row_matches_d106 verifies that the founder role row
+complies with D106 (CCR-003 resolved 2026-10-24 by Founder decision).
+Expected pytest summary: 11 passed, 0 xfailed.
 """
 import os
 
@@ -59,14 +57,10 @@ def test_valid_dangerous_capability_in_people_only_no_errors():
     assert r_cap_02.check_r_cap_04(_people(case)) == []
 
 
-# ---- known contradiction (1, xfail) ------------------------------------
+# ---- founder row complies with D106 (CCR-003, resolved) -----------------
 
 
-@pytest.mark.xfail(
-    reason="L1-103 blocker: Section 8 founder default contradicts D106; awaiting L0",
-    strict=False,
-)
-def test_spec_founder_row_known_contradiction():
+def test_spec_founder_row_matches_d106():
     findings = r_cap_02.check_r_cap_02(_roles("spec_founder_row"))
     assert findings == []
 

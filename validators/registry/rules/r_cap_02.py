@@ -34,14 +34,10 @@ Rules covered:
   that was never run through jsonschema, so the duplicate is still
   observable here.
 
-KNOWN RED, expected: Section 8's own ``founder`` role default (transcribed
-verbatim into ``registries/roles.yaml`` by task L1-103) contains three
-dangerous tokens (``lifecycle-decision``, ``exceptional-approval``,
-``people-intelligence``) -- a contradiction the spec itself creates. L1-103's
-own task text: "That contradiction is in the spec and resolving it is not
-yours." This module reports it; it does not silence it, and the
-``spec_founder_row`` fixture below is marked ``xfail`` for exactly this
-reason, pending the ``BLOCKER L1 L1-103`` L0 decision.
+RESOLVED (2026-10-24, CCR-003): The founder role default previously contained
+three dangerous tokens (lifecycle-decision, exceptional-approval, people-intelligence)
+in contradiction with D106. By Founder decision, those three capabilities were stripped
+from registries/roles.yaml, making the founder default compliant with D106.
 """
 from __future__ import annotations
 
