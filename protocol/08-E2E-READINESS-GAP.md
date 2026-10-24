@@ -10,7 +10,8 @@
 
 - **Total Positive Checkpoints Evaluated:** 122 instances across E2E-00 through E2E-13 (satisfying the 118-checkpoint minimum floor).
 - **Total Negative Gate Tests Evaluated:** 29 instances (NEG-01 through NEG-28 plus NEG-18b restore assertion; satisfying the 28-gate minimum floor).
-- **Current Preflight (E2E-00) Status:** 3 PASS (CP-0001, CP-0002, CP-0003), 3 FAIL (CP-0004 unpinned tags consumed, CP-0005 outside core hours / weekend, CP-0006 missing jq/yq on operator runner).
+- **Current Live Harness Execution Status (`bash e2e/run.sh --bootstrap`):** First failure occurs at **CP-0001** ("HEAD is the tip of integration"). Because this work resides on an unmerged development branch (`gravity/batch-5`), `HEAD != origin/integration`. The harness structurally halts at preflight link 1 by design; a genuine full E2E-00 run can only proceed past CP-0001 once this PR is merged to integration.
+- **Diagnostic Isolated Preflight Probing (Not a Harness Run):** When subsequent preflight checks are evaluated in isolation: CP-0002 (PASS, no API keys), CP-0003 (PASS, pilot absent), CP-0004 (FAIL, unpinned tags `workflows/v1` and `workflows/v1.0.0` consumed in templates), CP-0005 (FAIL, execution on Saturday/weekend outside declared core hours), CP-0006 (FAIL, `jq` and `yq` missing from operator runner).
 - **Actor Constraint (STOP Rule S-01):** Active GitHub organization (`lumiverse-org`) holds **2 members** (`bendrohit-eng`, `pbhayashri`), failing the minimum 3-human Write requirement for armed gate independence.
 - **Harness Scaffolding Completed:** 100% of canonical files transcribed and syntax-validated (`e2e/lib/checkpoint.sh`, `e2e/run.sh`, `e2e/verdict.sh`, 14 stage scripts, 28 negative scripts, fixtures).
 
@@ -228,5 +229,5 @@
 
 1. **Scaffolding Complete:** All 14 stage scripts and 28 negative scripts are written, syntactically valid, and bound to protocol 08 primitives.
 2. **Real Tooling Built:** `tools/verify-workflow-tag-pins.sh --strict` and `tools/freeze-window-check.sh --need-minutes 90` are fully implemented with real logic.
-3. **True Current State:** The execution chain breaks at **CP-0004** in Preflight due to unregistered reusable workflow tags (`workflows/v1`, `workflows/v1.0.0`), followed by CP-0005 (weekend execution) and CP-0006 (operator CLI environment). Beyond Preflight, 80 positive checkpoints and 18 negative tests are genuinely blocked on live multi-tenant infrastructure.
+3. **True Current State (Harness Execution):** The true execution of `bash e2e/run.sh --bootstrap` halts immediately at **CP-0001** ("HEAD is the tip of integration") with 1 checkpoint failure (as verified in `e2e/out/*/checkpoints/log.tsv`), because the branch is unmerged. Once merged into integration, diagnostic isolated probing demonstrates that preflight will subsequently fail at **CP-0004** (unpinned workflow tags in templates), **CP-0005** (execution outside core working hours per calendar), and **CP-0006** (missing `jq` and `yq` on operator runner). Beyond Preflight, 80 positive checkpoints and 18 negative tests are genuinely blocked on live multi-tenant infrastructure.
 4. **Anti-Hallucination Integrity:** Per `AGENTS.md`, zero stubs or mocks were introduced to fake passes against unbuilt infrastructure. The harness reports failures accurately and truthfully.
