@@ -6,13 +6,9 @@ registry_version: 1
 # authored by Lane 1 (L1-606/L1-938).
 #
 # The three hermes-* entries below register the real nousresearch/hermes-agent
-# checkout pinned at C:\D_Drive\PS\MultiProduct\estate\hermes-agent, tag
-# v2026.9.14 (commit 345cd2b057a452236de401d3534b8502a7465e8d), per D69
-# ("tools.yaml, registered before first use... has no owning lane") and
+# checkout pinned at v0.22.4 (commit 4d04303818b61bf3aa09278af48356315515965b),
+# per D69 ("tools.yaml, registered before first use... has no owning lane") and
 # Section 62.1's verbatim three-entry shape (lanes/L1-02-schemas.md fixture).
-# `owner: founder` reflects D69's own framing ("the founder ops console");
-# reconcile to a real registries/people.yaml id once the roster is seeded --
-# do not treat this as a stand-in for any other person.
 # Activation is still gated: the CPU benchmark go/park decision (BT-2/S2,
 # spec Sec 98.2 Phase 3) has not been run, and per invariant 85/D69/D80 the
 # checkout's own self-update path (`hermes update`) must never be invoked --
@@ -31,40 +27,40 @@ registry_version: 1
 # name.
 tools:
   - id: hermes-background-worker
-    purpose: "Background worker harness for unattended automation tasks (D69)"
+    purpose: "Hermes Agent harness inside the Subsystem J background execution cage; drafts whitelisted-class output as draft PRs only (D69)"
     owner: bendrohit-eng
-    current_version: "v2026.9.14 (345cd2b057a452236de401d3534b8502a7465e8d)"
+    current_version: "v0.22.4 (4d04303818b61bf3aa09278af48356315515965b)"
     upgrade_policy: "Pinned checkout only; self-update path (`hermes update`) never invoked (invariant 85, D69, D80). Version bumps require a reviewed PR editing this field after evaluating the new tag."
     replacement_candidates: []
-    exit_condition: "Replaced by a verifiably equivalent tool that passes the full Hermes acceptance suite"
-    last_reviewed: "2026-09-16"
-    criticality: medium
-    data_touched: "HERMES_HOME (sensitive-at-rest, D69); repository contents and command output on hosts where it runs"
-    removal_consequence: "Background worker harness for unattended automation becomes unavailable until a replacement is registered and pinned"
+    exit_condition: "Disable the systemd units, revoke the machine account's token, delete the instance's HERMES_HOME; no gate, metric or record depends on it (Section 62.5)"
+    last_reviewed: "2026-10-23"
+    criticality: low
+    data_touched: "whitelisted product repositories with ai_processing_permitted; Layer A operational data; never Layer B (sensitive-at-rest, D69)"
+    removal_consequence: "none — the estate survives removal unchanged; the background layer pauses and manual engineering continues (D49, Section 62.5)"
     patch_cadence: "Manual only; no auto-update"
   - id: hermes-ops-console
-    purpose: "Founder ops console -- operator-facing interface onto the estate (D69)"
+    purpose: "Read-only conversational query surface over Layer A operational data, sender-allowlisted to Founder identities (D69)"
     owner: bendrohit-eng
-    current_version: "v2026.9.14 (345cd2b057a452236de401d3534b8502a7465e8d)"
+    current_version: "v0.22.4 (4d04303818b61bf3aa09278af48356315515965b)"
     upgrade_policy: "Pinned checkout only; self-update path (`hermes update`) never invoked (invariant 85, D69, D80). Version bumps require a reviewed PR editing this field after evaluating the new tag."
     replacement_candidates: []
-    exit_condition: "Replaced by a successor console that passes the full ops-console acceptance suite"
-    last_reviewed: "2026-09-16"
-    criticality: medium
-    data_touched: "HERMES_HOME (sensitive-at-rest, D69); estate host state it surfaces to the founder"
-    removal_consequence: "Operators fall back to direct file/host reads; no automated summarisation"
+    exit_condition: "Stop the gateway process, revoke the read-only credential, delete the instance's HERMES_HOME; no gate, metric or record depends on it (Section 62.5)"
+    last_reviewed: "2026-10-23"
+    criticality: low
+    data_touched: "Layer A read-only credential only; never Layer B, never records/ writes, never board state (sensitive-at-rest, D69)"
+    removal_consequence: "degraded convenience only — the estate survives removal unchanged; queries revert to the existing dashboards and notification surfaces (D49, Section 62.5)"
     patch_cadence: "Manual only; no auto-update"
   - id: hermes-pr-review
-    purpose: "PR-review engine (D69)"
+    purpose: "Advisory machine PR reviewer behind the existing machine-review step; comments only, never blocking, never approving (D69)"
     owner: bendrohit-eng
-    current_version: "v2026.9.14 (345cd2b057a452236de401d3534b8502a7465e8d)"
+    current_version: "v0.22.4 (4d04303818b61bf3aa09278af48356315515965b)"
     upgrade_policy: "Pinned checkout only; self-update path (`hermes update`) never invoked (invariant 85, D69, D80). Version bumps require a reviewed PR editing this field after evaluating the new tag."
     replacement_candidates: []
-    exit_condition: "Replaced by a verifiably equivalent tool that passes the full Hermes acceptance suite"
-    last_reviewed: "2026-09-16"
-    criticality: medium
-    data_touched: "HERMES_HOME (sensitive-at-rest, D69); pull request contents and review output"
-    removal_consequence: "Automated PR review ceases; human reviewers cover the gap until a replacement is registered"
+    exit_condition: "Remove the review job and its runner registration; no gate, metric or record depends on it (Section 62.5)"
+    last_reviewed: "2026-10-23"
+    criticality: low
+    data_touched: "pull-request diffs on repositories with ai_processing_permitted, via read-only token; no base-repository secrets (sensitive-at-rest, D69)"
+    removal_consequence: "degraded convenience only — the estate survives removal unchanged; human review is the gate and remains so (D49, Section 62.5)"
     patch_cadence: "Manual only; no auto-update"
   - id: gsd
     purpose: "Plan-checker / spec-driven dev workflow behind subsystem G (Discuss-Plan-Execute-Verify-Ship; Gate 1 plan approval, G-F7)"

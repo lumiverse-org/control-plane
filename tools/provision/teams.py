@@ -98,12 +98,19 @@ def _is_current(person: dict[str, Any]) -> bool:
 
 
 def _product_team_members(product_yaml: dict[str, Any], current_logins: set[str]) -> list[str]:
-    assignments = product_yaml.get("assignments") or {}
+    raw = product_yaml.get("assignments") or {}
     members: list[str] = []
-    for role in _ASSIGNMENT_ROLES:
-        holder = assignments.get(role)
-        if holder and holder in current_logins and holder not in members:
-            members.append(holder)
+    if isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, dict):
+                holder = item.get("person")
+                if holder and holder in current_logins and holder not in members:
+                    members.append(holder)
+    elif isinstance(raw, dict):
+        for role in _ASSIGNMENT_ROLES:
+            holder = raw.get(role)
+            if holder and holder in current_logins and holder not in members:
+                members.append(holder)
     return members
 
 

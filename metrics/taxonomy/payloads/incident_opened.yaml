@@ -1,0 +1,7 @@
+# metrics/taxonomy/payloads/incident_opened.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: incident_opened
+n: 32
+entry: incident opened with severity
+payload_required:
+- severity

@@ -1,0 +1,8 @@
+# metrics/taxonomy/payloads/plan_approved.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: plan_approved
+n: 7
+entry: plan approved (Gate 1) with agent_authored flag
+payload_required:
+- gate
+- agent_authored

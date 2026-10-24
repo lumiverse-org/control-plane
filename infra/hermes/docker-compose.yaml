@@ -1,0 +1,101 @@
+# infra/hermes/docker-compose.yaml
+# Spec Section 37.8 (cage architecture) & Invariant 85
+# Whole-process container isolation wrapping Hermes instances.
+# Per Spec §37.8, the container is the outer security boundary:
+# - Read-only root filesystem
+# - Dropped Linux capabilities (cap_drop: ALL)
+# - No privilege escalation (no-new-privileges: true)
+# - Non-root execution with dedicated OS user per instance
+# - Separate named volumes for isolated HERMES_HOME
+# - Internal network isolation with egress wall outside harness (infra/egress/background-host-allowlist.conf)
+
+version: "3.8"
+
+networks:
+  internal-cage:
+    driver: bridge
+    internal: false
+
+volumes:
+  hermes_worker_home:
+    name: hermes-worker-home
+  hermes_ops_home:
+    name: hermes-ops-home
+  hermes_review_home:
+    name: hermes-review-home
+
+services:
+  hermes-background-worker:
+    image: "nousresearch/hermes-agent:v0.22.4"
+    container_name: "hermes-background-worker"
+    read_only: true
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - "ALL"
+    user: "1001:1001"
+    environment:
+      HERMES_HOME: "/var/lib/hermes-background-worker"
+      HERMES_OFFLINE: "1"
+      HERMES_REDACT_SECRETS: "true"
+    volumes:
+      - type: volume
+        source: hermes_worker_home
+        target: /var/lib/hermes-background-worker
+      - type: bind
+        source: ./background-worker.yaml
+        target: /var/lib/hermes-background-worker/config.yaml
+        read_only: true
+    networks:
+      - internal-cage
+    restart: "no"
+
+  hermes-ops-console:
+    image: "nousresearch/hermes-agent:v0.22.4"
+    container_name: "hermes-ops-console"
+    read_only: true
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - "ALL"
+    user: "1002:1002"
+    environment:
+      HERMES_HOME: "/var/lib/hermes-ops-console"
+      HERMES_OFFLINE: "1"
+      HERMES_REDACT_SECRETS: "true"
+    volumes:
+      - type: volume
+        source: hermes_ops_home
+        target: /var/lib/hermes-ops-console
+      - type: bind
+        source: ./ops-console.yaml
+        target: /var/lib/hermes-ops-console/config.yaml
+        read_only: true
+    networks:
+      - internal-cage
+    restart: "no"
+
+  hermes-pr-review:
+    image: "nousresearch/hermes-agent:v0.22.4"
+    container_name: "hermes-pr-review"
+    read_only: true
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - "ALL"
+    user: "1003:1003"
+    environment:
+      HERMES_HOME: "/var/lib/hermes-pr-review"
+      HERMES_OFFLINE: "1"
+      HERMES_REDACT_SECRETS: "true"
+    volumes:
+      - type: volume
+        source: hermes_review_home
+        target: /var/lib/hermes-pr-review
+      - type: bind
+        source: ./pr-review.yaml
+        target: /var/lib/hermes-pr-review/config.yaml
+        read_only: true
+    networks:
+      - internal-cage
+    restart: "no"

@@ -1,0 +1,7 @@
+# metrics/taxonomy/payloads/pr_opened.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: pr_opened
+n: 14
+entry: PR opened with agent_authored flag
+payload_required:
+- agent_authored

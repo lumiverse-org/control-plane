@@ -1,0 +1,989 @@
+[
+  {
+    "artifactPath": "tools/evidence/event_writer.py",
+    "summary": "Create the one-file-per-event bound-envelope writer plus fixtures/events/**; both confirmed absent.",
+    "satisfiesTaskIds": [
+      "L2-T545"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/records_client.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": ".github/workflows/deploy-staging.yml",
+    "summary": "Author this workflow; confirmed absent (only a template exists at templates/workflows/deploy-staging.template.yml).",
+    "satisfiesTaskIds": [
+      "L2-T130"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/actor_gate.py",
+      "tools/evidence/event_writer.py",
+      "tools/evidence/lint_workflow.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": ".github/workflows/deploy-production.yml",
+    "summary": "Author this workflow; confirmed absent.",
+    "satisfiesTaskIds": [
+      "L2-T131"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      ".github/workflows/deploy-staging.yml",
+      "tools/evidence/identity_gate.py",
+      "tools/evidence/digest_invariant.py",
+      "tools/evidence/timegate.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": ".github/workflows/migrate.yml",
+    "summary": "Author this workflow covering cases A-G; confirmed absent.",
+    "satisfiesTaskIds": [
+      "L2-T132"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/actor_gate.py",
+      "tools/evidence/event_writer.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/evidence_chain.py",
+    "summary": "Create the eleven-questions evidence-chain tool plus fixtures/chain/**; both confirmed absent (an eleven-questions.yaml file already exists but has no consuming tool).",
+    "satisfiesTaskIds": [
+      "L2-T519"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/profile_evidence.py",
+      "tools/evidence/records_client.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/verify_digest_chain.py",
+    "summary": "Create this as a proper importable module plus fixtures/sweep/**; confirmed the only thing at this name today is tools/evidence/verify-digest-chain, an executable Python script (not dash-named as a dotted module), so `python -m tools.evidence.verify_digest_chain` cannot resolve it.",
+    "satisfiesTaskIds": [
+      "L2-T550"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/evidence_chain.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/version_monitor.py",
+    "summary": "Create the /version digest-match monitor plus fixtures/version/**; both confirmed absent.",
+    "satisfiesTaskIds": [
+      "L2-T551"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/evidence_chain.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": ".github/workflows/version-monitor.yml",
+    "summary": "Author this workflow; confirmed absent.",
+    "satisfiesTaskIds": [
+      "L2-T140"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/version_monitor.py",
+      "tools/evidence/lint_workflow.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/restore_rotation.py",
+    "summary": "Create the restore-rotation scheduler computation plus fixtures/rotation/**; both confirmed absent at this L2-owned path. (ops-vm/jobs/restore_rotation.py exists but is a separate, L4-owned Ops-VM job, not this evidence-toolchain module.)",
+    "satisfiesTaskIds": [
+      "L2-T552"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/__init__.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": ".github/workflows/restore-rotation.yml",
+    "summary": "Author this workflow; confirmed absent.",
+    "satisfiesTaskIds": [
+      "L2-T141"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/restore_rotation.py",
+      "tools/evidence/lint_workflow.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/shipped_assert.py",
+    "summary": "Create the eight 'shipped' conditions assertion tool plus fixtures/shipped/**; both confirmed absent.",
+    "satisfiesTaskIds": [
+      "L2-T553"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/evidence_chain.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": ".github/workflows/canary-exercise.yml",
+    "summary": "Author this workflow; confirmed absent.",
+    "satisfiesTaskIds": [
+      "L2-T143"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/lint_workflow.py",
+      ".github/workflows/deploy-staging.yml"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/assert_actor_gate_first.py",
+    "summary": "Create the actor-gate-is-step-0 assertion tool scanning the privileged workflows; confirmed absent.",
+    "satisfiesTaskIds": [
+      "L2-T554"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      ".github/workflows/deploy-production.yml",
+      ".github/workflows/migrate.yml",
+      "tools/evidence/lint_workflow.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/at/at-024.sh",
+    "summary": "Create the four-leg AT-024 acceptance-test harness exactly per the full script already given in lanes/L2-05-tasks.md (it reads real canary/revert/unmigrated-product results from env vars and records pass/fail per leg); confirmed tools/evidence/at/ does not exist at all yet. The script itself is fully code-buildable; leg 1 (impact-analysis / affected: generator) is explicitly noted in the task doc as blocked pending open decision D-L2-01 (no lane owns tools/fleet/**), and legs 2-4 need real workflow-run outcomes fed in via env vars to actually pass.",
+    "satisfiesTaskIds": [
+      "L2-T700"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      ".github/workflows/canary-exercise.yml",
+      ".github/workflows/publish-workflow-tag.yml"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/at/at-029.sh",
+    "summary": "Create the AT-029 (control-plane-unreachable) acceptance-test script; confirmed tools/evidence/at/ does not exist.",
+    "satisfiesTaskIds": [
+      "L2-T701"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/lint_workflow.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/at/at-035.sh",
+    "summary": "Create the AT-035 (organisation-export restores) acceptance-test script; confirmed tools/evidence/at/ does not exist.",
+    "satisfiesTaskIds": [
+      "L2-T702"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/lint_workflow.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/at/at-103.sh",
+    "summary": "Create the AT-103 (production restore, no hand-held credential) acceptance-test script; confirmed tools/evidence/at/ does not exist.",
+    "satisfiesTaskIds": [
+      "L2-T703"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "templates/workflows/restore-production.yml",
+      "tools/evidence/lint_workflow.py"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "tools/evidence/acceptance_matrix.py",
+    "summary": "Create the DoD acceptance matrix plus tools/evidence/HANDOFF.md; both confirmed absent. This is the lane's final rollup and depends on essentially every other L2 artifact above.",
+    "satisfiesTaskIds": [
+      "L2-T555"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/evidence/at/at-024.sh",
+      "tools/evidence/at/at-029.sh",
+      "tools/evidence/at/at-035.sh",
+      "tools/evidence/at/at-103.sh",
+      ".github/workflows/control-plane-ci.yml",
+      "tools/evidence/assert_actor_gate_first.py",
+      "tools/evidence/run_negative_tests.sh"
+    ],
+    "lane": "L2"
+  },
+  {
+    "artifactPath": "reconciler/gap/audit.py",
+    "summary": "Gap diff-audit module (+ reconciler/tests/test_gap_audit.py) that diff-audits every access grant, merge and production approval made during a detected gap window against declared state per spec section 53.7, treating the window as unverified.",
+    "satisfiesTaskIds": [
+      "L3-P8-02"
+    ],
+    "dependsOnArtifacts": [],
+    "category": "code",
+    "lane": "L3"
+  },
+  {
+    "artifactPath": "reconciler/gap/marking.py",
+    "summary": "gap-window marking module (+ reconciler/tests/test_gap_marking.py) that tags every record produced during a gap window with a 'gap-window' mark until it is re-verified, per spec section 53.7 bullet 5.",
+    "satisfiesTaskIds": [
+      "L3-P8-03"
+    ],
+    "dependsOnArtifacts": [],
+    "category": "code",
+    "lane": "L3"
+  },
+  {
+    "artifactPath": "reconciler/gap/wrong_repair.py",
+    "summary": "on_wrong_repair(repair_class, window) implementing the four-step wrong-repair response (freeze, enumerate from repair records, revert-or-human-confirm, mark gap-window) specified in section 53.7/53.2/28.1, with its test reconciler/tests/test_wrong_repair.py.",
+    "satisfiesTaskIds": [
+      "L3-P8-04"
+    ],
+    "dependsOnArtifacts": [
+      "reconciler/gap/marking.py"
+    ],
+    "category": "code",
+    "lane": "L3"
+  },
+  {
+    "artifactPath": "reconciler/acceptance/run_matrix.py",
+    "summary": "Lane acceptance-matrix runner (with reconciler/acceptance/__init__.py and reconciler/tests/test_acceptance_matrix.py) executing Lane 3's eleven Section 100 acceptance tests against fixture-a and printing a MATRIX passed=/total= summary; its blocking GitHub-App-vs-PAT decision (L3-D3) is already resolved and all other depended-on modules (e.g. validators/drift/credential_bounds.py, reconciler/envelope.py) already exist, so only the three reconciler/gap/* modules below it are the remaining real blockers.",
+    "satisfiesTaskIds": [
+      "L3-P8-05"
+    ],
+    "dependsOnArtifacts": [
+      "reconciler/gap/audit.py",
+      "reconciler/gap/marking.py",
+      "reconciler/gap/wrong_repair.py"
+    ],
+    "category": "code",
+    "lane": "L3"
+  },
+  {
+    "artifactPath": "reconciler/HANDOFF.md",
+    "summary": "Lane 3 handoff manifest (+ reconciler/scripts/check-handoff.sh) documenting what Lane 3 hands to L5/L2/L4 and the boundaries it does not cross, verified by a script that asserts the doc names all three consumers and that no Lane 3 module writes to records/, events/, .github/workflows/, or ops-vm/.",
+    "satisfiesTaskIds": [
+      "L3-P8-06"
+    ],
+    "dependsOnArtifacts": [
+      "reconciler/acceptance/run_matrix.py"
+    ],
+    "category": "code",
+    "lane": "L3"
+  },
+  {
+    "artifactPath": "reconciler/orphans/decisions.py",
+    "summary": "Decision-constants module (DELEGATION_WARNING_TYPES and the ASSET_* constants named in lanes/L3-05-orphans.md) that the DR-L3-05 decision gates import; it can be scaffolded now with constants defaulting to None/unset per the task docs' own spec, which is exactly what lets step-0 gates detect an unresolved decision and STOP.",
+    "satisfiesTaskIds": [
+      "L3-P0-DEL14"
+    ],
+    "dependsOnArtifacts": [],
+    "category": "code",
+    "lane": "L3"
+  },
+  {
+    "artifactPath": "control-plane-records/PROTECTION-REQUEST.md",
+    "summary": "Confirmed absent (gh api 404) at the control-plane-records repo root; its content and exact gh/git push commands are already fully specified in lanes/L4-06-tasks.md and L4-01-records-repo.md, so a coding agent with repo push access can draft and push it.",
+    "satisfiesTaskIds": [
+      "L4-T003"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "control-plane-records/README.md,CONVENTIONS.md,.gitignore",
+    "summary": "None of the three root documents exist in control-plane-records (404 on CONVENTIONS.md); their full text is already written out verbatim in lanes/L4-01-records-repo.md for a coding agent to push.",
+    "satisfiesTaskIds": [
+      "L4-P1-T04"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "tools/records/lane-selfcheck.sh#--coverage-mode",
+    "summary": "Verified lane-selfcheck.sh only implements a --paths mode (unknown-mode error on anything else); metrics/register/l4-spec-coverage.csv already exists on disk, so only the --coverage CLI mode needs adding.",
+    "satisfiesTaskIds": [
+      "L4-T006"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "tools/records/validate-schemas.sh#--only-mode",
+    "summary": "Read validate-schemas.sh in full: it supports --coverage/--lint/--time/--fields/--negative/--at105/--at046-secreview/--selftest/--all but has no --only <store> mode; all 18 underlying schema files these task ids name (record.base, event.envelope, incident, postmortem, uat, estimate, deployment, restore-test, decision, breach, deletion-request, security-review, eval, launch, demo, support, onboarding, leave) already exist on disk and are already covered by the --all sweep, so this is purely one missing CLI mode shared by all 18 ids.",
+    "satisfiesTaskIds": [
+      "L4-P2-04",
+      "L4-P2-05",
+      "L4-P2-07",
+      "L4-P2-08",
+      "L4-P2-09",
+      "L4-P2-10",
+      "L4-P2-11",
+      "L4-P2-12",
+      "L4-P2-13",
+      "L4-P2-14",
+      "L4-P2-15",
+      "L4-P2-16",
+      "L4-P2-17",
+      "L4-P2-18",
+      "L4-P2-19",
+      "L4-P2-20",
+      "L4-P2-21",
+      "L4-P2-22"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "schemas/records/store-inventory.yaml",
+    "summary": "Confirmed absent on disk; needs creating (the 17 record-store paths) alongside a new --stores mode in lane-selfcheck.sh that currently errors with unknown-mode.",
+    "satisfiesTaskIds": [
+      "L4-P2-06"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "schemas/records/defs/flags.schema.json",
+    "summary": "Confirmed absent (schemas/records/defs/ doesn't exist); the --fields mode in validate-schemas.sh currently just mis-delegates to validate-no-names.sh and prints the wrong success string, so both the schema file and the mode's logic need building.",
+    "satisfiesTaskIds": [
+      "L4-P2-23"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "tools/records/validate-schemas.sh#--fixtures-valid-mode",
+    "summary": "Confirmed tools/records/fixtures/valid/** already has a golden fixture for essentially every store; only the --fixtures valid CLI mode to iterate and validate them is missing from validate-schemas.sh.",
+    "satisfiesTaskIds": [
+      "L4-P2-26"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "tools/records/fixtures/invalid/*.json#envelope-negative-fixtures",
+    "summary": "Confirmed tools/records/fixtures/invalid/ has exactly one top-level .json file today (an unrelated denied-property.schema.json), which is why --negative reports 1/1; the 9 missing-required-field + 1 bad-enum JSON fixtures the event envelope's 9 required fields call for genuinely don't exist and must be authored.",
+    "satisfiesTaskIds": [
+      "L4-P2-27"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/records/validate-schemas.sh#--fixtures-valid-mode"
+    ],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "schemas/records/versions.yaml",
+    "summary": "Confirmed both schemas/records/versions.yaml and VERSIONS.md are absent; needs creating alongside the --versions mode in validate-schemas.sh.",
+    "satisfiesTaskIds": [
+      "L4-P2-28"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/records/fixtures/invalid/*.json#envelope-negative-fixtures"
+    ],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "tools/records/validate-freshness.sh",
+    "summary": "Confirmed metrics/freshness/ doesn't exist and tools/records/validate-freshness.sh is absent; both the per-store freshness-window YAML (3 Blocking stores) and the validator need building from the fully-specified pseudocode in lanes/L4-04-metric-register.md.",
+    "satisfiesTaskIds": [
+      "L4-P3-04"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "schemas/records/store-inventory.yaml"
+    ],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "metrics/anchor/records-head-anchor.schema.json",
+    "summary": "Confirmed metrics/anchor/ doesn't exist at all; the head-SHA anchor schema (D107) needs creating, and its acceptance command needs the same --only mode this cluster shares with the 18-id schema cluster.",
+    "satisfiesTaskIds": [
+      "L4-P3-05"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/records/validate-schemas.sh#--only-mode"
+    ],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "tools/records/validate-retention.sh",
+    "summary": "Confirmed metrics/retention/ doesn't exist and tools/records/validate-retention.sh is absent; both the per-store retention-class YAML and the validator need building, fully specified in lanes/L4-04-metric-register.md.",
+    "satisfiesTaskIds": [
+      "L4-P3-07"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "schemas/records/store-inventory.yaml"
+    ],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "tools/records/test-writers.sh",
+    "summary": "Confirmed this test harness doesn't exist on disk; some of what it must exercise already works (lib/emit.sh backs the real record-write/event-append CLIs, and lib/eventpath.py is fully built), but lib/writer.py, lib/nooverwrite.py, record_write.py, event_append.py, the whole record-decision CLI + record_decision.py, lib/rwtoken.py and fixtures/writer-negative/** are all genuinely absent, so building the harness also means finishing the writer library it tests.",
+    "satisfiesTaskIds": [
+      "L4-P4-01",
+      "L4-P4-02",
+      "L4-P4-03",
+      "L4-P4-04",
+      "L4-P4-05",
+      "L4-P4-07",
+      "L4-P4-09",
+      "L4-P4-10"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/records/validate-freshness.sh"
+    ],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "tools/records/test-freshness-e2e.sh",
+    "summary": "Confirmed absent on disk; needs building to prove write-freshness end to end from real git commit timestamps, following the pattern of the other test-*.sh scripts already in tools/records/.",
+    "satisfiesTaskIds": [
+      "L4-P8-01"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/records/validate-freshness.sh",
+      "tools/records/test-writers.sh"
+    ],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "tools/records/run-dod-matrix.sh",
+    "summary": "Confirmed absent on disk; lanes/L4-CONCORDANCE.md itself flags this as the lane's own unbuilt acceptance gate, needing to run all 20 charter DoD rows (most of which are the other artifacts in this list) in one command.",
+    "satisfiesTaskIds": [
+      "L4-P8-02"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/records/lane-selfcheck.sh#--coverage-mode",
+      "tools/records/validate-schemas.sh#--only-mode",
+      "schemas/records/store-inventory.yaml",
+      "schemas/records/defs/flags.schema.json",
+      "tools/records/validate-schemas.sh#--fixtures-valid-mode",
+      "tools/records/fixtures/invalid/*.json#envelope-negative-fixtures",
+      "schemas/records/versions.yaml",
+      "tools/records/validate-freshness.sh",
+      "metrics/anchor/records-head-anchor.schema.json",
+      "tools/records/validate-retention.sh",
+      "tools/records/test-writers.sh",
+      "tools/records/test-freshness-e2e.sh",
+      "metrics/register/metric-declarations.yaml"
+    ],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "metrics/HANDOFF.md",
+    "summary": "Confirmed absent; generated by `run-dod-matrix.sh --handoff`, which doesn't exist yet either, so this is directly gated on that runner being built first.",
+    "satisfiesTaskIds": [
+      "L4-P8-03"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "tools/records/run-dod-matrix.sh"
+    ],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "metrics/register/metric-declarations.yaml",
+    "summary": "Read metrics/register/validate-sources.sh, arming.py, baselines.py and ownership.py in full: all four are already complete, correct implementations of --attributes/--arming/--at046/--ownership; they only report vacuous passes (e.g. 'ATTRIBUTES OK 0/0') because metric-declarations.yaml still has zero declared measures, even though metrics/compute/ already has ~15 working measure modules (deployments, incidents, restore, uat, support, eval, security_reviews, decisions, estimates, learning_loop, lifecycle_cadence, rqm, status_requests, weekend_residual, attention_measures) to catalog with real 8-attribute entries, then mirror into baselines.yaml as baseline-or-unbaselined rows. Note: baselines.yaml's own header comment (and lanes/L4-98-DEEP-REVIEW.md item B33/11) already flags the L4-P7-04 task doc's 'five-member minimum baseline set' acceptance text as a prior fabrication with invented measure ids that the spec never names, so that specific acceptance string in lanes/L4-06-tasks.md and L4-03-metric-register.md needs correcting rather than literally re-inventing 5 measures.",
+    "satisfiesTaskIds": [
+      "L4-P7-01",
+      "L4-P7-02",
+      "L4-P7-03",
+      "L4-P7-04",
+      "L4-P7-05"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L4"
+  },
+  {
+    "artifactPath": "infra/tools/lane_tree_check.sh",
+    "summary": "Shell script (+ infra/OWNERSHIP.md manifest) that proves the five lane roots exist and declares per-directory ownership; both are completely absent from the repo (confirmed via Glob \u2014 infra/tools/ has only check_contract_inputs.py, lane_guard_check.sh, readiness.sh, validate_handoff.py, and no OWNERSHIP.md anywhere).",
+    "satisfiesTaskIds": [
+      "L5-T01"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "infra/tools/bootstrap_venv.sh",
+    "summary": "Venv-bootstrap script plus infra/requirements.txt pinning the L5 Python toolchain (pyyaml, jsonschema, pytest); confirmed absent, and no $HOME/.venv-l5 exists either, so $L5PY can only be set manually today.",
+    "satisfiesTaskIds": [
+      "L5-T02"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "infra/tools/lane_tree_check.sh"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/tools/check_org_evidence.py",
+    "summary": "Template-only evidence-checklist validator for org-settings arming; confirmed absent from access/tools/ (18 other scripts exist there but not this one), along with its access/assisted/org-settings-checklist.md and access/assisted/evidence/README.md templates (access/assisted/ doesn't exist at all).",
+    "satisfiesTaskIds": [
+      "L5-T15"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "ops-vm/tools/check_versions_lock.py",
+    "summary": "Template-only version-lock checker plus ops-vm/compose/versions.lock and ops-vm/assisted/version-lock-request.md; confirmed absent (ops-vm/tools/ has only rebuild_clock.py and validate_slos.py; ops-vm/compose/ doesn't exist; ops-vm/assisted/ has only vm-buildout-request.md).",
+    "satisfiesTaskIds": [
+      "L5-T16"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "infra/tools/bootstrap_venv.sh"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "ops-vm/tools/render_compose.py",
+    "summary": "Renders ops-vm/compose/docker-compose.yml from versions.lock with --write/--check modes; confirmed absent from the repo, and the compose directory itself doesn't exist yet.",
+    "satisfiesTaskIds": [
+      "L5-T17"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "ops-vm/tools/check_versions_lock.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "ops-vm/provision/provision.sh",
+    "summary": "Idempotent host-provisioning script, hardening.yaml policy assertions (private network path, SSO, no prod credentials \u2014 values may legitimately stay 'a named Founder decision' per spec, that doesn't block building the checker), and ops-vm/tests/test_hardening.py; confirmed absent (ops-vm/provision/ only has 30-stack-up.sh; pytest collects 0 items).",
+    "satisfiesTaskIds": [
+      "L5-T18"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "ops-vm/tools/render_compose.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "ops-vm/tools/post_patch_smoke.py",
+    "summary": "Post-patch smoke-checklist tool plus ops-vm/patching/patch-cadence.yaml; confirmed absent \u2014 a differently named/placed shell script (ops-vm/checks/post-patch-smoke.sh) exists but is not this deliverable and the patching/ directory doesn't exist.",
+    "satisfiesTaskIds": [
+      "L5-T20"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "ops-vm/tools/render_compose.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "ops-vm/tools/deadman_heartbeat.py",
+    "summary": "Off-VM dead-man heartbeat CLI plus ops-vm/offvm/deadman.yaml and uptime-checks.yaml; confirmed absent (ops-vm/offvm/ doesn't exist; only unrelated shell scripts exist under ops-vm/deadman/ and ops-vm/checks/). The spec itself ships a fail-closed 'DECLARED-BY-L0' witness placeholder by design, so the script/config are fully buildable now \u2014 only the final live witness identity is a separate Founder decision, not a blocker to building this artifact.",
+    "satisfiesTaskIds": [
+      "L5-T21"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "infra/tools/bootstrap_venv.sh"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/ai-runtime/tools/validate_runtime_contract.py",
+    "summary": "Foundational runtime-contract validator plus access/ai-runtime/runtime-contract.yaml and vendor-checklist.yaml; the entire access/ai-runtime/ directory is confirmed absent. A parallel but structurally different tree exists at access/ai-toolchain/ (per-vendor yaml under runtimes/, separate check scripts) which is not this deliverable's path or schema.",
+    "satisfiesTaskIds": [
+      "L5-T24"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "infra/tools/bootstrap_venv.sh"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/ai-runtime/tools/check_no_api_keys.py",
+    "summary": "No-API-keys workstation check (plus access/tests/test_no_api_keys.py); confirmed absent \u2014 a shell equivalent exists only at access/ai-toolchain/checks/no_api_keys.sh, a different path/form.",
+    "satisfiesTaskIds": [
+      "L5-T25"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/ai-runtime/tools/validate_runtime_contract.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/ai-runtime/tools/check_extension_pins.py",
+    "summary": "Extension/MCP-server pin checker plus access/tests/test_extension_pins.py; confirmed absent anywhere in the repo (pytest collects 0 items; no check_extension_pins.py exists under any path).",
+    "satisfiesTaskIds": [
+      "L5-T26"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/ai-runtime/tools/validate_runtime_contract.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/ai-runtime/tools/check_constitution_reference.py",
+    "summary": "Constitution-reference checker; confirmed absent at the stated path. A same-named script exists only at access/ai-toolchain/constitution/check_constitution_reference.py (different directory/schema), reusable as a logic reference but not a substitute path.",
+    "satisfiesTaskIds": [
+      "L5-T27"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/ai-runtime/tools/validate_runtime_contract.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/ai-runtime/tools/preflight_secret_strip.py",
+    "summary": "Pre-flight secret-strip wrapper plus access/ai-runtime/preflight.yaml; confirmed absent anywhere in the repo.",
+    "satisfiesTaskIds": [
+      "L5-T28"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/ai-runtime/tools/validate_runtime_contract.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/ai-runtime/tools/check_ai_restrictions.py",
+    "summary": "Per-product AI-restriction checker plus access/tests/test_ai_restrictions.py; confirmed absent at the stated path \u2014 an implementation check_ai_restrictions.py exists only at access/ai-toolchain/checks/, with no pytest wrapper or the ai-runtime path version.",
+    "satisfiesTaskIds": [
+      "L5-T29"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/ai-runtime/tools/validate_runtime_contract.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/ai-runtime/tools/eval_runner.py",
+    "summary": "AI-eval scheduled runner and SIG-42 emission tool plus access/ai-runtime/eval-runner.yaml and access/tests/test_eval_runner.py; confirmed entirely absent (pytest collects 0 items).",
+    "satisfiesTaskIds": [
+      "L5-T30"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/ai-runtime/tools/validate_runtime_contract.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/ai-runtime/tools/validate_benchmark_record.py",
+    "summary": "Model-regression benchmark record validator plus access/ai-runtime/benchmark/benchmark-record.template.yaml; confirmed absent anywhere in the repo.",
+    "satisfiesTaskIds": [
+      "L5-T31"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/ai-runtime/tools/validate_runtime_contract.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/ai-runtime/tools/workstation_check.sh",
+    "summary": "Quarterly workstation check bundle plus access/ai-runtime/workstation-check.yaml, wrapping the no-API-keys/extension-pins/constitution checks; confirmed absent (exit 127, no such file).",
+    "satisfiesTaskIds": [
+      "L5-T32"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/ai-runtime/tools/check_no_api_keys.py",
+      "access/ai-runtime/tools/check_extension_pins.py",
+      "access/ai-runtime/tools/check_constitution_reference.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "assets/tools/validate_inventory.py",
+    "summary": "Asset-inventory schema validator (plus assets/schema/asset-inventory.schema.json) built up across T33 (schema-only mode) and T35 (full validator + access/tests: assets/tests/test_inventory.py); confirmed absent \u2014 assets/tools/ doesn't exist at all (only a differently-located assets/validate_assets.py with no tools/ subfolder and a different, non-schema-based layout). The seed data (assets/inventory/*.yaml) already exists and is not the gap.",
+    "satisfiesTaskIds": [
+      "L5-T33",
+      "L5-T34",
+      "L5-T35"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "infra/tools/bootstrap_venv.sh"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "assets/tools/deadline_watch.py",
+    "summary": "Deadline-watch job plus assets/tests/test_deadline_watch.py; confirmed absent (pytest collects 0 items; assets/tools/ has no such file).",
+    "satisfiesTaskIds": [
+      "L5-T36"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "assets/tools/validate_inventory.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "assets/tools/vendor_deprecation_feed.py",
+    "summary": "Vendor-deadline entries (assets/deadlines/vendor-deadlines.yaml) and deprecation feed; confirmed absent \u2014 assets/deadlines/ has only .gitkeep and CLASSES.md.",
+    "satisfiesTaskIds": [
+      "L5-T37"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "assets/tools/deadline_watch.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "assets/tools/orphan_owners.py",
+    "summary": "Asset-owner orphan feed plus assets/tests/test_orphan_owners.py; confirmed absent (a shell test at-017-asset-owner-orphan.sh exists but is a different file/form). The spec explicitly designs this to emit findings with no severity field (severity mapping is deliberately an L3/L0 concern, not a blocker \u2014 this artifact is fully buildable as specified).",
+    "satisfiesTaskIds": [
+      "L5-T38"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "assets/tools/validate_inventory.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "notify/tools/validate_notify_config.py",
+    "summary": "Shared push-event/channel config validator invoked with --only push-events (T39, needs notify/contract/push-events.yaml, confirmed absent) and --only channels (T40, needs notify/routing/channels.yaml, confirmed absent). Both reasons name this exact same missing script; real but differently-shaped implementations exist at repo-root notify/check_push_list.py and notify/check_channels.py \u2014 different paths/forms, not this deliverable.",
+    "satisfiesTaskIds": [
+      "L5-T39",
+      "L5-T40"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "notify/tools/route.py",
+    "summary": "Router CLI (fail-closed on an unlisted event) plus notify/tests/test_route.py; confirmed absent \u2014 notify/tools/ contains only layerb_guard.py. A differently-shaped notify/route.py exists at repo root, not at this path.",
+    "satisfiesTaskIds": [
+      "L5-T41"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "notify/tools/validate_notify_config.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "notify/tools/check_phone_path.py",
+    "summary": "Phone-escalation path presence/template checker plus notify/escalation/phone-path.template.yaml; confirmed absent (existing notify/escalation/phone-path.yaml is a differently-named data file, not this checker). Spec ships a 'DECLARED-BY-L0' placeholder for the filled copy's custody location by design, so the --template validation mode is fully buildable without that decision.",
+    "satisfiesTaskIds": [
+      "L5-T43"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "notify/tools/validate_notify_config.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "notify/tools/check_no_paging_apps.py",
+    "summary": "No-paging-apps check plus notify/tests/test_no_paging_apps.py; confirmed absent anywhere in the repo (pytest collects 0 items).",
+    "satisfiesTaskIds": [
+      "L5-T44"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "notify/tools/validate_notify_config.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/layerb/tools/check_separate_credential.py",
+    "summary": "Static separation checker for the Founder-only Layer B Grafana instance (--config-only), plus access/layerb/instance/compose.layerb.yml, grafana.layerb.ini and provisioning/ files; confirmed absent \u2014 the real directory is access/layer-b (hyphenated, matching the rest of the repo's shell-based Layer B tooling) and has no tools/ subfolder at all, so nothing at any spelling of this path exists yet.",
+    "satisfiesTaskIds": [
+      "L5-T46"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "ops-vm/tools/render_compose.py",
+      "ops-vm/provision/provision.sh"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/layerb/tools/check_no_people_datasource.py",
+    "summary": "AT-097 shared-instance people-datasource absence check plus access/tests/test_at097.py; confirmed absent \u2014 shell equivalents exist instead at access/layer-b/at-097-no-people-datasource-in-shared.sh and ops-vm/tests/at-097-shared-no-people-ds.sh, different paths/forms from the pytest-based deliverable the task doc names.",
+    "satisfiesTaskIds": [
+      "L5-T47"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/layerb/tools/check_separate_credential.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/tests/test_at098.py",
+    "summary": "AT-098 separate-credential pytest suite (exercising an extended check_separate_credential.py with the live-half INCOMPLETE semantics); confirmed absent \u2014 shell equivalents exist instead at access/layer-b/at-098-separately-credentialed.sh and ops-vm/tests/at-098-founder-instance-cred.sh.",
+    "satisfiesTaskIds": [
+      "L5-T48"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/layerb/tools/check_separate_credential.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/layerb/tools/allowlist_sync.py",
+    "summary": "Layer B allowlist derivation/comparison-scope tool plus access/layerb/allowlist-scope.yaml and access/tests/test_allowlist_scope.py; confirmed absent \u2014 a shell equivalent exists instead at access/layer-b/check-allowlist-parity.sh, a different path/form with no declared comparison scope.",
+    "satisfiesTaskIds": [
+      "L5-T49"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/layerb/tools/check_separate_credential.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/layerb/tools/access_log.py",
+    "summary": "Layer B access-log and session-lifetime tool plus access/layerb/session-policy.yaml and access/tests/test_access_log.py; confirmed absent \u2014 shell equivalents access/layer-b/check-access-log.sh and check-session-limits.sh exist instead.",
+    "satisfiesTaskIds": [
+      "L5-T50"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/layerb/tools/check_separate_credential.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/layerb/tools/check_backup_policy.py",
+    "summary": "Layer B at-rest/backup discipline config checker plus access/layerb/backup/backup-policy.yaml; confirmed absent (access/layer-b has no tools/ subfolder at all) with no equivalent backup-policy checker located anywhere in the repo.",
+    "satisfiesTaskIds": [
+      "L5-T51"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/layerb/tools/check_separate_credential.py",
+      "assets/tools/validate_inventory.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/layerb/selfview/generate_selfview.py",
+    "summary": "Self-view generator plus access/layerb/selfview/keyring-schema.json and access/tests/test_selfview.py; confirmed absent anywhere in the repo (only a shell check access/layer-b/at-095-self-view.sh exists, which doesn't generate anything or define a keyring schema).",
+    "satisfiesTaskIds": [
+      "L5-T52"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/layerb/tools/access_log.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/layerb/tools/check_drill_record.py",
+    "summary": "Layer B restore-protocol drill-record instrument plus access/layerb/restore/restore-protocol.yaml and access/tests/test_drill_record.py; confirmed absent \u2014 partial shell equivalents exist (ops-vm/checks/restore-rotation-coverage.sh, ops-vm/drill/drill-record.template.yaml) but no unified Layer B drill-record check at the stated path.",
+    "satisfiesTaskIds": [
+      "L5-T54"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/layerb/tools/check_backup_policy.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/acceptance/at_runner.py",
+    "summary": "Unified access acceptance-test harness (plus access/acceptance/cases/*.yaml and access/tests/test_acceptance_harness.py) covering AT-089 through AT-098; confirmed that the entire access/acceptance/ directory does not exist. Individual AT-xxx shell scripts are scattered across access/layer-b, ops-vm/tests, ops-vm/checks, assets/tests and notify/tests but are never unified into this single harness.",
+    "satisfiesTaskIds": [
+      "L5-T55"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/layerb/tools/check_no_people_datasource.py",
+      "access/tests/test_at098.py",
+      "access/layerb/tools/allowlist_sync.py",
+      "access/layerb/tools/access_log.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "access/acceptance/at110_probe.py",
+    "summary": "AT-110 reconciler-credential-bound dry-run probe plus access/acceptance/at110-runbook.md; confirmed absent anywhere in the repo. The probe/runbook artifact itself is fully buildable (--dry-run mode, no live credential use); only the actual live execution of the six AT-110 attempts is the separate ASSISTED/human step this task explicitly routes to L0.",
+    "satisfiesTaskIds": [
+      "L5-T56"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [
+      "access/acceptance/at_runner.py"
+    ],
+    "lane": "L5"
+  },
+  {
+    "artifactPath": "metrics/cli.py",
+    "summary": "Confirmed: metrics/ has no __init__.py and no cli.py at all (not even an importable package), so every exit-gate command L4-P4 needs (`python -m metrics.cli metric-register|cost-anomaly-probe|detection-latency|scrape-coverage`) fails outright with a missing-module error; it should be built as a thin CLI dispatching to the already-real metrics/compute/*.py functions (eval.py, incidents.py, etc.), following the pattern of validators/registry/cli.py which already exists.",
+    "satisfiesTaskIds": [
+      "L4-P4"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "master-phases-2-6"
+  },
+  {
+    "artifactPath": ".github/workflows/eval-regression.yml",
+    "summary": "Confirmed: no workflow file anywhere matches *eval* and records/eval/ holds only .gitkeep. The AT-107 logic itself already passes standalone (access/tests/at-107-eval-regression-blocks-pin.sh runs clean, SUITE OK), but AT-107 specifically requires a SCHEDULED runner with real accumulated run history, which does not exist; buildable the same way as the existing scheduled workflows (.github/workflows/org-export.yml, scheduled-cut.yml, verify-digest-chain.yml all use `schedule:`).",
+    "satisfiesTaskIds": [
+      "L5-P3"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "master-phases-2-6"
+  },
+  {
+    "artifactPath": "registries/platform.yaml",
+    "summary": "Re-ran notify/check_push_list.py myself: it genuinely fails P7 for 8 of 11 routes because event_type values used by notify/routing/*.yaml (e.g. plan_submitted_to_approver_notification_sent, verification_blocked, launch_sign_off_requested, support_first_touch_breach, and four others) are absent from registries/platform.yaml's event_type enum and from contracts/event-types.yaml; the taxonomy registry and the L5-owned routing files disagree and need reconciling (either registering the missing event types or correcting the route files to existing ones) \u2014 this is the real cause of AT-106's \"closed-list guard does not report PUSH-LIST: PASS\" failure, not a logic bug in the guard itself.",
+    "satisfiesTaskIds": [
+      "L5-P4"
+    ],
+    "category": "code",
+    "dependsOnArtifacts": [],
+    "lane": "master-phases-2-6"
+  }
+]

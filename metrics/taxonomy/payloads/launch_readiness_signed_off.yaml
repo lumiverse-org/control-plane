@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/launch_readiness_signed_off.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: launch_readiness_signed_off
+n: 42
+entry: launch readiness signed off
+payload_required: []

@@ -52,6 +52,7 @@ def _add_common_args(sub: argparse.ArgumentParser) -> None:
     )
     sub.add_argument("--dry-run", action="store_true", help="explicit no-op: this is already the default")
     sub.add_argument("--summary", action="store_true", help="print the PLAN summary line")
+    sub.add_argument("--steps", action="store_true", help="print each planned step in the plan")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -65,6 +66,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_create = sub.add_parser("create-product", help="scaffold a new product: repo, Team, CODEOWNERS, protection")
     _add_common_args(p_create)
     p_create.add_argument("--product", required=True, help="the product id to create")
+    p_create.add_argument(
+        "--roster-source",
+        choices=("fixture", "live"),
+        default=None,
+        help="roster source for steps 11-13: 'fixture' (default with --fixture) or 'live' (reads docs/onboarding/products)",
+    )
     p_create.set_defaults(func=_cmd_create_product)
 
     p_add = sub.add_parser("add-person", help="onboard a person onto the organisation and any assignments")
@@ -88,6 +95,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 class ApplyRequiresLive(RuntimeError):
     """--apply was given without --live: refused (§64.1)."""
+
+
+class LiveRosterApplyForbidden(RuntimeError):
+    """--apply was given with --roster-source live: refused (live roster planning is dry-run only)."""
 
 
 def _check_apply_requires_live(args: argparse.Namespace) -> None:
@@ -127,6 +138,13 @@ def _run_operation(args: argparse.Namespace, operation: str, plan: Plan) -> int:
         pass
 
     print(plan.summary_line(operation, applied=applied))
+    if getattr(args, "steps", False):
+        for idx, step in enumerate(plan.steps, start=1):
+            print(f"  {idx:2d}. [{step.kind.value}] {step.id}: {step.description}")
+        manual_steps = getattr(plan, "manual_steps", ())
+        if manual_steps:
+            for idx, step in enumerate(manual_steps, start=len(plan.steps) + 1):
+                print(f"  {idx:2d}. [{step.kind.value}] {step.id}: {step.description}")
     if not applied:
         print(f"NOTE: dry-run (default) for {operation} -- pass --apply and --live to perform writes")
     return 0
@@ -136,12 +154,22 @@ def _cmd_create_product(args: argparse.Namespace) -> int:
     _fixture_root(args)
     # L3-P4-07: the real thirteen-automated/two-manual plan (spec §19.1),
     # composing L3-P4-02 .. -06. It needs a registry to read the current
-    # product roster from (steps 11-13) - only --fixture supplies one
-    # today, so --live still plans zero steps rather than guess at a
-    # live roster no accessor here can read; that stays honest with
-    # _run_operation's own rule that --apply --live never claims a write
-    # no step here actually performed.
-    if args.fixture is not None:
+    # product roster from (steps 11-13). When --roster-source live is passed,
+    # it reads the real onboarded product IDs from docs/onboarding/products/
+    # (dry-run only; incompatible with --apply).
+    if getattr(args, "roster_source", None) == "live":
+        if args.apply:
+            raise LiveRosterApplyForbidden(
+                "--apply cannot be used with --roster-source live: live roster planning is dry-run only."
+            )
+        if args.fixture is not None:
+            raise ValueError(
+                "--roster-source live cannot be used with --fixture: live roster planning requires --live."
+            )
+        from tools.provision.create_product import build_create_product_plan_against_live_roster
+
+        plan = build_create_product_plan_against_live_roster(args.product)
+    elif args.fixture is not None:
         from tools.provision.create_product import build_create_product_plan
 
         plan = build_create_product_plan(args.product, args.fixture)
@@ -179,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return args.func(args)
-    except (ApplyRequiresLive, FileNotFoundError) as exc:
+    except (ApplyRequiresLive, LiveRosterApplyForbidden, FileNotFoundError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 

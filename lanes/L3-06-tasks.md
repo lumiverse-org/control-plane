@@ -1,4 +1,4 @@
-﻿> **[AUTHORITATIVE — FD-B1-L3 2026-09-02]**
+> **[AUTHORITATIVE — FD-B1-L3 2026-09-02]**
 > This is the authoritative task plan for Lane 3. All competing plans are superseded.
 
 > **L0 ATTENTION — 4 work items from superseded phase files lack L3-06 equivalents (Session 12, 2026-09-08):**
@@ -692,7 +692,7 @@ git checkout integration && git pull --ff-only origin integration && git checkou
 mkdir -p reconciler/fixtures/fixture-a/declared/products reconciler/fixtures/fixture-a/declared/templates reconciler/fixtures/fixture-a/actual/codeowners
 ```
 
-<!-- CONTESTED(DR-L3-05-A): pre-resolved placeholder — not yet decided by Founder. Do not ship until FD closes DR-L3-05-A. -->
+<!-- RESOLVED(DR-L3-05-A): Closed by Founder Decision FD-089 (Option B: rejected invented schema fields; fixture-a must use ratified L1 schemas only). -->
 **File 1 —** `reconciler/fixtures/fixture-a/declared/people.yaml`
 
 ```yaml
@@ -720,7 +720,7 @@ people:
     capabilities: [verification, code-review]
 ```
 
-<!-- CONTESTED(DR-L3-05-B): pre-resolved placeholder — not yet decided by Founder. Do not ship until FD closes DR-L3-05-B. -->
+<!-- RESOLVED(DR-L3-05-B): Closed by Founder Decision FD-089 (Option B: rejected invented schema fields; fixture-a must use ratified L1 schemas only). Note: identifier DR-L3-05-B was also reused in L3-P0-DEL14 for delegation-expiry warning types, resolved separately by FD-129. -->
 **File 2 —** `reconciler/fixtures/fixture-a/declared/products/alpha.yaml`
 
 ```yaml
@@ -775,7 +775,7 @@ workflow_tags:
 attestation_window_days: 30
 ```
 
-<!-- CONTESTED(DR-L3-05-C): pre-resolved placeholder — not yet decided by Founder. Do not ship until FD closes DR-L3-05-C. -->
+<!-- RESOLVED(DR-L3-05-C): Closed by Founder Decision FD-089 (Option B: rejected invented schema fields; fixture-a must use ratified L1 schemas only). -->
 **File 5 —** `reconciler/fixtures/fixture-a/declared/os-health.yaml`
 
 ```yaml
@@ -788,7 +788,7 @@ write_freshness_max_hours:
   "records/uat/": 168
 ```
 
-<!-- CONTESTED(DR-L3-05-D): pre-resolved placeholder — not yet decided by Founder. Do not ship until FD closes DR-L3-05-D. -->
+<!-- RESOLVED(DR-L3-05-D): Closed by Founder Decision FD-089 (Option B: rejected invented schema fields; fixture-a must use ratified L1 schemas only). -->
 **File 6 —** `reconciler/fixtures/fixture-a/declared/assets.yaml`
 
 ```yaml
@@ -833,7 +833,7 @@ services:
     owner: ""
 ```
 
-<!-- CONTESTED(DR-L3-05-E): pre-resolved placeholder — not yet decided by Founder. Do not ship until FD closes DR-L3-05-E. -->
+<!-- RESOLVED(DR-L3-05-E): Closed by Founder Decision FD-089 (Option B: rejected invented schema fields; fixture-a must use ratified L1 schemas only). -->
 **File 10 —** `reconciler/fixtures/fixture-a/declared/board.yaml`
 
 ```yaml

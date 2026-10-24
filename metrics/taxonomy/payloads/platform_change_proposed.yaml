@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/platform_change_proposed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: platform_change_proposed
+n: 60
+entry: platform change proposed
+payload_required: []

@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/ready_queue_miss_recorded.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: ready_queue_miss_recorded
+n: 4
+entry: Ready-queue miss recorded
+payload_required: []

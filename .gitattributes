@@ -2,3 +2,9 @@
 *.py text eol=lf
 *.tsv text eol=lf
 Makefile text eol=lf
+tools/evidence/test/stub/gh text eol=lf
+tools/records/event-append text eol=lf
+tools/records/mint-token text eol=lf
+tools/records/record-decision text eol=lf
+tools/records/record-verification-result text eol=lf
+tools/records/record-write text eol=lf

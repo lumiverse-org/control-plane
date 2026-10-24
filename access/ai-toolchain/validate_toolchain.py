@@ -28,7 +28,10 @@ APPROVED = {
     "cursor", "kilo-code", "hermes-agent",
 }
 
-HERMES_PIN = "8e9459c97f707047be5915a5c8b4c503756daa9b"
+HERMES_PINS = {
+    "8e9459c97f707047be5915a5c8b4c503756daa9b",  # Section 36.3 initial pin
+    "4d04303818b61bf3aa09278af48356315515965b",  # v0.22.4 stable release pin (D80)
+}
 
 RUNTIMES = os.path.join("access", "ai-toolchain", "runtimes")
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
@@ -71,8 +74,8 @@ def check(path, doc):
         errors.append("T7 vendor_api_key %r is not forbidden"
                       % model.get("vendor_api_key"))
     if stem == "hermes-agent":
-        if str(doc.get("source_pin")) != HERMES_PIN:
-            errors.append("T5 source_pin %r is not the Section 36.3 commit"
+        if str(doc.get("source_pin")) not in HERMES_PINS:
+            errors.append("T5 source_pin %r is not an approved Section 36.3/D80 commit"
                           % doc.get("source_pin"))
         if not SHA_RE.match(str(doc.get("source_pin", ""))):
             errors.append("T5 source_pin is not a full 40-hex commit SHA")

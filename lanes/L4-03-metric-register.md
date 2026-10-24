@@ -41,7 +41,125 @@ The shell resets between calls. Re-export at the start of every task. Always use
 
 ---
 
-## § Phase 3 entry gate (L4-P3-06)
+## § Phase 3 — Taxonomy, Freshness, Anchors and Retention
+
+### L4-P3-02 — Event payload declarations (directory-per-item)
+
+**Title:** Event payload declarations — directory-per-item under metrics/taxonomy/payloads/
+**Phase:** 3
+**Files touched:**
+- `metrics/taxonomy/payloads/*.yaml` (86 files)
+- `tools/records/validate-taxonomy.sh`
+
+**Deps:** L4-P3-01
+**Acceptance command:** `export CP_ROOT=. L4_PY=python; bash tools/records/validate-taxonomy.sh`
+**Spec anchor:** MasterSpec §97.3 line 8958; PARTITION.md rule 3 (directory-per-item)
+
+**Commands**
+
+```bash
+export CP_ROOT=. L4_PY=python
+bash tools/records/validate-taxonomy.sh
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | All 86 payload files present under metrics/taxonomy/payloads/ | `ls metrics/taxonomy/payloads/*.yaml \| wc -l` | `86` |
+| 2 | Taxonomy and directory-per-item payloads validate cleanly | `bash tools/records/validate-taxonomy.sh` | `TAXONOMY OK 86` |
+| 3 | No orphan payload files and no missing identifiers | `bash tools/records/validate-taxonomy.sh` | exit 0 |
+
+**SELF-VERIFY**
+
+```bash
+bash tools/records/validate-taxonomy.sh
+```
+
+Expected output:
+```
+TAXONOMY OK 86
+```
+
+---
+
+### L4-P3-04 — Write-freshness windows per store (3 Blocking)
+
+**Title:** Write-freshness windows per store, 3 Blocking
+**Phase:** 3
+**Files touched:**
+- `metrics/freshness/write-freshness.yaml`
+- `tools/records/validate-freshness.sh`
+
+**Deps:** L4-P2-06
+**Acceptance command:** `bash tools/records/validate-freshness.sh`
+**Spec anchor:** MasterSpec §97.2 line 8880; §53.1 line 4679
+
+**Commands**
+
+```bash
+bash tools/records/validate-freshness.sh
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | Write freshness declaration valid with exactly 3 Blocking stores (`events/`, `records/deployments/`, `records/uat/`) | `bash tools/records/validate-freshness.sh` | `FRESHNESS OK BLOCKING=3` |
+| 2 | Write-freshness declaration file exists | `test -f metrics/freshness/write-freshness.yaml && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+bash tools/records/validate-freshness.sh
+```
+
+Expected output:
+```
+FRESHNESS OK BLOCKING=3
+```
+
+---
+
+### L4-P3-05 — Records head-SHA anchor schema (D107)
+
+**Title:** Records head-SHA anchor schema (D107)
+**Phase:** 3
+**Files touched:**
+- `metrics/anchor/records-head-anchor.schema.json`
+
+**Deps:** L4-P2-05
+**Acceptance command:** `bash tools/records/validate-schemas.sh --anchor`
+**Spec anchor:** MasterSpec §40.1 line 3681; §53.2; Decision D107
+
+**Note on cross-lane boundary:** L4 writes only the anchor schema `metrics/anchor/records-head-anchor.schema.json`. L3 is the reconciler lane that writes actual anchor records. L4 does not write anchor records.
+
+**Commands**
+
+```bash
+export CP_ROOT=. L4_PY=python
+bash tools/records/validate-schemas.sh --anchor
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | Anchor schema parses as valid Draft 2020-12 JSON Schema | `bash tools/records/validate-schemas.sh --anchor` | `ANCHOR-SCHEMA OK` |
+| 2 | Schema file exists under metrics/anchor/ | `test -f metrics/anchor/records-head-anchor.schema.json && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+bash tools/records/validate-schemas.sh --anchor
+```
+
+Expected output:
+```
+ANCHOR-SCHEMA OK
+```
+
+---
 
 ### L4-P3-06 — Metric register entry gate and SIG source map
 
@@ -255,6 +373,44 @@ gh pr create --base integration \
 - Any of the three files fails to parse as YAML — STOP, file blocker.
 - `validate-taxonomy.sh --signals` prints anything other than `SIGNALS OK 7/7` — STOP.
 - D-L4-TL-4 was not yet decided — STOP. (It has been decided: SIG-47.)
+
+---
+
+### L4-P3-07 — Retention classes per store (§97.6)
+
+**Title:** Retention classes per store (§97.6)
+**Phase:** 3
+**Files touched:**
+- `metrics/retention/retention-classes.yaml`
+- `tools/records/validate-retention.sh`
+
+**Deps:** L4-P2-06
+**Acceptance command:** `bash tools/records/validate-retention.sh`
+**Spec anchor:** MasterSpec §97.6 lines 9001–9004; §101 invariants 47–48, lines 9527–9529
+
+**Commands**
+
+```bash
+bash tools/records/validate-retention.sh
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | All stores classified with retention policies | `bash tools/records/validate-retention.sh` | `RETENTION OK (21 stores validated)` |
+| 2 | Retention classes declaration file exists | `test -f metrics/retention/retention-classes.yaml && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+bash tools/records/validate-retention.sh
+```
+
+Expected output:
+```
+RETENTION OK (21 stores validated)
+```
 
 ---
 

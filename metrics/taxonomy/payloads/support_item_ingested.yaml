@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/support_item_ingested.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: support_item_ingested
+n: 81
+entry: support item ingested
+payload_required: []

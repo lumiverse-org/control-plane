@@ -1,4 +1,4 @@
-﻿# L4 — PHASE 4 — THE ATTENTION LEDGER AND DERIVED METRICS
+# L4 — PHASE 4 — THE ATTENTION LEDGER AND DERIVED METRICS
 
 **Lane:** L4 Records, Events & Metrics (subsystems I, N — Master Spec §99.2, lines 9184–9231)
 **Phase:** 4 — the attention ledger, its duration rule, and the metrics derived from it
@@ -3667,6 +3667,108 @@ expected: "CFG / CFGC / SELF / STORE / STOREC the five OK lines / RQM=RQM-DETECT
 spec_ref: "Master Spec v4.0 Section 97.4 lines 8955-8981; Section 97.5 lines 8982-8987; Section 99.6 risk 2 lines 9276-9294; PARTITION.md rules 1 and 4"
 needs: "L0"
 action_taken: "no force-push, no merge, no other-lane branch modified, no records repository write"
+```
+
+---
+
+### L4-T419 — L4-P4-07: record-decision CLI and decision library
+
+**Size:** M
+**Depends on:** L4-T411
+**Artifacts:** `tools/records/record-decision`, `tools/records/lib/decision.py`, `tools/records/record_decision.py`
+
+Documents `tools/records/record-decision` CLI and its core library `tools/records/lib/decision.py`. Opening a decision prompt writes to `records/decisions/pending/`; deciding writes a final decision to `records/decisions/` and marks the pending record superseded by a follow-up record, never by in-place mutation (§97.2 lines 8865–8866; §99.2).
+
+**Commands**
+
+```bash
+python -m pytest tools/records/tests/test_record_decision.py -q
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | Decision pending and decide flows execute with schema validation | `python -m pytest tools/records/tests/test_record_decision.py -q` | `8 passed` |
+| 2 | CLI help is accessible | `PYTHONPATH=. tools/records/record-decision --help` | `record-decision CLI: pending and decided records` |
+
+**SELF-VERIFY**
+
+```bash
+python -m pytest tools/records/tests/test_record_decision.py -q
+```
+
+Expected output:
+```
+8 passed
+```
+
+---
+
+### L4-T420 — L4-P4-08: read-across fail-closed cross-repository reader
+
+**Size:** M
+**Depends on:** L4-T411
+**Artifacts:** `tools/records/read-across`, `tools/records/read_across.py`, `tools/records/test-read-across.sh`
+
+Documents `tools/records/read-across` and `tools/records/test-read-across.sh` (charter DoD-16). Cross-repository reader fails closed rather than reporting false zeros if the records repository is unreachable (§40.1 line 3671). When unreachable, the reader prints `FAIL-CLOSED` and exits non-zero; `test-read-across.sh --unreachable` asserts this fail-closed exit and exits 1.
+
+**Commands**
+
+```bash
+bash tools/records/test-read-across.sh --unreachable
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | Unreachable records repository triggers fail-closed error | `bash tools/records/test-read-across.sh --unreachable` | `FAIL-CLOSED records-repository-unreachable root=...` (exit 1) |
+| 2 | Fail-closed reader tool exists | `test -f tools/records/read-across && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+bash tools/records/test-read-across.sh --unreachable
+```
+
+Expected output:
+```
+FAIL-CLOSED records-repository-unreachable root=...
+```
+
+---
+
+### L4-T421 — L4-P4-10: records-writer token adapter rwtoken.py
+
+**Size:** S
+**Depends on:** L4-T411
+**Artifacts:** `tools/records/lib/rwtoken.py`
+
+Documents `tools/records/lib/rwtoken.py`, the records-writer token adapter. Every writer obtains credentials through token minting rather than carrying a static token. A writer invoked without a valid token mechanism exits with configuration error, never 0 (§97.1 line 8841; §40.1 line 3665).
+
+**Commands**
+
+```bash
+python -m pytest tools/records/tests/test_rwtoken.py -q
+```
+
+**Acceptance criteria**
+
+| # | Criterion | Proving command | Unambiguous output |
+|---|---|---|---|
+| 1 | Writer token adapter minting and validation tests pass | `python -m pytest tools/records/tests/test_rwtoken.py -q` | `4 passed` |
+| 2 | Token adapter module exists | `test -f tools/records/lib/rwtoken.py && echo present` | `present` |
+
+**SELF-VERIFY**
+
+```bash
+python -m pytest tools/records/tests/test_rwtoken.py -q
+```
+
+Expected output:
+```
+4 passed
 ```
 
 ---

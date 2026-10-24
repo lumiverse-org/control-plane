@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/asset_owner_reassigned.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: asset_owner_reassigned
+n: 40
+entry: asset owner reassigned
+payload_required: []

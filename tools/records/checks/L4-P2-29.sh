@@ -29,11 +29,11 @@ echo "$OUT" | tail -n1 | grep -qx "SCHEMAS GATE PASS" \
 bash "$VS" --coverage | grep -Eq '^COVERAGE OK [0-9]+$' \
   || { echo "validate-schemas.sh --coverage did not report COVERAGE OK" >&2; exit 1; }
 
-# Assertion: the store-map itself still carries exactly eighteen rows (the
-# seventeen record stores of Section 2.2 plus the shared events/ envelope --
-# store-map_version 1; see L4-T223 note on the nineteen-vs-eighteen count).
+# Assertion: the store-map itself carries exactly nineteen rows (the
+# seventeen record stores of Section 2.2 plus events/ plus bootstrap/ --
+# store_map_version 1; 19 per FD-059).
 ROWS=$(grep -c '{ store:' "$MAP")
-[ "$ROWS" -eq 18 ] || { echo "expected 18 store-map rows, got $ROWS" >&2; exit 1; }
+[ "$ROWS" -eq 19 ] || { echo "expected 19 store-map rows, got $ROWS" >&2; exit 1; }
 
 # Negative fixture (neg_fixture): a schema declaring a denied property name
 # (D88 limb B) must be rejected by --fields. Sandbox a copy of the real store

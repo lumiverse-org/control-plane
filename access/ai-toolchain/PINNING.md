@@ -47,7 +47,7 @@ naming the source pin and the access the component holds (Section 36.3).
 | Runtime | Binding |
 |---|---|
 | `kilo-code` | `credit_based_billing: forbidden` — it must be configured against a subscription provider, not its own credit-based billing (Section 35.2) |
-| `hermes-agent` | `source_pin: 8e9459c97f707047be5915a5c8b4c503756daa9b`, full SHA; pinned-checkout install; `curl_pipe_installer: never`; `self_update_command: never`; installs fetch from the company mirror at the pin; `model_configuration.provider: custom` against the LAN inference endpoint (Sections 35.2, 36.3) |
+| `hermes-agent` | `source_pin: 4d04303818b61bf3aa09278af48356315515965b` (v0.22.4 stable release, bumped from initial `8e9459c97f707047be5915a5c8b4c503756daa9b` per D80), full SHA; pinned-checkout install; `curl_pipe_installer: never`; `self_update_command: never`; installs fetch from the company mirror at the pin; `model_configuration.provider: custom` against the LAN inference endpoint (Sections 35.2, 36.3) |
 
 ## What this directory does not decide
 

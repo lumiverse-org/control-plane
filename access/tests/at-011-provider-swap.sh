@@ -24,10 +24,10 @@ if [ -z "$MISSING" ]; then
 else
   l5_fail "AT-011/list-is-complete" "approved runtimes missing from the list:$MISSING (spec 35.2)"
 fi
-if grep -rqF '8e9459c97f707047be5915a5c8b4c503756daa9b' "$RUNTIMES_DIR/hermes-agent.yaml" 2>/dev/null; then
+if grep -rqE '(8e9459c97f707047be5915a5c8b4c503756daa9b|4d04303818b61bf3aa09278af48356315515965b)' "$RUNTIMES_DIR/hermes-agent.yaml" 2>/dev/null; then
   l5_pass "AT-011/hermes-pinned"
 else
-  l5_fail "AT-011/hermes-pinned" "Hermes Agent is not pinned at the commit spec 35.2 names (D69)"
+  l5_fail "AT-011/hermes-pinned" "Hermes Agent is not pinned at the commit spec 35.2 names (D69) or approved bump (D80)"
 fi
 # Negative: no runtime name may appear outside the list. A name anywhere
 # else is the coupling spec 35.3 calls a defect to be removed.

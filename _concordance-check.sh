@@ -72,11 +72,17 @@ esac | grep -oE '(T-)?L[0-9]-[A-Za-z0-9-]+' | sort -u; }
 # counted -- the alias file still correctly claimed it, producing a ghost.
 # Moved the cutoff to NR<=5064, immediately before L5-T60's real heading at
 # line 5065, so T01..T59 are captured in full and T60+ stays excluded.
+# L4 128->141 bodies, 14->1 residue (2026-10-23): commit 6dc1710 resolved 13
+# residue tasks in lanes/_ALIASES.tsv by backfilling real body implementations
+# across Lane 4 phase documents (L4-03-metric-register.md, L4-04-attention-ledger.md,
+# L4-07-tests-and-runbook.md), leaving only L4-P2-23 (retired under FD-130) as
+# unmapped residue. Bodies moved from 128 to 141 (128+13=141) and residue
+# decreased from 14 to 1 (14-13=1). Updated EXPECT to match live alias state.
 #      lane index bodies residue
 EXPECT="L1 61 157 0
 L2 113 138 0
 L3 78 194 0
-L4 117 128 14
+L4 117 141 1
 L5 59 152 0"
 
 printf '%-4s %-9s %-9s %-9s %-9s %-4s %-5s %-6s %s\n' \

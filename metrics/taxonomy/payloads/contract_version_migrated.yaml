@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/contract_version_migrated.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: contract_version_migrated
+n: 65
+entry: contract version migrated
+payload_required: []

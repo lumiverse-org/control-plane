@@ -1,0 +1,27 @@
+# Negative fixture: empty cap_drop
+version: "3.8"
+
+networks:
+  internal-cage:
+    driver: bridge
+    internal: false
+
+volumes:
+  hermes_worker_home:
+    name: hermes-worker-home
+
+services:
+  hermes-background-worker:
+    image: "nousresearch/hermes-agent:v0.22.4"
+    container_name: "hermes-background-worker"
+    read_only: true
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop: []
+    user: "1001:1001"
+    volumes:
+      - type: volume
+        source: hermes_worker_home
+        target: /var/lib/hermes-background-worker
+    networks:
+      - internal-cage

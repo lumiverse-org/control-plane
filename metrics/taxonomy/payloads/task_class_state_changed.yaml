@@ -1,0 +1,10 @@
+# metrics/taxonomy/payloads/task_class_state_changed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: task_class_state_changed
+n: 69
+entry: task class suspended or restored
+payload_required:
+- state
+states:
+- suspended
+- restored

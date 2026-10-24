@@ -1,0 +1,7 @@
+# metrics/taxonomy/payloads/artifact_built.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: artifact_built
+n: 19
+entry: artifact built with digest
+payload_required:
+- digest

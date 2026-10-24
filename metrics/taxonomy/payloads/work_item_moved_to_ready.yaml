@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/work_item_moved_to_ready.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: work_item_moved_to_ready
+n: 2
+entry: moved to Ready
+payload_required: []

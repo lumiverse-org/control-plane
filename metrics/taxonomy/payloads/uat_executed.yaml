@@ -1,0 +1,7 @@
+# metrics/taxonomy/payloads/uat_executed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: uat_executed
+n: 22
+entry: UAT executed with result
+payload_required:
+- result

@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/eval_regression_detected.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: eval_regression_detected
+n: 78
+entry: eval regression detected
+payload_required: []

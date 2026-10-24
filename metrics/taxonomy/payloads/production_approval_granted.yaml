@@ -1,0 +1,7 @@
+# metrics/taxonomy/payloads/production_approval_granted.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: production_approval_granted
+n: 24
+entry: production approval granted with approver
+payload_required:
+- approver

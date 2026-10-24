@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/knowledge_redundancy_status_changed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: knowledge_redundancy_status_changed
+n: 44
+entry: knowledge redundancy status change
+payload_required: []

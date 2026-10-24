@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/ai_provider_outage_recorded.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: ai_provider_outage_recorded
+n: 71
+entry: AI provider outage recorded
+payload_required: []

@@ -1,0 +1,10 @@
+# metrics/taxonomy/payloads/verification_state_changed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: verification_state_changed
+n: 75
+entry: verification blocked and unblocked
+payload_required:
+- state
+states:
+- blocked
+- unblocked

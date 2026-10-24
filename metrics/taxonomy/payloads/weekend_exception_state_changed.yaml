@@ -1,0 +1,13 @@
+# metrics/taxonomy/payloads/weekend_exception_state_changed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: weekend_exception_state_changed
+n: 86
+entry: weekend exception requested, authorised, worked, TOIL scheduled and taken
+payload_required:
+- state
+states:
+- requested
+- authorised
+- worked
+- toil_scheduled
+- toil_taken

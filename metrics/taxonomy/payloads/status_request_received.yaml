@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/status_request_received.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: status_request_received
+n: 73
+entry: status request received (Coordination category)
+payload_required: []

@@ -19,3 +19,18 @@ devlake:
   action_required: >
     L5 must revert ops-vm/stack/compose.shared.yml to remove the premature DevLake
     inclusion added before this decision was recorded.
+
+# FD-115 — 2026-10-21
+pilot_products:
+  status: decided
+  decision_date: "2026-10-21"
+  rationale: >
+    Per FD-016 ("two, by criticality rank"), the two V1 pilot products selected
+    by criticality rank are Assetssync.cloud (rank 1) and solvox.ai (rank 2),
+    per facts.tsv criticality ordering.
+  products:
+    - name: "Assetssync.cloud"
+      rank: 1
+    - name: "solvox.ai"
+      rank: 2
+

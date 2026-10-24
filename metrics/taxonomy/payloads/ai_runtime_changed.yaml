@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/ai_runtime_changed.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: ai_runtime_changed
+n: 70
+entry: AI runtime changed
+payload_required: []

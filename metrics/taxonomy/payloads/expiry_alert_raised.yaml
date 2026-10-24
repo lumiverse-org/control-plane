@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/expiry_alert_raised.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: expiry_alert_raised
+n: 39
+entry: secret or certificate expiry alert
+payload_required: []

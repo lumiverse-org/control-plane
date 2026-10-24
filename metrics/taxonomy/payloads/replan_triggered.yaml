@@ -1,0 +1,6 @@
+# metrics/taxonomy/payloads/replan_triggered.yaml
+# Master Spec v4.0 §97.3 line 8958, PARTITION.md rule 3 (directory-per-item)
+event_type: replan_triggered
+n: 12
+entry: re-plan triggered
+payload_required: []

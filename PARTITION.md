@@ -17,7 +17,7 @@ A lane may edit ONLY paths it owns. Enforced by CODEOWNERS + the lane-guard CI c
 | **L1 Registries & Contracts** | `lane/1/*` | A, B | `schemas/registry/**`, `schemas/product/**`, `registries/**`, `validators/registry/**` |
 | **L2 Pipeline & Evidence** | `lane/2/*` | E, F | `.github/workflows/**`, `templates/workflows/**`, `tools/evidence/**` |
 | **L3 Reconciler & Provisioning** | `lane/3/*` | C, D | `reconciler/**`, `tools/provision/**`, `validators/drift/**` |
-| **L4 Records, Events & Metrics** | `lane/4/*` | I, N | ALL of `control-plane-records`, plus `schemas/records/**`, `metrics/**`, `tools/records/**` |
+| **L4 Records, Events & Metrics** | `lane/4/*` | I, N, P | ALL of `control-plane-records`, plus `schemas/records/**`, `metrics/**`, `tools/records/**` |
 | **L5 Access, Infra & Ops** | `lane/5/*` | K, L, M, Q, R | `access/**`, `infra/**`, `ops-vm/**`, `notify/**`, `assets/**` |
 | **L0 Integrator** (human/lead) | `main`, `integration` | — | `contracts/**`, `CODEOWNERS`, `docs/**`, root files, `Makefile` |
 
