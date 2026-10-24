@@ -226,6 +226,18 @@ def resolve_recovery_exemption(
 ) -> tuple[bool, str | None]:
     """Cross-file resolver connecting product.yaml's recovery value to
     exceptions.yaml exemption records (Section 15.7, Section 54.1; CCR-004 resolved).
+
+    Verification logic against Section 54.1 / exceptions.registry.v1 schema:
+    1. Exemption lookup: Matches exemption by target ID (if product.yaml recovery
+       declares an EXC-YYYY-NNN string) or by product membership in affected.products.
+    2. Closure check: Verifies the exemption is open (`closure` is None).
+       A non-null closure indicates a terminated exemption (e.g. expired, remediated).
+    3. Compensating control check: Verifies `compensating_control` is declared,
+       non-empty, and not 'none' (Section 15.7 mandatory requirement).
+    4. Expiry check: Verifies `expiry` is declared and (if as_of is provided)
+       has not elapsed past as_of (Section 54.2, Invariant 77).
+    5. Product scope check: Verifies that if `affected.products` is populated,
+       it includes the subject product's ID (Section 54.1).
     """
     pid = _product_id(product_doc)
     recovery = product_doc.get("recovery")
@@ -233,6 +245,7 @@ def resolve_recovery_exemption(
     # If recovery is a non-null object, local recovery declarations are satisfied
     if isinstance(recovery, dict):
         return True, None
+
 
     target_exemption_id = recovery.strip() if isinstance(recovery, str) else None
 
