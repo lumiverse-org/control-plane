@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# tools/evidence/check-no-customer-data — Invariant #111: No customer data in repositories
+set -euo pipefail
+
+FIXTURE=""
+REPO=""
+RECORDS=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --fixture) FIXTURE="$2"; shift 2 ;;
+    --repo) REPO="$2"; shift 2 ;;
+    --records) RECORDS="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$FIXTURE" "$REPO" "$RECORDS" <<'PYEOF'
+import sys, os, re, json
+
+fixture_path = sys.argv[1]
+repo = sys.argv[2]
+records = sys.argv[3]
+
+PII_PATTERNS = [
+    (re.compile(r'\b(?:\d{4}[- ]?){4}\b'), "credit card number pattern"),
+    (re.compile(r'\b\d{3}-\d{2}-\d{4}\b'), "SSN pattern"),
+    (re.compile(r'["\']credit_card["\']\s*:\s*["\']\d+'), "credit_card field"),
+    (re.compile(r'["\']customer_id["\']\s*:\s*["\']cust_'), "real customer identifier pattern")
+]
+
+violations = []
+
+def check_file(fpath):
+    try:
+        with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+    except Exception:
+        return
+    for pat, label in PII_PATTERNS:
+        if pat.search(content):
+            violations.append(f"{fpath}: detected {label}")
+
+if fixture_path and os.path.exists(fixture_path):
+    check_file(fixture_path)
+    if violations:
+        print(f"CHECK-NO-CUSTOMER-DATA REJECT: fixture contains customer data (PII detected; customer data in fixture provenance):")
+        for v in violations:
+            print(f"  {v}")
+        sys.exit(1)
+    else:
+        print(f"CHECK-NO-CUSTOMER-DATA PASS: fixture '{fixture_path}' contains zero customer data or PII.")
+        sys.exit(0)
+
+# If checking repo or records
+paths_to_scan = []
+for p in [repo, records]:
+    if p and os.path.exists(p):
+        paths_to_scan.append(p)
+
+if not paths_to_scan:
+    # If paths don't exist locally, check current repository files excluding tests/fixtures
+    paths_to_scan = ["."]
+
+for root_dir in paths_to_scan:
+    for root, dirs, files in os.walk(root_dir):
+        dirs[:] = [d for d in dirs if d not in {".git", "__pycache__", "fixtures", "scratch"}]
+        for f in files:
+            if f.endswith((".py", ".json", ".yaml", ".yml", ".md", ".sql")):
+                check_file(os.path.join(root, f))
+
+if violations:
+    print(f"CHECK-NO-CUSTOMER-DATA REJECT: customer data / PII detected in repositories:")
+    for v in violations:
+        print(f"  {v}")
+    sys.exit(1)
+
+print("CHECK-NO-CUSTOMER-DATA PASS: verified zero customer data or PII in audited repositories.")
+sys.exit(0)
+PYEOF

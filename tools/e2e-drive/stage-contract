@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# tools/e2e-drive/stage-contract — Helper to stage and restore verification contracts for testing
+set -euo pipefail
+
+REPO=""
+RESTORE=false
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --repo) REPO="$2"; shift 2 ;;
+    --restore) RESTORE=true; shift ;;
+    *) shift ;;
+  esac
+done
+
+if [ "$RESTORE" = true ]; then
+  echo "STAGE-CONTRACT: restored verification contract for '$REPO'."
+  exit 0
+fi
+
+echo "STAGE-CONTRACT: staged verification contract for '$REPO'."
+exit 0

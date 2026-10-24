@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# tools/records/close-verification-block — Close a verification block (§27, NEG-15)
+set -euo pipefail
+
+PRODUCT=""
+ACTOR="system"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --product) PRODUCT="$2"; shift 2 ;;
+    --as) ACTOR="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$PRODUCT" "$ACTOR" <<'PYEOF'
+import sys, os, yaml
+
+product = sys.argv[1] or "all"
+actor = sys.argv[2]
+
+block_dirs = [
+    f"{os.environ.get('E2E_OUT', '.')}/verification-blocks",
+    "records/verification-blocks"
+]
+
+closed = False
+for bdir in block_dirs:
+    target = os.path.join(bdir, f"{product}.yaml")
+    if os.path.exists(target):
+        try:
+            with open(target, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+            data["status"] = "closed"
+            data["closed_by"] = actor
+            with open(target, "w", encoding="utf-8") as f:
+                yaml.safe_dump(data, f)
+            closed = True
+        except Exception:
+            pass
+
+if closed:
+    print(f"VERIFICATION-BLOCK CLOSED: closed verification block for '{product}' by {actor}.")
+else:
+    print(f"VERIFICATION-BLOCK: no open block found to close for '{product}'.")
+sys.exit(0)
+PYEOF

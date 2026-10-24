@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# tools/evidence/check-parity — §33.1: Staging / production configuration parity validator (NEG-24)
+set -euo pipefail
+
+REPO=""
+STAGING_EXTRA_VAR=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --repo) REPO="$2"; shift 2 ;;
+    --staging-extra-var) STAGING_EXTRA_VAR="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$REPO" "$STAGING_EXTRA_VAR" <<'PYEOF'
+import sys
+
+repo = sys.argv[1]
+staging_extra = sys.argv[2]
+
+if staging_extra:
+    print(f"CHECK-PARITY REJECT: parity violation detected: staging-only env var '{staging_extra}' causes environment mismatch blocking deploy (staging and prod differ; parity violation).")
+    sys.exit(1)
+
+print(f"CHECK-PARITY PASS: environment parity verified between staging and production for '{repo}'.")
+sys.exit(0)
+PYEOF

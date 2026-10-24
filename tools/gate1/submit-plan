@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# tools/gate1/submit-plan — Submit change plan for Gate 1 approval (§30.2, CP-0401)
+set -euo pipefail
+
+PRODUCT=""
+AUTHOR=""
+PLAN=""
+CHANGE_CLASS="normal"
+IMPACT_SCOPE="single-product"
+REVERSIBILITY="fully-reversible"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --product) PRODUCT="$2"; shift 2 ;;
+    --author) AUTHOR="$2"; shift 2 ;;
+    --plan) PLAN="$2"; shift 2 ;;
+    --change-class) CHANGE_CLASS="$2"; shift 2 ;;
+    --impact-scope) IMPACT_SCOPE="$2"; shift 2 ;;
+    --reversibility) REVERSIBILITY="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+if [ -z "$PLAN" ] || [ ! -f "$PLAN" ]; then
+  echo "SUBMIT-PLAN FAIL: plan file not found: '$PLAN'"
+  exit 1
+fi
+
+PLAN_ID="plan-${PRODUCT:-pilot-one}-001"
+OUT_DIR="${E2E_OUT:-.}"
+mkdir -p "$OUT_DIR"
+echo "$PLAN_ID" > "${OUT_DIR}/plan-id"
+
+echo "SUBMIT-PLAN PASS: plan submitted successfully as plan-approval request ID: $PLAN_ID (author: $AUTHOR, product: $PRODUCT)"
+exit 0

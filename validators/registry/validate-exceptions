@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# validators/registry/validate-exceptions — Exception registry validator (Inv #77, NEG-25)
+set -euo pipefail
+
+FILE=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --file) FILE="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$FILE" <<'PYEOF'
+import sys, os, yaml, re, datetime
+
+file_path = sys.argv[1]
+if not file_path or not os.path.exists(file_path):
+    print(f"VALIDATE-EXCEPTIONS FAIL: file not found: '{file_path}' (invalid exception)")
+    sys.exit(2)
+
+try:
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+except Exception as e:
+    print(f"VALIDATE-EXCEPTIONS FAIL: YAML parse error: {e} (invalid exception)")
+    sys.exit(1)
+
+# Check required fields
+if not data.get("id"):
+    print("VALIDATE-EXCEPTIONS FAIL: id is required (invalid exception)")
+    sys.exit(1)
+
+expiry = data.get("expiry") or data.get("expires")
+if not expiry:
+    print("VALIDATE-EXCEPTIONS FAIL: expiry date is required on all exceptions (missing expiry) — invalid exception")
+    sys.exit(1)
+
+# Validate date format YYYY-MM-DD
+try:
+    if isinstance(expiry, datetime.date):
+        exp_date = expiry
+    else:
+        exp_date = datetime.date.fromisoformat(str(expiry))
+except Exception:
+    print(f"VALIDATE-EXCEPTIONS FAIL: invalid expiry date format '{expiry}' (expiry date required)")
+    sys.exit(1)
+
+print(f"VALIDATE-EXCEPTIONS PASS: exception '{data.get('id')}' is valid (expires: {exp_date}).")
+sys.exit(0)
+PYEOF

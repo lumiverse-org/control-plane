@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# tools/records/find-event — Event query tool for Lane 4 immutable event stores (§97.3)
+set -euo pipefail
+
+EVENT_TYPE=""
+PRODUCT=""
+NEWER_THAN=""
+REQUIRES=()
+PRESENT_FIELDS=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --type) EVENT_TYPE="$2"; shift 2 ;;
+    --product) PRODUCT="$2"; shift 2 ;;
+    --newer-than) NEWER_THAN="$2"; shift 2 ;;
+    --require) REQUIRES+=("$2"); shift 2 ;;
+    --require-fields)
+      IFS=',' read -ra ADDFIELDS <<< "$2"
+      PRESENT_FIELDS+=("${ADDFIELDS[@]}")
+      shift 2
+      ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$EVENT_TYPE" "$PRODUCT" "$NEWER_THAN" "${REQUIRES[*]}" "${PRESENT_FIELDS[*]}" <<'PYEOF'
+import sys, os, glob, yaml, datetime
+
+event_type = sys.argv[1]
+product = sys.argv[2]
+newer_than_str = sys.argv[3]
+requires_str = sys.argv[4]
+fields_str = sys.argv[5]
+
+requires = [r.split("=", 1) for r in requires_str.split() if "=" in r]
+required_fields = [f.strip() for f in fields_str.split() if f.strip()]
+
+search_dirs = [
+    "events",
+    os.path.join(os.environ.get("E2E_OUT", "."), "events"),
+    "records/events"
+]
+
+def get_nested(d, path):
+    parts = path.split(".")
+    curr = d
+    for p in parts:
+        if isinstance(curr, dict) and p in curr:
+            curr = curr[p]
+        else:
+            return None
+    return curr
+
+matched_events = []
+for d in search_dirs:
+    if not os.path.exists(d):
+        continue
+    for root, _, files in os.walk(d):
+        for fname in files:
+            if not fname.endswith((".yaml", ".yml", ".json")):
+                continue
+            fpath = os.path.join(root, fname)
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+                if not isinstance(data, dict):
+                    continue
+                
+                # Check event type
+                if event_type and data.get("event_type") != event_type and data.get("type") != event_type:
+                    continue
+                
+                # Check product
+                if product and data.get("product") and data.get("product") != product:
+                    continue
+                
+                # Check required fields
+                if not all(get_nested(data, f) is not None for f in required_fields):
+                    continue
+                
+                # Check key=value pairs
+                match_all = True
+                for k, v in requires:
+                    val = str(get_nested(data, k) or "")
+                    if val != str(v):
+                        match_all = False
+                        break
+                if not match_all:
+                    continue
+                
+                # Check newer-than if specified
+                if newer_than_str:
+                    rec_ts_str = data.get("recorded_at") or data.get("occurred_at") or data.get("timestamp")
+                    if rec_ts_str:
+                        try:
+                            rec_dt = datetime.datetime.fromisoformat(str(rec_ts_str).replace("Z", "+00:00"))
+                            newer_dt = datetime.datetime.fromisoformat(newer_than_str.replace("Z", "+00:00"))
+                            if rec_dt < newer_dt:
+                                continue
+                        except Exception:
+                            pass
+                
+                matched_events.append((fpath, data))
+            except Exception:
+                continue
+
+if not matched_events:
+    print(f"FIND-EVENT FAIL: no matching event found (type={event_type}, product={product}, requires={requires})")
+    sys.exit(1)
+
+print(f"FIND-EVENT PASS: found {len(matched_events)} matching event(s) of type '{event_type}' (first: {matched_events[0][0]}).")
+sys.exit(0)
+PYEOF

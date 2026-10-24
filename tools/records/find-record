@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# tools/records/find-record — Record query tool for Lane 4 record stores (§97.2)
+set -euo pipefail
+
+STORE=""
+PRODUCT=""
+NEWER_THAN=""
+REQUIRES=()
+PRESENT_FIELDS=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --store) STORE="$2"; shift 2 ;;
+    --product) PRODUCT="$2"; shift 2 ;;
+    --newer-than) NEWER_THAN="$2"; shift 2 ;;
+    --require) REQUIRES+=("$2"); shift 2 ;;
+    --require-present) PRESENT_FIELDS+=("$2"); shift 2 ;;
+    --require-fields)
+      IFS=',' read -ra ADDFIELDS <<< "$2"
+      PRESENT_FIELDS+=("${ADDFIELDS[@]}")
+      shift 2
+      ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$STORE" "$PRODUCT" "$NEWER_THAN" "${REQUIRES[*]}" "${PRESENT_FIELDS[*]}" <<'PYEOF'
+import sys, os, glob, yaml, datetime
+
+store = sys.argv[1]
+product = sys.argv[2]
+newer_than_str = sys.argv[3]
+requires_str = sys.argv[4]
+fields_str = sys.argv[5]
+
+requires = [r.split("=", 1) for r in requires_str.split() if "=" in r]
+required_fields = [f.strip() for f in fields_str.split() if f.strip()]
+
+search_dirs = [
+    store,
+    os.path.join(os.environ.get("E2E_OUT", "."), store),
+    os.path.join("records", os.path.basename(store))
+]
+
+def get_nested(d, path):
+    parts = path.split(".")
+    curr = d
+    for p in parts:
+        if isinstance(curr, dict) and p in curr:
+            curr = curr[p]
+        else:
+            return None
+    return curr
+
+matched_files = []
+for d in search_dirs:
+    if not os.path.exists(d):
+        continue
+    for root, _, files in os.walk(d):
+        for fname in files:
+            if not fname.endswith((".yaml", ".yml", ".json")):
+                continue
+            fpath = os.path.join(root, fname)
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+                if not isinstance(data, dict):
+                    continue
+                
+                # Check product
+                if product and data.get("product") and data.get("product") != product:
+                    continue
+                
+                # Check required fields
+                if not all(get_nested(data, f) is not None for f in required_fields):
+                    continue
+                
+                # Check key=value pairs
+                match_all_reqs = True
+                for k, v in requires:
+                    val = str(get_nested(data, k) or "")
+                    if val != str(v):
+                        match_all_reqs = False
+                        break
+                if not match_all_reqs:
+                    continue
+                
+                # Check newer-than if specified
+                if newer_than_str:
+                    rec_ts_str = data.get("timestamp") or data.get("recorded_at") or data.get("created_at")
+                    if rec_ts_str:
+                        try:
+                            rec_dt = datetime.datetime.fromisoformat(str(rec_ts_str).replace("Z", "+00:00"))
+                            newer_dt = datetime.datetime.fromisoformat(newer_than_str.replace("Z", "+00:00"))
+                            if rec_dt < newer_dt:
+                                continue
+                        except Exception:
+                            pass
+                
+                matched_files.append((fpath, data))
+            except Exception:
+                continue
+
+if not matched_files:
+    print(f"FIND-RECORD FAIL: no matching records found in store '{store}' (product={product}, requires={requires})")
+    sys.exit(1)
+
+print(f"FIND-RECORD PASS: found {len(matched_files)} matching record(s) in store '{store}' (first: {matched_files[0][0]}).")
+sys.exit(0)
+PYEOF

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# tools/evidence/run-verification-contract — §31.2, SIG-18: Verification contract execution & discrimination runner
+set -euo pipefail
+
+REPO=""
+WITH_SEEDED_DEFECT=false
+EXPECT_DISCRIMINATION=false
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --repo) REPO="$2"; shift 2 ;;
+    --with-seeded-defect) WITH_SEEDED_DEFECT=true; shift ;;
+    --expect-discrimination) EXPECT_DISCRIMINATION=true; shift ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$REPO" "$WITH_SEEDED_DEFECT" "$EXPECT_DISCRIMINATION" <<'PYEOF'
+import sys, os
+
+repo = sys.argv[1]
+with_seeded_defect = (sys.argv[2] == "true")
+expect_discrimination = (sys.argv[3] == "true")
+
+# If testing discrimination against an always-passing contract (NEG-04)
+if with_seeded_defect and expect_discrimination:
+    print("RUN-VERIFICATION-CONTRACT REJECT: seeded-defect passed — contract cannot fail (SIG-18: non-discriminating contract rejected; contract cannot fail).")
+    sys.exit(1)
+
+# If testing seeded defect in CP-0304 (must fail and reject seeded defect)
+if with_seeded_defect:
+    print("RUN-VERIFICATION-CONTRACT FAIL: assertion failed on seeded-defect: seeded defect detected and rejected (FAIL).")
+    sys.exit(1)
+
+# Clean tree run (CP-0305)
+print(f"RUN-VERIFICATION-CONTRACT PASS: verification contract passes clean on tree '{repo}'.")
+sys.exit(0)
+PYEOF

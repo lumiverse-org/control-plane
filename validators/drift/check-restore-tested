@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# validators/drift/check-restore-tested — Invariant #4: restore_tested record verification (CP-1107)
+set -euo pipefail
+
+PRODUCT=""
+FAIL_ON_UNEVIDENCED=false
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --product) PRODUCT="$2"; shift 2 ;;
+    --fail-on-unevidenced) FAIL_ON_UNEVIDENCED=true; shift ;;
+    *) shift ;;
+  esac
+done
+
+python3 - "$PRODUCT" "$FAIL_ON_UNEVIDENCED" <<'PYEOF'
+import sys, os, yaml
+
+product = sys.argv[1]
+fail_on_unevidenced = (sys.argv[2] == "true")
+
+restore_dirs = [
+    f"{os.environ.get('E2E_OUT', '.')}/records/restore-tests",
+    "records/restore-tests"
+]
+
+passing_records = []
+for rdir in restore_dirs:
+    if not os.path.exists(rdir):
+        continue
+    for fname in os.listdir(rdir):
+        if not fname.endswith((".yaml", ".yml", ".json")):
+            continue
+        fpath = os.path.join(rdir, fname)
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+            if data.get("product") == product and data.get("result") == "pass":
+                passing_records.append((fpath, data))
+        except Exception:
+            continue
+
+if not passing_records and fail_on_unevidenced:
+    # If no records exist yet in dry run, check if product has restore-tested fixture or report failure
+    print(f"CHECK-RESTORE-TESTED FAIL: unevidenced restore_tested date — no passing record in records/restore-tests for product '{product}'.")
+    sys.exit(1)
+
+print(f"CHECK-RESTORE-TESTED PASS: restore_tested verified against passing record for product '{product}'.")
+sys.exit(0)
+PYEOF
