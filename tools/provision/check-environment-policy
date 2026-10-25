@@ -12,10 +12,27 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+# Release tag convention per Section 11.3, Section 33.2, Section 33.4:
+# Product release tags start with 'v' followed by digits (e.g. v1.0.0, v2) or wildcard 'v*'.
+RELEASE_TAG_PATTERN = re.compile(r"^v(\*|[0-9].*)$")
+
+
+def fetch_repo_default_branch(repo: str) -> str:
+    """Fetch default branch for repo via gh api."""
+    endpoint = f"repos/{repo}"
+    res = subprocess.run(["gh", "api", endpoint, "--jq", ".default_branch"], capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(f"error fetching repo default branch for {repo}: {res.stderr.strip()}")
+    branch = res.stdout.strip()
+    if not branch:
+        raise RuntimeError(f"empty default branch returned for {repo}")
+    return branch
 
 
 def fetch_live_environments(repo: str) -> list[dict[str, Any]]:
@@ -49,39 +66,90 @@ def check_environment(
     env_data: dict[str, Any] | None,
     policies: list[dict[str, Any]],
     expected_policies: set[str],
+    default_branch: str = "main",
 ) -> list[str]:
-    """Validate a single environment against expectations."""
+    """Validate a single environment against expectations.
+
+    GitHub API semantics (Section 33.4 / §40.3):
+    An environment's deployment_branch_policy object defines the restriction mode:
+      1. 'protected_branches': true -> permits ANY branch that has branch protection enabled.
+         This does NOT satisfy Section 33.4 because any non-default protected branch (e.g.
+         release/*, feature-branch) would be granted access to environment secrets.
+      2. 'custom_branch_policies': true -> restricts deployments strictly to the explicit
+         list of branch/tag rules fetched from /environments/{name}/deployment-branch-policies.
+    Section 33.4 requires: "staging and production accept deployments from the default branch
+    and from protected release tags only, and from no other ref."
+    Therefore, custom_branch_policies MUST be True, and protected_branches must not be True
+    as a blanket allowance.
+    """
     errors: list[str] = []
     if env_data is None:
         errors.append(f"environment '{env_name}' does not exist")
         return errors
 
-    # Check expectations: default-branch, protected-tags
-    # GitHub environment policies have:
-    # {"id": ..., "name": "main", "type": "branch"}
-    # {"id": ..., "name": "v*", "type": "tag"}
-    has_branch_policy = False
-    has_tag_policy = False
-
-    # Check custom_branch_policies setting if present
+    # Check deployment_branch_policy configuration if present
     policy_setting = env_data.get("deployment_branch_policy")
     if isinstance(policy_setting, dict):
         if policy_setting.get("protected_branches") is True:
-            has_branch_policy = True
+            errors.append(
+                f"environment '{env_name}' has 'protected_branches: true' enabled "
+                f"(Section 33.4 forbids blanket protected-branches mode; custom_branch_policies must be used)"
+            )
+        if not policy_setting.get("custom_branch_policies"):
+            errors.append(
+                f"environment '{env_name}' lacks 'custom_branch_policies: true' "
+                f"(Section 33.4 requires explicit custom branch/tag policy rules)"
+            )
+
+    has_default_branch_policy = False
+    has_protected_tag_policy = False
 
     for p in policies:
-        ptype = p.get("type", "")
-        pname = p.get("name", "")
-        if ptype == "branch" or pname in ("main", "master") or not ptype:
-            has_branch_policy = True
-        if ptype == "tag" or pname.startswith("v") or "tag" in pname.lower():
-            has_tag_policy = True
+        ptype = p.get("type")
+        pname = str(p.get("name", "")).strip()
 
-    if "default-branch" in expected_policies and not has_branch_policy:
-        errors.append(f"environment '{env_name}' lacks policy restricting deployments to default branch")
+        # (c) Policy entry with missing or invalid type is a FAIL
+        if ptype not in ("branch", "tag"):
+            errors.append(
+                f"environment '{env_name}' policy entry {p} has missing or invalid type '{ptype}' (must be 'branch' or 'tag')"
+            )
+            continue
 
-    if "protected-tags" in expected_policies and not has_tag_policy:
-        errors.append(f"environment '{env_name}' lacks policy restricting deployments to protected tags")
+        if ptype == "branch":
+            # (a) Every branch-type policy entry MUST equal exactly the default branch
+            if pname == default_branch:
+                has_default_branch_policy = True
+            else:
+                errors.append(
+                    f"environment '{env_name}' contains unauthorized branch policy '{pname}' "
+                    f"(Section 33.4 permits default branch '{default_branch}' only; other branch patterns are forbidden)"
+                )
+
+        elif ptype == "tag":
+            # (b) Every tag-type policy entry MUST be a genuine release-tag glob (e.g. 'v*', 'v[0-9]*')
+            # Bare '*' or non-release tag patterns are forbidden
+            if pname == "*":
+                errors.append(
+                    f"environment '{env_name}' contains unrestricted wildcard tag policy '*' "
+                    f"(Section 33.4 forbids unrestricted tag patterns; must restrict to protected release tags only)"
+                )
+            elif RELEASE_TAG_PATTERN.match(pname):
+                has_protected_tag_policy = True
+            else:
+                errors.append(
+                    f"environment '{env_name}' contains unauthorized tag policy '{pname}' "
+                    f"(Section 33.4 permits protected release tags only, e.g. 'v*'; pattern '{pname}' is forbidden)"
+                )
+
+    if "default-branch" in expected_policies and not has_default_branch_policy:
+        errors.append(
+            f"environment '{env_name}' lacks policy restricting deployments to default branch '{default_branch}'"
+        )
+
+    if "protected-tags" in expected_policies and not has_protected_tag_policy:
+        errors.append(
+            f"environment '{env_name}' lacks policy restricting deployments to protected release tags"
+        )
 
     return errors
 
@@ -105,6 +173,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated expected policy capabilities (e.g. default-branch,protected-tags)",
     )
     parser.add_argument(
+        "--default-branch",
+        default=None,
+        help="Default branch name (default: resolved via gh api or fixture default_branch)",
+    )
+    parser.add_argument(
         "--fixture-file",
         type=Path,
         default=None,
@@ -126,15 +199,17 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"CHECK-ENVIRONMENT-POLICY FAIL: fixture file not found: {args.fixture_file}", file=sys.stderr)
                 return 1
             fixture_data = json.loads(args.fixture_file.read_text(encoding="utf-8"))
+            default_branch = args.default_branch or fixture_data.get("default_branch", "main")
             envs_list = fixture_data.get("environments", [])
             env_map = {e["name"]: e for e in envs_list if "name" in e}
 
             for env_name in args.envs:
                 env_data = env_map.get(env_name)
                 policies = env_data.get("policies", []) if env_data else []
-                errs = check_environment(env_name, env_data, policies, expected_policies)
+                errs = check_environment(env_name, env_data, policies, expected_policies, default_branch=default_branch)
                 all_errors.extend(errs)
         else:
+            default_branch = args.default_branch or fetch_repo_default_branch(args.repo)
             envs_list = fetch_live_environments(args.repo)
             env_map = {e["name"]: e for e in envs_list if "name" in e}
 
@@ -144,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
                     policies = fetch_live_branch_policies(args.repo, env_name)
                 else:
                     policies = []
-                errs = check_environment(env_name, env_data, policies, expected_policies)
+                errs = check_environment(env_name, env_data, policies, expected_policies, default_branch=default_branch)
                 all_errors.extend(errs)
     except Exception as exc:
         print(f"CHECK-ENVIRONMENT-POLICY FAIL: {exc}", file=sys.stderr)
@@ -158,7 +233,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(
         f"CHECK-ENVIRONMENT-POLICY OK: all {len(args.envs)} environment(s) ({', '.join(args.envs)}) "
-        f"on {args.repo} satisfy expectation [{args.expect}] (§33.4)"
+        f"on {args.repo} satisfy expectation [{args.expect}] (§33.4, default-branch={default_branch})"
     )
     return 0
 

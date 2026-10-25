@@ -165,6 +165,9 @@
 | `CP-1312` | Machine account restricted to draft PRs, GitHub-side | `tools/e2e-drive/draft-pr-only-verification.sh` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L5** | Invariant #18: requires real GitHub account machine-bg permissions probe |
 | `CP-1313` | No customer data in repositories | `tools/evidence/check-no-customer-data` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L5** | Invariant #111: local regex/data-shape scan over pilot repo and records |
 
+> [!NOTE]
+> **Real gap, not yet built:** create-product's step-7 executor only writes `ci.yml` into a new product repo. Writing the other 3 required workflow files (`migrate.yml`, `restore-test.yml`, `restore-production.yml`, each generated from `templates/workflows/*.template.yml` the same way `ci.yml` is) is unbuilt. `CP-0104-migrate`/`restore-test`/`restore-production` will fail for a real reason (file missing) once the pilot repo exists, not merely because of live-infra blocking.
+
 ---
 
 ## 3. Negative Gate Test Readiness Inventory (NEG-01 through NEG-28)
