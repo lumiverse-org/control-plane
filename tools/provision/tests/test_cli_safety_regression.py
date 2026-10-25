@@ -16,6 +16,9 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+import sys
+import types
+from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -30,8 +33,20 @@ from tools.provision.cli import (
     build_parser,
 )
 from tools.provision.executors import FakeGitHubClient
-from tools.provision.github_client import RealGitHubClient
+from tools.provision.github_client import GitHubClientError, RealGitHubClient
 from tools.provision.plan import Plan, Step, StepKind
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+CREATE_PRODUCT_SCRIPT = REPO_ROOT / "tools" / "provision" / "create-product"
+CONTRACT_FIXTURE = REPO_ROOT / "e2e" / "fixtures" / "pilot-one" / "product.yaml"
+
+
+def _load_create_product_module() -> types.ModuleType:
+    loader = SourceFileLoader("create_product_bin", str(CREATE_PRODUCT_SCRIPT))
+    mod = types.ModuleType(loader.name)
+    mod.__file__ = str(CREATE_PRODUCT_SCRIPT)
+    loader.exec_module(mod)
+    return mod
 
 
 @pytest.fixture(autouse=True)
@@ -261,3 +276,184 @@ def test_adversarial_create_team_slug_demonstration():
     mem2_cmd = calls[2]
     assert mem2_cmd == ["gh", "api", f"orgs/test-org/teams/{returned_slug}/memberships/member-b", "-X", "PUT"]
     assert raw_name not in mem2_cmd[2], "Membership call must not use unslugified raw name!"
+
+
+# ==============================================================================
+# FIX A: Environment-variable ORG gap under --apply in create-product wrapper
+# ==============================================================================
+
+
+@patch("tools.provision.cli.execute_step")
+@patch("tools.provision.cli.RealGitHubClient.__init__", return_value=None)
+def test_regression_wrapper_env_var_org_rejected_under_apply(
+    mock_client_init: MagicMock,
+    mock_execute_step: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    """Verify that when os.environ['ORG'] is set to 'lumiverse-org' and --apply is given
+    without an explicit CLI --org flag, create-product refuses the invocation.
+
+    Must reject BEFORE RealGitHubClient is constructed and BEFORE execute_step is called.
+    """
+    monkeypatch.setenv("ORG", "lumiverse-org")
+    mod = _load_create_product_module()
+
+    argv = [
+        "--id",
+        "pilot-one",
+        "--contract",
+        str(CONTRACT_FIXTURE),
+        "--template",
+        "product-template",
+        "--executor",
+        "devops-1",
+        "--apply",
+    ]
+
+    rc = mod.main(argv)
+    assert rc == 1
+    out, err = capsys.readouterr()
+    expected = (
+        "CREATE-PRODUCT FAIL: --org must be passed explicitly on the command line when using --apply; "
+        "it cannot be sourced from the ORG environment variable for a real write."
+    )
+    assert expected in err
+    assert mock_client_init.call_count == 0, "RealGitHubClient must NEVER be instantiated!"
+    assert mock_execute_step.call_count == 0, "execute_step must NEVER be called!"
+
+
+def test_regression_wrapper_explicit_cli_org_accepted_under_apply(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Verify that an explicit CLI --org flag is properly forwarded to cli.main under --apply."""
+    monkeypatch.setenv("ORG", "should-be-ignored")
+    mod = _load_create_product_module()
+
+    intercepted_cli_args: list[str] = []
+
+    def mock_cli_main(args: list[str]) -> int:
+        intercepted_cli_args.extend(args)
+        return 0
+
+    monkeypatch.setattr(mod.cli, "main", mock_cli_main)
+
+    argv = [
+        "--id",
+        "pilot-one",
+        "--contract",
+        str(CONTRACT_FIXTURE),
+        "--template",
+        "product-template",
+        "--executor",
+        "devops-1",
+        "--apply",
+        "--org",
+        "lumiverse-org",
+    ]
+
+    rc = mod.main(argv)
+    assert rc == 0
+    assert "--apply" in intercepted_cli_args
+    assert "--live" in intercepted_cli_args
+    assert "--org" in intercepted_cli_args
+    idx = intercepted_cli_args.index("--org")
+    assert intercepted_cli_args[idx + 1] == "lumiverse-org"
+
+
+def test_wrapper_dry_run_falls_back_to_env_org(monkeypatch: pytest.MonkeyPatch):
+    """Verify that dry-run planning still conveniently falls back to the ORG environment variable."""
+    monkeypatch.setenv("ORG", "env-dry-org")
+    mod = _load_create_product_module()
+
+    intercepted_cli_args: list[str] = []
+
+    def mock_cli_main(args: list[str]) -> int:
+        intercepted_cli_args.extend(args)
+        return 0
+
+    monkeypatch.setattr(mod.cli, "main", mock_cli_main)
+
+    argv = [
+        "--id",
+        "pilot-one",
+        "--contract",
+        str(CONTRACT_FIXTURE),
+        "--template",
+        "product-template",
+        "--executor",
+        "devops-1",
+    ]
+
+    rc = mod.main(argv)
+    assert rc == 0
+    assert "--apply" not in intercepted_cli_args
+    assert "--org" in intercepted_cli_args
+    idx = intercepted_cli_args.index("--org")
+    assert intercepted_cli_args[idx + 1] == "env-dry-org"
+
+
+# ==============================================================================
+# FIX B: Double-layered LiveRosterApplyForbidden guard in _run_operation
+# ==============================================================================
+
+
+@patch("tools.provision.cli.execute_step")
+def test_regression_run_operation_double_layered_live_roster_apply_forbidden(
+    mock_execute_step: MagicMock,
+):
+    """Verify calling _run_operation directly with roster_source='live' and apply=True
+    is refused before execute_step runs.
+    """
+    parser = build_parser()
+    args = parser.parse_args([
+        "create-product",
+        "--live",
+        "--apply",
+        "--roster-source",
+        "live",
+        "--product",
+        "alpha",
+        "--org",
+        "test-org",
+    ])
+    plan = Plan(steps=[Step("repo_from_template", "create repo", StepKind.WRITE)])
+
+    with pytest.raises(LiveRosterApplyForbidden, match="live roster planning is dry-run only"):
+        cli._run_operation(args, "create-product", plan)
+
+    assert mock_execute_step.call_count == 0, "execute_step must NEVER be called!"
+
+
+# ==============================================================================
+# FIX C: create_team response parse failure raises GitHubClientError
+# ==============================================================================
+
+
+def test_regression_create_team_malformed_json_raises():
+    """Verify create_team raises GitHubClientError instead of silently falling back on malformed JSON."""
+    class MockedClient(RealGitHubClient):
+        def _run_gh(self, cmd: list[str], input_str: str | None = None) -> Any:
+            mock_proc = MagicMock()
+            mock_proc.returncode = 0
+            mock_proc.stdout = "{ malformed truncated response"
+            return mock_proc
+
+    client = MockedClient(org="test-org")
+    with pytest.raises(GitHubClientError, match="Failed to parse team creation response"):
+        client.create_team("Product Nine Team", ["alice"])
+
+
+def test_regression_create_team_empty_json_raises():
+    """Verify create_team raises GitHubClientError instead of silently falling back on empty JSON object."""
+    class MockedClient(RealGitHubClient):
+        def _run_gh(self, cmd: list[str], input_str: str | None = None) -> Any:
+            mock_proc = MagicMock()
+            mock_proc.returncode = 0
+            mock_proc.stdout = "{}"
+            return mock_proc
+
+    client = MockedClient(org="test-org")
+    with pytest.raises(GitHubClientError, match="returned empty JSON object"):
+        client.create_team("Product Nine Team", ["alice"])
+

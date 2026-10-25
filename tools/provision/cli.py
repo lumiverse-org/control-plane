@@ -156,6 +156,11 @@ def _run_operation(
     _check_apply_requires_live(args)
     applied = bool(args.apply and args.live)
 
+    if applied and getattr(args, "roster_source", None) == "live":
+        raise LiveRosterApplyForbidden(
+            "--apply cannot be used with --roster-source live: live roster planning is dry-run only."
+        )
+
     if applied and operation != "create-product":
         raise OperationApplyNotImplemented(
             f"--live --apply is not supported for {operation}: "

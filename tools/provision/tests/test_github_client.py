@@ -206,6 +206,36 @@ def test_create_team_failure_on_membership(mock_run: MagicMock):
 
 
 @patch("subprocess.run")
+def test_create_team_failure_on_malformed_json_response(mock_run: MagicMock):
+    """Failure path: raises GitHubClientError when team creation returns malformed JSON."""
+    mock_run.return_value = subprocess.CompletedProcess(
+        args=["gh", "api"],
+        returncode=0,
+        stdout="{ malformed or truncated json response",
+        stderr="",
+    )
+
+    client = RealGitHubClient(org="test-org")
+    with pytest.raises(GitHubClientError, match="Failed to parse team creation response"):
+        client.create_team("new-team", ["alice"])
+
+
+@patch("subprocess.run")
+def test_create_team_failure_on_empty_json_response(mock_run: MagicMock):
+    """Failure path: raises GitHubClientError when team creation returns empty JSON object."""
+    mock_run.return_value = subprocess.CompletedProcess(
+        args=["gh", "api"],
+        returncode=0,
+        stdout="{}",
+        stderr="",
+    )
+
+    client = RealGitHubClient(org="test-org")
+    with pytest.raises(GitHubClientError, match="returned empty JSON object"):
+        client.create_team("new-team", ["alice"])
+
+
+@patch("subprocess.run")
 def test_put_file_create_case_no_prior_file(mock_run: MagicMock):
     """put_file create case: GET returns 404 -> PUT executes without sha."""
     mock_run.side_effect = [

@@ -85,11 +85,20 @@ class RealGitHubClient:
         # 1. Create the team
         create_cmd = ["gh", "api", f"orgs/{self.org}/teams", "-f", f"name={name}"]
         res = self._run_gh(create_cmd)
-        team_data: dict[str, Any] = {}
         try:
             team_data = json.loads(res.stdout)
-        except Exception:
-            pass
+            if not isinstance(team_data, dict):
+                raise ValueError("Response payload is not a JSON object")
+        except Exception as exc:
+            raise GitHubClientError(
+                f"Failed to parse team creation response for team {name!r}: {exc}\n"
+                f"Raw response: {res.stdout!r}"
+            ) from exc
+
+        if not team_data:
+            raise GitHubClientError(
+                f"Team creation response for team {name!r} returned empty JSON object; membership cannot safely proceed."
+            )
 
         slug = team_data.get("slug") or name
 
