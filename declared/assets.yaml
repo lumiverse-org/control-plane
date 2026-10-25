@@ -1,1 +1,5 @@
-assets: []
+assets:
+- id: asset-pilot-one-app
+  product: pilot-one
+  type: service
+  tier: tier-2

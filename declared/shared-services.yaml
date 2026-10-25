@@ -1,2 +1,6 @@
-services: []
-dependency_edges: []
+services:
+- pilot-one
+dependency_edges:
+- from: pilot-one
+  to: platform-auth
+  type: shared_service

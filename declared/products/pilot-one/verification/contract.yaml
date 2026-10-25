@@ -1,0 +1,5 @@
+contract_version: 1
+product: pilot-one
+reliability_criticality: standard
+seeded_defect_target: test_seeded_defect
+verification_suite: make test
