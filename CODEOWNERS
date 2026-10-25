@@ -35,6 +35,7 @@
 /contracts/lane-paths.yaml	@bendrohit-eng
 /contracts/harness/	@bendrohit-eng
 /e2e/	@bendrohit-eng
+/templates/protection/	@bendrohit-eng
 /docs/	@bendrohit-eng
 /plan-checker/	@bendrohit-eng
 /verification/acceptance/*	@bendrohit-eng
