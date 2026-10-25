@@ -20,6 +20,7 @@
 0	.github/workflows/lane-guard.yml
 2	.github/workflows/*
 2	templates/workflows/*
+0	templates/protection/*
 2	tools/evidence/*
 3	reconciler/*
 3	tools/provision/*

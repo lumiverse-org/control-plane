@@ -72,6 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="roster source for steps 11-13: 'fixture' (default with --fixture) or 'live' (reads docs/onboarding/products)",
     )
+    p_create.add_argument("--executor", default=None, help="the acting devops identity (§19.1)")
     p_create.set_defaults(func=_cmd_create_product)
 
     p_add = sub.add_parser("add-person", help="onboard a person onto the organisation and any assignments")
@@ -152,6 +153,10 @@ def _run_operation(args: argparse.Namespace, operation: str, plan: Plan) -> int:
 
 def _cmd_create_product(args: argparse.Namespace) -> int:
     _fixture_root(args)
+    executor = getattr(args, "executor", None)
+    if executor:
+        from tools.provision.executors import record_executor
+        record_executor(args.product, executor)
     # L3-P4-07: the real thirteen-automated/two-manual plan (spec §19.1),
     # composing L3-P4-02 .. -06. It needs a registry to read the current
     # product roster from (steps 11-13). When --roster-source live is passed,

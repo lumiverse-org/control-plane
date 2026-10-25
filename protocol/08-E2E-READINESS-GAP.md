@@ -38,7 +38,7 @@
 | `CP-0004` | Consumed workflow tags match platform.yaml pins | `tools/verify-workflow-tag-pins.sh` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L0** | Offline static YAML & pin audit |
 | `CP-0005` | Run window admits a compliant production deploy | `tools/freeze-window-check.sh` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L0** | Offline calendar logic (§34.2) |
 | `CP-0006` | Required tools present (gh, jq, yq mikefarah, curl, base64, git) | `gh, jq, yq, curl, base64, git` | **PARTIAL** | `BUILDABLE NOW, OFFLINE` | **L0** | Sequential check halts at `jq` (`missing required tool: jq`); independent probe confirms `gh`, `curl`, `base64`, `git` present; `jq`, `yq` absent |
-| `CP-0101` | create-product completes | `tools/provision/create-product` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live GitHub organization API to provision repo org/pilot-one-api |
+| `CP-0101` | create-product completes | `tools/provision/create-product` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Tool built (wrapper mapping spec flags to provision CLI, 13 automated + 2 manual steps dry-run verified). Blocked on live pilot repo creation. |
 | `CP-0102-setup` | Makefile exposes setup | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires real org/pilot-one-api repo contents on GitHub |
 | `CP-0102-dev` | Makefile exposes dev | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires real org/pilot-one-api repo contents on GitHub |
 | `CP-0102-test` | Makefile exposes test | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires real org/pilot-one-api repo contents on GitHub |
@@ -47,7 +47,7 @@
 | `CP-0102-reset` | Makefile exposes reset | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires real org/pilot-one-api repo contents on GitHub |
 | `CP-0102-health` | Makefile exposes health | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires real org/pilot-one-api repo contents on GitHub |
 | `CP-0102-parity` | Makefile exposes parity | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires real org/pilot-one-api repo contents on GitHub |
-| `CP-0103` | Required repository files present | `tools/provision/check-required-files` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires scaffolded org/pilot-one-api repository |
+| `CP-0103` | Required repository files present | `tools/provision/check-required-files` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Tool built; checks all 8 Section 33.1 required items. Confirmed passing on product-template; blocked on live pilot repo creation. |
 | `CP-0104-ci` | ci.yml generated and tag-pinned | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires scaffolded org/pilot-one-api repository on GitHub |
 | `CP-0104-build` | build.yml generated and tag-pinned | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires scaffolded org/pilot-one-api repository on GitHub |
 | `CP-0104-deploy-staging` | deploy-staging.yml generated and tag-pinned | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires scaffolded org/pilot-one-api repository on GitHub |
@@ -55,17 +55,17 @@
 | `CP-0104-migrate` | migrate.yml generated and tag-pinned | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires scaffolded org/pilot-one-api repository on GitHub |
 | `CP-0104-restore-test` | restore-test.yml generated and tag-pinned | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires scaffolded org/pilot-one-api repository on GitHub |
 | `CP-0104-restore-production` | restore-production.yml generated and tag-pinned | `gh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires scaffolded org/pilot-one-api repository on GitHub |
-| `CP-0105` | Third-party actions pinned to 40-char SHA | `tools/verify-action-pins.sh` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Requires scaffolded org/pilot-one-api repository |
-| `CP-0106` | Staging/prod restricted to default branch and protected tags | `tools/provision/check-environment-policy` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L5** | Requires GitHub Environment protection rules on org/pilot-one-api |
-| `CP-0107` | Branch protection matches template | `tools/provision/diff-branch-protection` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L5** | Requires GitHub Branch Protection on org/pilot-one-api |
-| `CP-0108-portfolio-board` | pilot-one discoverable on portfolio-board | `tools/verify-surface-enumeration.sh` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live portfolio board infrastructure |
-| `CP-0108-grafana` | pilot-one discoverable on grafana | `tools/verify-surface-enumeration.sh` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live Grafana instance |
-| `CP-0108-scorecard` | pilot-one discoverable on scorecard | `tools/verify-surface-enumeration.sh` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live scorecard dashboard |
-| `CP-0108-devlake` | pilot-one discoverable on devlake | `tools/verify-surface-enumeration.sh` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live DevLake instance |
-| `CP-0108-reviewer-matrix` | pilot-one discoverable on reviewer-matrix | `tools/verify-surface-enumeration.sh` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live reviewer matrix surface |
-| `CP-0108-dependency-graph` | pilot-one discoverable on dependency-graph | `tools/verify-surface-enumeration.sh` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live dependency graph surface |
+| `CP-0105` | Third-party actions pinned to 40-char SHA | `tools/verify-action-pins.sh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L2** | Tool built; verified against control-plane (all 71 pinned actions pass). Blocked on live pilot repo creation. |
+| `CP-0106` | Staging/prod restricted to default branch and protected tags | `tools/provision/check-environment-policy` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L5** | Tool built; verifies environment ref policies (§33.4). Blocked on live pilot repo creation. |
+| `CP-0107` | Branch protection matches template | `tools/provision/diff-branch-protection` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L5** | Template (templates/protection/service.json) & diff tool built (§53.1). Blocked on live pilot repo branch protection. |
+| `CP-0108-portfolio-board` | pilot-one discoverable on portfolio-board | `tools/verify-surface-enumeration.sh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Tool built; confirms registry enumeration. Blocked on live portfolio-board instance. |
+| `CP-0108-grafana` | pilot-one discoverable on grafana | `tools/verify-surface-enumeration.sh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Tool built; confirms registry enumeration. Blocked on live Grafana instance. |
+| `CP-0108-scorecard` | pilot-one discoverable on scorecard | `tools/verify-surface-enumeration.sh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Tool built; confirms registry enumeration. Blocked on live scorecard dashboard. |
+| `CP-0108-devlake` | pilot-one discoverable on devlake | `tools/verify-surface-enumeration.sh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Tool built; confirms registry enumeration. Blocked on live DevLake instance. |
+| `CP-0108-reviewer-matrix` | pilot-one discoverable on reviewer-matrix | `tools/verify-surface-enumeration.sh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Tool built; confirms registry enumeration. Blocked on live reviewer matrix surface. |
+| `CP-0108-dependency-graph` | pilot-one discoverable on dependency-graph | `tools/verify-surface-enumeration.sh` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Tool built; confirms registry enumeration. Blocked on live dependency graph surface. |
 | `CP-0109` | No hard-coded product list anywhere | `tools/verify-no-product-list.sh` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L3** | Static regex scan across dashboards, workflows, tools, templates |
-| `CP-0110` | CONFIGURE checklist and channel/mailbox steps emitted | `tools/provision/check-scaffold-issues` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires GitHub Issues on org/pilot-one-api |
+| `CP-0110` | CONFIGURE checklist and channel/mailbox steps emitted | `tools/provision/check-scaffold-issues` | **EXISTS** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Tool built; verifies tracked issues for configure-checklist, alert-channel, support-intake. Blocked on live pilot repo creation. |
 | `CP-0201` | Assignments merged to the registry | `tools/provision/apply-assignments` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L3** | Local YAML edit tool for products/pilot-one/product.yaml |
 | `CP-0202` | Reconciliation run applies declared state | `gh workflow run reconcile.yml` | **EXISTS (gh)** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live GitHub Actions workflow runner in control-plane |
 | `CP-0203` | CODEOWNERS generated from assignments, no machine identity | `tools/provision/verify-codeowners` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L3** | Requires live org/pilot-one-api CODEOWNERS file |
@@ -165,6 +165,9 @@
 | `CP-1312` | Machine account restricted to draft PRs, GitHub-side | `tools/e2e-drive/draft-pr-only-verification.sh` | **MISSING** | `GENUINELY BLOCKED ON LIVE INFRASTRUCTURE` | **L5** | Invariant #18: requires real GitHub account machine-bg permissions probe |
 | `CP-1313` | No customer data in repositories | `tools/evidence/check-no-customer-data` | **EXISTS** | `BUILDABLE NOW, OFFLINE` | **L5** | Invariant #111: local regex/data-shape scan over pilot repo and records |
 
+> [!NOTE]
+> **Real gap, not yet built:** create-product's step-7 executor only writes `ci.yml` into a new product repo. Writing the other 3 required workflow files (`migrate.yml`, `restore-test.yml`, `restore-production.yml`, each generated from `templates/workflows/*.template.yml` the same way `ci.yml` is) is unbuilt. `CP-0104-migrate`/`restore-test`/`restore-production` will fail for a real reason (file missing) once the pilot repo exists, not merely because of live-infra blocking.
+
 ---
 
 ## 3. Negative Gate Test Readiness Inventory (NEG-01 through NEG-28)
@@ -246,7 +249,7 @@ The table below catalogs every stage in `protocol/08-smoke-and-e2e.md` (stages `
 | Stage ID | Stage Name | First Blocked Checkpoint ID | Exact Live-Infrastructure Dependency | Progress Before Stopping |
 |---|---|---|---|---|
 | **E2E-00** | Preflight Checks | *None (all offline)* | No live infra blocker; CP-0001..CP-0004 pass; CP-0005 evaluates weekend freeze; CP-0006 checks operator runner binaries | 4 checkpoints pass (`CP-0001` .. `CP-0004`) |
-| **E2E-01** | Create Product | `CP-0101` (`tools/provision/create-product`) | Real pilot repository (`org/pilot-one-api`) and live GitHub Organization REST/GraphQL API | 0 checkpoints |
+| **E2E-01** | Create Product | `CP-0101` (`tools/provision/create-product`) | Real pilot repository (`org/pilot-one-api`) and live GitHub Organization REST/GraphQL API | All 6 checkpoint tools built & verified dry (`CP-0101`, `0103`, `0105`, `0106`, `0107`, `0108`, `0110`); 0 checkpoints pass live without real pilot repo |
 | **E2E-02** | Assignment & Roles | `CP-0202` (`reconcile.yml`) | Live GitHub Actions runner and `lumiverse-org/control-plane` workflow dispatch permissions | 1 checkpoint passes (`CP-0201`) |
 | **E2E-03** | Verification Contract | `CP-0301` / `CP-0302` (`gh api repos/...`) | Real pilot repository (`org/pilot-one-api`) containing `verification/contract.yaml` | 0 checkpoints |
 | **E2E-04** | Gate 1 Plan Approval | `CP-0403` (`verify-notification`) | Push notification dispatch service and multi-actor human organization members (STOP Rule S-01) | 2 checkpoints pass (`CP-0401`, `CP-0402`) |
