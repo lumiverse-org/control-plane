@@ -43,6 +43,11 @@
 /tools/lane-guard/	@bendrohit-eng
 /derived/*	@bendrohit-eng
 /gate-state/*	@bendrohit-eng
+/protocol/	@bendrohit-eng
+/tools/	@bendrohit-eng
+/records/	@bendrohit-eng
+/scripts/	@bendrohit-eng
+/tests/	@bendrohit-eng
 
 # --- guard-critical: the lane guard itself. L0 only, no override exists. ---
 /CODEOWNERS	@bendrohit-eng

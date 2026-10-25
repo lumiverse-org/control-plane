@@ -45,5 +45,7 @@
 0	protocol/*
 0	tools/*
 0	records/*
+0	scripts/*
+0	tests/*
 X	*/*
 0	*
