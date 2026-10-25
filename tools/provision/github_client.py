@@ -28,8 +28,10 @@ class GitHubClientError(RuntimeError):
 class RealGitHubClient:
     """Live implementation of GitHubClient Protocol via gh CLI subprocess calls."""
 
-    def __init__(self, org: str = "lumiverse-org") -> None:
-        self.org = org
+    def __init__(self, org: str) -> None:
+        if not org or not org.strip():
+            raise ValueError("org must be a non-empty string; defaulting to a production organisation is forbidden")
+        self.org = org.strip()
 
     def _full_repo(self, repo: str) -> str:
         """Resolve full repository name including org prefix."""
@@ -89,12 +91,14 @@ class RealGitHubClient:
         except Exception:
             pass
 
+        slug = team_data.get("slug") or name
+
         # 2. Add members
         for member in members:
             mem_cmd = [
                 "gh",
                 "api",
-                f"orgs/{self.org}/teams/{name}/memberships/{member}",
+                f"orgs/{self.org}/teams/{slug}/memberships/{member}",
                 "-X",
                 "PUT",
             ]
@@ -102,7 +106,7 @@ class RealGitHubClient:
 
         return {
             "name": name,
-            "slug": name,
+            "slug": slug,
             "members": list(members),
             "team": team_data,
         }

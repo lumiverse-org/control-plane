@@ -12,11 +12,14 @@ the explicit `--apply` flag, and `--apply` is refused outright unless
 Plan Building and Execution Status:
 - `create-product` (L3-P4-07): real 13-automated/2-manual step plan building (spec §19.1)
   and real apply-execution wired to `tools.provision.executors` and `GitHubClient`.
-  Under `--live --apply`, uses the permanent `declared/` directory as data source
-  and executes GitHub API mutations via `RealGitHubClient`.
+  Under `--live --apply`, requires explicit `--org`, uses the permanent `declared/`
+  directory as data source, and executes GitHub API mutations via `RealGitHubClient`.
+  Incompatible with `--roster-source live` under `--apply`.
 - `add-person` (L3-P4-09), `change-role` (L3-P7-01), `remove-person` (L3-P7-02):
-  real plan builders that enumerate their respective operations' steps; apply-execution
-  remains skeleton-only pending their respective write-step executors.
+  real plan builders that enumerate their respective operations' steps. Under
+  `--live --apply`, these operations are explicitly refused with an early error
+  (`OperationApplyNotImplemented`); apply-execution is not supported for them
+  pending their respective write-step executors.
 """
 
 from __future__ import annotations
@@ -71,7 +74,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--roster-source",
         choices=("fixture", "live"),
         default=None,
-        help="roster source for steps 11-13: 'fixture' (default with --fixture) or 'live' (reads docs/onboarding/products)",
+        help="roster source for steps 11-13: 'fixture' (default with --fixture) or 'live' (reads docs/onboarding/products; dry-run only, incompatible with --apply)",
     )
     p_create.add_argument("--executor", default=None, help="the acting devops identity (§19.1)")
     p_create.set_defaults(func=_cmd_create_product)
@@ -103,11 +106,27 @@ class LiveRosterApplyForbidden(RuntimeError):
     """--apply was given with --roster-source live: refused (live roster planning is dry-run only)."""
 
 
+class OrgRequiredForApply(ValueError):
+    """--org was omitted when running with --live --apply: refused."""
+
+
+class OperationApplyNotImplemented(RuntimeError):
+    """--apply was requested on an operation without write-step executors."""
+
+
 def _check_apply_requires_live(args: argparse.Namespace) -> None:
     if args.apply and not args.live:
         raise ApplyRequiresLive(
             "--apply cannot be used with --fixture: a fixture is not something you can "
             "mutate. --apply requires --live."
+        )
+
+
+def _check_operation_apply_allowed(operation: str, args: argparse.Namespace) -> None:
+    if args.apply and args.live and operation != "create-product":
+        raise OperationApplyNotImplemented(
+            f"--live --apply is not supported for {operation}: "
+            f"apply-execution is currently implemented only for create-product."
         )
 
 
@@ -137,6 +156,20 @@ def _run_operation(
     _check_apply_requires_live(args)
     applied = bool(args.apply and args.live)
 
+    if applied and operation != "create-product":
+        raise OperationApplyNotImplemented(
+            f"--live --apply is not supported for {operation}: "
+            f"apply-execution is currently implemented only for create-product."
+        )
+
+    if applied:
+        org = getattr(args, "org", None)
+        if not org or not org.strip():
+            raise OrgRequiredForApply(
+                "--org must be explicitly specified when running with --live --apply: "
+                "refusing to default to a production organisation."
+            )
+
     succeeded_steps: list[tuple[Any, dict[str, Any]]] = []
     failed_step: tuple[Any, Exception] | None = None
 
@@ -147,7 +180,7 @@ def _run_operation(
 
         # Resolve GitHub client for live GitHub API mutations
         if client is None:
-            client = RealGitHubClient(org=getattr(args, "org", None) or "lumiverse-org")
+            client = RealGitHubClient(org=org.strip())
 
         product = getattr(args, "product", "")
         executor_identity = getattr(args, "executor", None)
@@ -214,12 +247,19 @@ def _cmd_create_product(
     declared_dir: Path | None = None,
 ) -> int:
     _fixture_root(args)
+
+    # Incompatible: --roster-source live is dry-run only and cannot be applied
+    if getattr(args, "roster_source", None) == "live" and args.apply:
+        raise LiveRosterApplyForbidden(
+            "--apply cannot be used with --roster-source live: live roster planning is dry-run only."
+        )
+
     executor = getattr(args, "executor", None)
     if executor:
         from tools.provision.executors import record_executor
         record_executor(args.product, executor)
 
-    # When --live --apply is passed (with or without --roster-source),
+    # When --live --apply is passed (without --roster-source live),
     # build the real 13-step plan using the permanent declared/ directory.
     if args.live and args.apply:
         from tools.provision.create_product import build_create_product_plan_against_declared
@@ -251,6 +291,7 @@ def _cmd_create_product(
 
 def _cmd_add_person(args: argparse.Namespace) -> int:
     _fixture_root(args)
+    _check_operation_apply_allowed("add-person", args)
     # L3-P4-09: the real seven-step plan (spec 12.6, 12.1).
     from tools.provision.add_person import build_add_person_plan
 
@@ -259,6 +300,7 @@ def _cmd_add_person(args: argparse.Namespace) -> int:
 
 def _cmd_change_role(args: argparse.Namespace) -> int:
     _fixture_root(args)
+    _check_operation_apply_allowed("change-role", args)
     # L3-P7-01: the real seven-step plan (spec 12.6).
     from tools.provision.change_role import build_change_role_plan
 
@@ -267,6 +309,7 @@ def _cmd_change_role(args: argparse.Namespace) -> int:
 
 def _cmd_remove_person(args: argparse.Namespace) -> int:
     _fixture_root(args)
+    _check_operation_apply_allowed("remove-person", args)
     # L3-P7-02: the real eleven-step plan (spec 12.2, 12.6).
     from tools.provision.remove_person import build_remove_person_plan
 
@@ -278,7 +321,14 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return args.func(args)
-    except (ApplyRequiresLive, LiveRosterApplyForbidden, FileNotFoundError, ValueError) as exc:
+    except (
+        ApplyRequiresLive,
+        LiveRosterApplyForbidden,
+        OrgRequiredForApply,
+        OperationApplyNotImplemented,
+        FileNotFoundError,
+        ValueError,
+    ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 

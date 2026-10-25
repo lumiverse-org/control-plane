@@ -83,7 +83,7 @@ def test_apply_with_live_performs_zero_writes_when_plan_is_empty():
     # When plan has zero steps, an --apply --live run performs zero writes
     # and must report writes=0 honestly, not report a write that never happened.
     parser = build_parser()
-    args = parser.parse_args(["create-product", "--live", "--apply", "--product", "gamma"])
+    args = parser.parse_args(["create-product", "--live", "--apply", "--product", "gamma", "--org", "test-org"])
     from tools.provision.cli import _run_operation
     from tools.provision.plan import Plan
     assert _run_operation(args, "create-product", Plan()) == 0

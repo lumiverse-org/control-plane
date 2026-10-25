@@ -67,5 +67,7 @@ EXC-LG-048	0	tools/provision/tests/test_cli.py	31	2026-11-24	@lead-1	harness-mer
 EXC-LG-049	0	tools/provision/tests/test_cli_apply.py	31	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-25: Real GitHubClient and live apply execution (PR #31)
 EXC-LG-050	0	tools/provision/tests/test_github_client.py	31	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-25: Real GitHubClient and live apply execution (PR #31)
 EXC-LG-051	0	tools/provision/tests/test_live_roster.py	31	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-25: Real GitHubClient and live apply execution (PR #31)
+EXC-LG-052	0	tools/provision/create-product	31	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-25: Safety fixes for create-product wrapper defaults (PR #31)
+EXC-LG-053	0	tools/provision/tests/test_cli_safety_regression.py	31	2026-11-24	@lead-1	harness-merged	Founder authorization 2026-10-25: Safety fixes regression test suite (PR #31)
 
 

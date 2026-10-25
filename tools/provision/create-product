@@ -53,12 +53,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     # Optional flags and overrides
-    parser.add_argument("--org", default=os.environ.get("ORG", "lumiverse-org"), help="GitHub organization name")
+    parser.add_argument("--org", default=os.environ.get("ORG"), help="GitHub organization name")
     parser.add_argument(
         "--roster-source",
         choices=("fixture", "live"),
-        default="live",
-        help="roster source for discovery steps: 'live' (default) or 'fixture'",
+        default=None,
+        help="roster source for discovery steps: 'live' (default for dry-run) or 'fixture'",
     )
     parser.add_argument(
         "--apply",
@@ -142,20 +142,23 @@ def main(argv: list[str] | None = None) -> int:
     ]
 
     if args.apply:
-        cli_args.extend(["--apply", "--live", "--org", args.org])
+        cli_args.extend(["--apply", "--live"])
+        if args.org:
+            cli_args.extend(["--org", args.org])
         if args.roster_source:
             cli_args.extend(["--roster-source", args.roster_source])
     else:
         # Default safe dry-run mode
+        roster_src = args.roster_source or "live"
         cli_args.extend([
             "--live",
-            "--org",
-            args.org,
             "--roster-source",
-            args.roster_source,
+            roster_src,
             "--summary",
             "--steps",
         ])
+        if args.org:
+            cli_args.extend(["--org", args.org])
 
     return cli.main(cli_args)
 

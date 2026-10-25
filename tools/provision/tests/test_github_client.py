@@ -24,6 +24,18 @@ def test_real_github_client_implements_protocol():
     assert isinstance(client, GitHubClient)
 
 
+def test_real_github_client_requires_non_empty_org():
+    """Verify RealGitHubClient requires an explicit, non-empty org and forbids silent defaults."""
+    with pytest.raises(TypeError):
+        RealGitHubClient()  # type: ignore[call-arg]
+
+    with pytest.raises(ValueError, match="org must be a non-empty string"):
+        RealGitHubClient(org="")
+
+    with pytest.raises(ValueError, match="org must be a non-empty string"):
+        RealGitHubClient(org="   ")
+
+
 @patch("subprocess.run")
 def test_create_repo_from_template_happy_path(mock_run: MagicMock):
     """Happy path: create_repo_from_template invokes gh repo create with correct flags."""
@@ -108,6 +120,47 @@ def test_create_team_happy_path(mock_run: MagicMock):
     )
     mock_run.assert_any_call(
         ["gh", "api", "orgs/test-org/teams/new-team/memberships/bob", "-X", "PUT"],
+        input=None,
+        capture_output=True,
+        text=True,
+    )
+
+
+@patch("subprocess.run")
+def test_create_team_uses_slug_from_response_for_memberships(mock_run: MagicMock):
+    """Verify create_team uses the server-returned slug rather than the raw input name for memberships."""
+    # Deliberately non-slug-shaped name with spaces and uppercase letters
+    team_name = "Product 9 Core Team"
+    returned_slug = "product-9-core-team"
+
+    mock_run.side_effect = [
+        subprocess.CompletedProcess(
+            args=["gh", "api"],
+            returncode=0,
+            stdout=json.dumps({"id": 102, "name": team_name, "slug": returned_slug}),
+            stderr="",
+        ),
+        subprocess.CompletedProcess(args=["gh", "api"], returncode=0, stdout="{}", stderr=""),
+    ]
+
+    client = RealGitHubClient(org="test-org")
+    res = client.create_team(team_name, ["alice"])
+
+    assert res["name"] == team_name
+    assert res["slug"] == returned_slug
+    assert res["members"] == ["alice"]
+    assert mock_run.call_count == 2
+
+    # Creation call uses raw name
+    mock_run.assert_any_call(
+        ["gh", "api", f"orgs/test-org/teams", "-f", f"name={team_name}"],
+        input=None,
+        capture_output=True,
+        text=True,
+    )
+    # Membership call MUST use the slug, NOT the raw name
+    mock_run.assert_any_call(
+        ["gh", "api", f"orgs/test-org/teams/{returned_slug}/memberships/alice", "-X", "PUT"],
         input=None,
         capture_output=True,
         text=True,
