@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""tools/provision/diff-branch-protection
+
+Compares repository branch protection against a committed JSON template (Section 53.1 / 11.3).
+Spec: protocol/08-smoke-and-e2e.md line 381 (CP-0107):
+  ./tools/provision/diff-branch-protection --repo "${E2E_REPO}" \
+    --template templates/protection/service.json --exit-nonzero-on-diff
+"""
+
+from __future__ import annotations
+
+import argparse
+import difflib
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+
+def _extract_bool(val: Any) -> bool:
+    if isinstance(val, dict):
+        return bool(val.get("enabled", False))
+    return bool(val)
+
+
+def normalize_protection(data: dict[str, Any]) -> dict[str, Any]:
+    """Normalize GitHub REST branch protection structure to canonical comparable shape."""
+    norm: dict[str, Any] = {}
+
+    # 1. required_pull_request_reviews
+    rprr = data.get("required_pull_request_reviews")
+    if rprr is not None and isinstance(rprr, dict):
+        norm["required_pull_request_reviews"] = {
+            "required_approving_review_count": int(rprr.get("required_approving_review_count", 0)),
+            "require_code_owner_reviews": bool(rprr.get("require_code_owner_reviews", False)),
+            "require_last_push_approval": bool(rprr.get("require_last_push_approval", False)),
+            "dismiss_stale_reviews": bool(rprr.get("dismiss_stale_reviews", False)),
+        }
+    else:
+        norm["required_pull_request_reviews"] = None
+
+    # 2. required_status_checks
+    rsc = data.get("required_status_checks")
+    if rsc is not None and isinstance(rsc, dict):
+        contexts = sorted(str(c) for c in (rsc.get("contexts") or []))
+        norm["required_status_checks"] = {
+            "strict": bool(rsc.get("strict", False)),
+            "contexts": contexts,
+        }
+    else:
+        norm["required_status_checks"] = None
+
+    # 3. enforce_admins
+    norm["enforce_admins"] = _extract_bool(data.get("enforce_admins", False))
+
+    # 4. allow_force_pushes
+    norm["allow_force_pushes"] = _extract_bool(data.get("allow_force_pushes", False))
+
+    # 5. allow_deletions
+    norm["allow_deletions"] = _extract_bool(data.get("allow_deletions", False))
+
+    return norm
+
+
+def fetch_live_protection(repo: str, branch: str = "main") -> dict[str, Any]:
+    """Fetch branch protection via gh api."""
+    endpoint = f"repos/{repo}/branches/{branch}/protection"
+    res = subprocess.run(["gh", "api", endpoint], capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(f"error fetching branch protection for {repo} ({branch}): {res.stderr.strip()}")
+    try:
+        return json.loads(res.stdout)
+    except Exception as exc:
+        raise RuntimeError(f"failed to parse branch protection JSON: {exc}")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="diff-branch-protection",
+        description="Diff branch protection against template (CP-0107 / §53.1).",
+    )
+    parser.add_argument("--repo", required=True, help="Repository owner/name (e.g. lumiverse-org/pilot-one-api)")
+    parser.add_argument("--template", required=True, type=Path, help="Path to branch protection JSON template")
+    parser.add_argument("--branch", default="main", help="Branch name to check (default: main)")
+    parser.add_argument(
+        "--exit-nonzero-on-diff",
+        action="store_true",
+        help="Exit with non-zero status if diff is detected",
+    )
+    parser.add_argument(
+        "--actual-file",
+        type=Path,
+        default=None,
+        help="Offline JSON file containing actual protection",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if not args.template.is_file():
+        print(f"DIFF-BRANCH-PROTECTION FAIL: template file not found: {args.template}", file=sys.stderr)
+        return 1
+
+    try:
+        raw_expected = json.loads(args.template.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"DIFF-BRANCH-PROTECTION FAIL: failed to parse template {args.template}: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        if args.actual_file:
+            if not args.actual_file.is_file():
+                print(f"DIFF-BRANCH-PROTECTION FAIL: actual file not found: {args.actual_file}", file=sys.stderr)
+                return 1
+            raw_actual = json.loads(args.actual_file.read_text(encoding="utf-8"))
+        else:
+            raw_actual = fetch_live_protection(args.repo, branch=args.branch)
+    except Exception as exc:
+        print(f"DIFF-BRANCH-PROTECTION FAIL: {exc}", file=sys.stderr)
+        return 1
+
+    norm_expected = normalize_protection(raw_expected)
+    norm_actual = normalize_protection(raw_actual)
+
+    expected_json = json.dumps(norm_expected, indent=2, sort_keys=True)
+    actual_json = json.dumps(norm_actual, indent=2, sort_keys=True)
+
+    if expected_json != actual_json:
+        diff_lines = list(
+            difflib.unified_diff(
+                expected_json.splitlines(),
+                actual_json.splitlines(),
+                fromfile=f"template:{args.template.name}",
+                tofile=f"actual:{args.repo}@{args.branch}",
+                lineterm="",
+            )
+        )
+        print(
+            f"DIFF-BRANCH-PROTECTION MISMATCH: {args.repo} ({args.branch}) differs from {args.template}:",
+            file=sys.stderr,
+        )
+        for line in diff_lines:
+            print(f"  {line}", file=sys.stderr)
+        if args.exit_nonzero_on_diff:
+            return 1
+        return 0
+
+    print(f"BRANCH-PROTECTION OK: {args.repo} ({args.branch}) matches {args.template}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

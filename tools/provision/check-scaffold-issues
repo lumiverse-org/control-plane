@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""tools/provision/check-scaffold-issues
+
+Checkpoint CP-0110: Verify that the CONFIGURE checklist issue and the
+alert-channel / support-intake manual steps exist as tracked work items,
+not silent omissions (Section 19.1, L3-P4-08).
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Verify tracked scaffold issues for a product (CP-0110, Section 19.1)"
+    )
+    parser.add_argument(
+        "--product",
+        required=True,
+        help="Product ID (e.g. pilot-one)",
+    )
+    parser.add_argument(
+        "--require",
+        default="configure-checklist,alert-channel,support-intake",
+        help="Comma-separated required issue keys (default: configure-checklist,alert-channel,support-intake)",
+    )
+    parser.add_argument(
+        "--repo",
+        default=None,
+        help="Target GitHub repository (default: lumiverse-org/<product>)",
+    )
+    parser.add_argument(
+        "--fixture-issues",
+        default=None,
+        help="Path to fixture file containing issue definitions (JSON array of {title, body} objects or text)",
+    )
+    return parser.parse_args(argv)
+
+
+def load_issues_from_fixture(path: Path) -> list[dict[str, str]]:
+    if not path.is_file():
+        raise FileNotFoundError(f"Fixture issues file not found: {path}")
+    raw = path.read_text(encoding="utf-8")
+    try:
+        data = json.loads(raw)
+        if isinstance(data, list):
+            return [{"title": str(item.get("title", "")), "body": str(item.get("body", ""))} for item in data]
+    except json.JSONDecodeError:
+        pass
+    # If not JSON, treat entire file as a single issue body
+    return [{"title": path.name, "body": raw}]
+
+
+def fetch_issues_from_gh(repo: str) -> list[dict[str, str]]:
+    cmd = ["gh", "issue", "list", "--repo", repo, "--state", "all", "--json", "number,title,body"]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    except FileNotFoundError:
+        print("CHECK-SCAFFOLD-ISSUES FAIL: 'gh' CLI tool not found", file=sys.stderr)
+        sys.exit(1)
+
+    if proc.returncode != 0:
+        err = proc.stderr.strip() or proc.stdout.strip()
+        print(f"CHECK-SCAFFOLD-ISSUES FAIL: unable to list issues for '{repo}': {err}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        items = json.loads(proc.stdout)
+        return [{"title": str(i.get("title", "")), "body": str(i.get("body", ""))} for i in items]
+    except json.JSONDecodeError as e:
+        print(f"CHECK-SCAFFOLD-ISSUES FAIL: failed to parse 'gh issue list' JSON: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+ITEM_PATTERNS = {
+    "configure-checklist": [re.compile(r"configure\s+checklist", re.IGNORECASE)],
+    "alert-channel": [re.compile(r"alert[-_]channel", re.IGNORECASE), re.compile(r"alert\s+channel", re.IGNORECASE)],
+    "support-intake": [re.compile(r"support[-_]intake", re.IGNORECASE), re.compile(r"support\s+intake", re.IGNORECASE)],
+}
+
+
+def matches_item(key: str, issues: list[dict[str, str]]) -> bool:
+    patterns = ITEM_PATTERNS.get(key, [re.compile(re.escape(key), re.IGNORECASE)])
+    for issue in issues:
+        content = f"{issue.get('title', '')}\n{issue.get('body', '')}"
+        for pat in patterns:
+            if pat.search(content):
+                return True
+    return False
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    product = args.product
+    repo = args.repo or f"lumiverse-org/{product}"
+    required_keys = [k.strip() for k in args.require.split(",") if k.strip()]
+
+    if args.fixture_issues:
+        fixture_path = Path(args.fixture_issues)
+        if not fixture_path.is_file():
+            print(f"CHECK-SCAFFOLD-ISSUES FAIL: fixture file not found: {fixture_path}", file=sys.stderr)
+            return 1
+        issues = load_issues_from_fixture(fixture_path)
+    else:
+        issues = fetch_issues_from_gh(repo)
+
+    missing = []
+    found = []
+    for key in required_keys:
+        if matches_item(key, issues):
+            found.append(key)
+        else:
+            missing.append(key)
+
+    if missing:
+        print(
+            f"CHECK-SCAFFOLD-ISSUES FAIL: missing required issue(s) for '{product}': {', '.join(missing)} "
+            f"(found: {', '.join(found) if found else 'none'})",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(
+        f"CHECK-SCAFFOLD-ISSUES OK: all {len(found)} required issues tracked for '{product}': {', '.join(found)}"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
