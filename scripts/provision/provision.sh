@@ -22,6 +22,17 @@ REPO_NAME=""
 CLI_ORG=""
 
 ID_REGEX='^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$'
+ORG_REGEX='^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$'
+
+escape_yaml() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\r'/\\r}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\t'/\\t}"
+  printf '%s' "$s"
+}
 
 shift || true
 while [[ $# -gt 0 ]]; do
@@ -64,15 +75,27 @@ case "$COMMAND" in
     TARGET_REPO="${REPO_NAME:-$PRODUCT_ID}"
 
     if [[ "$MODE" == "apply" ]]; then
-      if [[ -z "${CLI_ORG// }" ]]; then
+      TRIMMED_ORG="${CLI_ORG//[$' \t\r\n\v\f']}"
+      TRIMMED_ORG="${TRIMMED_ORG//$'\xC2\xA0'}"
+      if [[ -z "$TRIMMED_ORG" ]]; then
         echo "ERROR: --org must be passed explicitly on the command line when using --mode apply; it cannot be sourced from the ORG environment variable for a real write." >&2
+        exit 2
+      fi
+      if [[ ! "$CLI_ORG" =~ $ORG_REGEX ]]; then
+        echo "ERROR: Invalid --org '$CLI_ORG'. Must match regex: $ORG_REGEX" >&2
         exit 2
       fi
       TARGET_ORG="$CLI_ORG"
       echo "Target organisation: $TARGET_ORG"
     else
       TARGET_ORG="${CLI_ORG:-$ORG}"
+      if [[ -n "$TARGET_ORG" && ! "$TARGET_ORG" =~ $ORG_REGEX ]]; then
+        echo "ERROR: Invalid --org '$TARGET_ORG'. Must match regex: $ORG_REGEX" >&2
+        exit 2
+      fi
     fi
+
+    SAFE_PRODUCT_NAME=$(escape_yaml "$PRODUCT_NAME")
 
     echo "=== Create Product: $PRODUCT_ID ($PRODUCT_NAME) ==="
 
@@ -82,7 +105,7 @@ case "$COMMAND" in
       mkdir -p records/products
       cat > "$RECORD_FILE" <<EOF
 id: "$PRODUCT_ID"
-name: "$PRODUCT_NAME"
+name: "$SAFE_PRODUCT_NAME"
 created: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 status: "bootstrapping"
 EOF
@@ -97,7 +120,7 @@ EOF
       mkdir -p registries/capabilities
       cat > "$CAP_FILE" <<EOF
 id: "CAP-$(printf '%04d' $RANDOM)"
-name: "$PRODUCT_NAME"
+name: "$SAFE_PRODUCT_NAME"
 owner_lane: "L3"
 status: "planned"
 EOF

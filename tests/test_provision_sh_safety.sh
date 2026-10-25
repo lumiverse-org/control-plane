@@ -20,6 +20,15 @@ export PATH="$TMPDIR:$PATH"
 export GITHUB_TOKEN="mock-token-for-test"
 export MOCK_GH_LOG="$TMPDIR/gh_invocations.txt"
 
+# Sanity check: verify mock gh CLI interception works before trusting any test results
+rm -f "$MOCK_GH_LOG"
+gh sanity-check-interception
+if ! grep -q "sanity-check-interception" "$MOCK_GH_LOG"; then
+  echo "FAIL: Mock gh CLI interception failed sanity check!" >&2
+  exit 1
+fi
+rm -f "$MOCK_GH_LOG"
+
 run_test_1() {
   echo "=== TEST 1: Command injection via eval is completely neutralized ==="
   PROOF_FILE="$TMPDIR/INJECTED_PROOF"
@@ -101,16 +110,85 @@ run_test_3() {
 }
 
 run_test_4() {
-  echo "=== TEST 4: Problem 3 - Literal --org is required under --mode apply (exit 2) ==="
+  echo "=== TEST 4: GAP A - Strict --org validation and whitespace rejection under --mode apply ==="
+  
+  # 1. Test omission of --org flag
+  rm -f "$MOCK_GH_LOG"
+  SANDBOX="$TMPDIR/sb_org_omit"
+  mkdir -p "$SANDBOX"
   set +e
-  ERR_OUT=$(ORG="lumiverse-org" bash "$PROVISION_SH" create-product --product-id "alpha-prod" --product-name "Alpha" --mode apply 2>&1)
+  ERR_OUT=$(cd "$SANDBOX" && ORG="lumiverse-org" bash "$PROVISION_SH" create-product --product-id "alpha-prod" --product-name "Alpha" --mode apply 2>&1)
   RC=$?
   set -e
   if [[ $RC -ne 2 ]] || ! echo "$ERR_OUT" | grep -q "ERROR: --org must be passed explicitly"; then
     echo "FAIL: missing literal --org was not rejected with exit code 2. Got rc=$RC, out=$ERR_OUT" >&2
     exit 1
   fi
-  echo "PASS: Omission of literal --org under apply rejected with exit code 2."
+  if [[ -d "$SANDBOX/records" || -d "$SANDBOX/registries" || -f "$MOCK_GH_LOG" ]]; then
+    echo "FAIL: side effects produced when --org was omitted!" >&2
+    exit 1
+  fi
+
+  # 2. Test all whitespace variants
+  declare -A WS_VARIANTS=(
+    ["space"]="   "
+    ["tab"]=$'\t'
+    ["newline"]=$'\n'
+    ["cr"]=$'\r'
+    ["vt"]=$'\v'
+    ["ff"]=$'\f'
+    ["nbsp"]=$'\xC2\xA0'
+    ["mixed"]=$' \t \r\n '
+    ["empty"]=""
+  )
+
+  for ws_name in "${!WS_VARIANTS[@]}"; do
+    ws_val="${WS_VARIANTS[$ws_name]}"
+    rm -f "$MOCK_GH_LOG"
+    WS_BOX="$TMPDIR/sb_ws_${ws_name}"
+    mkdir -p "$WS_BOX"
+    set +e
+    ERR_OUT=$(cd "$WS_BOX" && ORG="lumiverse-org" bash "$PROVISION_SH" create-product --product-id "ws-prod" --product-name "WS Prod" --org "$ws_val" --mode apply 2>&1)
+    RC=$?
+    set -e
+    if [[ $RC -ne 2 ]] || ! echo "$ERR_OUT" | grep -q "ERROR: --org must be passed explicitly"; then
+      echo "FAIL: whitespace --org variant '$ws_name' was not rejected with exit code 2. Got rc=$RC, out=$ERR_OUT" >&2
+      exit 1
+    fi
+    if [[ -d "$WS_BOX/records" || -d "$WS_BOX/registries" || -f "$MOCK_GH_LOG" ]]; then
+      echo "FAIL: side effects produced for whitespace --org variant '$ws_name'!" >&2
+      exit 1
+    fi
+  done
+  echo "PASS: All 9 whitespace/empty --org variants rejected with exit 2 and zero side-effects."
+
+  # 3. Test invalid org regex variants
+  BAD_ORGS=(
+    "../../evil"
+    "bad/org"
+    "org;evil"
+    'org`backtick`'
+    'org$(subshell)'
+    "org with space"
+  )
+  for bad_org in "${BAD_ORGS[@]}"; do
+    rm -f "$MOCK_GH_LOG"
+    BAD_BOX="$TMPDIR/sb_badorg"
+    rm -rf "$BAD_BOX" && mkdir -p "$BAD_BOX"
+    set +e
+    ERR_OUT=$(cd "$BAD_BOX" && bash "$PROVISION_SH" create-product --product-id "bad-prod" --product-name "Bad" --org "$bad_org" --mode apply 2>&1)
+    RC=$?
+    set -e
+    if [[ $RC -ne 2 ]] || ! echo "$ERR_OUT" | grep -q "ERROR: Invalid --org"; then
+      echo "FAIL: bad org '$bad_org' was not rejected with exit code 2. Got rc=$RC, out=$ERR_OUT" >&2
+      exit 1
+    fi
+    if [[ -d "$BAD_BOX/records" || -d "$BAD_BOX/registries" || -f "$MOCK_GH_LOG" ]]; then
+      echo "FAIL: side effects produced for bad org '$bad_org'!" >&2
+      exit 1
+    fi
+  done
+  echo "PASS: All ${#BAD_ORGS[@]} invalid --org regex variants rejected with exit 2 and zero side-effects."
 }
 
 run_test_5() {
@@ -153,6 +231,62 @@ run_test_6() {
   echo "PASS: Dry-run planning mode completely functional and unregressed."
 }
 
+run_test_7() {
+  echo "=== TEST 7: GAP B - --product-name YAML escaping and integrity ==="
+  NAME_VARIANTS=(
+    'Evil", injected_field: "pwned'
+    'Has "double quotes" inside'
+    $'Multi\nLine\nName'
+    'Back\Slash\Name'
+    $'Complex "Name" \\ with \n newlines and \t tabs'
+  )
+
+  local idx=0
+  for test_name in "${NAME_VARIANTS[@]}"; do
+    idx=$((idx + 1))
+    PID="esc-prod-${idx}"
+    TEST_DIR="$TMPDIR/sb_esc_${idx}"
+    mkdir -p "$TEST_DIR"
+    rm -f "$MOCK_GH_LOG"
+
+    (
+      cd "$TEST_DIR"
+      bash "$PROVISION_SH" create-product \
+        --product-id "$PID" \
+        --product-name "$test_name" \
+        --org "test-org" \
+        --mode apply
+    )
+
+    PROD_RECORD="$TEST_DIR/records/products/${PID}.yaml"
+    CAP_RECORD="$TEST_DIR/registries/capabilities/${PID}.yaml"
+
+    if [[ ! -f "$PROD_RECORD" || ! -f "$CAP_RECORD" ]]; then
+      echo "FAIL: Record or capability file missing for test variant $idx" >&2
+      exit 1
+    fi
+
+    # Verify records parse cleanly with Python's yaml parser and data matches exactly
+    python3 -c "
+import yaml, sys
+path_p = sys.argv[1]
+path_c = sys.argv[2]
+expected = sys.argv[3]
+
+with open(path_p, 'r', encoding='utf-8') as f:
+    data_p = yaml.safe_load(f)
+assert data_p['name'] == expected, f'Product record mismatch: {data_p[\"name\"]} != {expected}'
+
+with open(path_c, 'r', encoding='utf-8') as f:
+    data_c = yaml.safe_load(f)
+assert data_c['name'] == expected, f'Capability record mismatch: {data_c[\"name\"]} != {expected}'
+" "$PROD_RECORD" "$CAP_RECORD" "$test_name"
+
+    echo "PASS: Variant $idx record parses cleanly and preserves exact input string."
+  done
+  echo "PASS: All ${#NAME_VARIANTS[@]} --product-name escaping variants verified with real YAML parser."
+}
+
 TARGET="${1:-all}"
 case "$TARGET" in
   1|problem1)
@@ -164,7 +298,7 @@ case "$TARGET" in
   3|problem2_repo)
     run_test_3
     ;;
-  4|problem3_org)
+  4|gap_a_org)
     run_test_4
     ;;
   5|problem4_private)
@@ -173,6 +307,9 @@ case "$TARGET" in
   6|dry_run)
     run_test_6
     ;;
+  7|gap_b_yaml)
+    run_test_7
+    ;;
   all)
     run_test_1
     run_test_2
@@ -180,7 +317,8 @@ case "$TARGET" in
     run_test_4
     run_test_5
     run_test_6
-    echo "ALL TESTS PASSED (6/6)."
+    run_test_7
+    echo "ALL TESTS PASSED (7/7)."
     ;;
   *)
     echo "Unknown test target: $TARGET" >&2

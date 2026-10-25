@@ -7,10 +7,13 @@ Verifies:
   so shell metacharacters in arguments (like product names) are never re-evaluated.
 - PROBLEM 2: Input validation for --product-id and --repo rejects path traversal
   (e.g., ../x) and shell metacharacters before any file write or command execution.
-- PROBLEM 3: Under --mode apply, --org must be passed explicitly on the CLI;
-  it cannot be silently inherited from the environment.
+- GAP A: Under --mode apply, --org must contain non-whitespace and match ORG_REGEX;
+  all whitespace variants (space, tab, newline, CR, VT, FF, NBSP, mixed) and invalid orgs
+  are rejected with exit code 2 and zero side-effects.
 - PROBLEM 4: gh repo create receives --private (not --public).
 - Mode dry: Dry-run planning remains safe, functional, and unregressed.
+- GAP B: --product-name YAML characters (double-quotes, newlines, backslashes) are escaped
+  so record and capability YAML files parse cleanly with a real YAML parser.
 """
 
 from __future__ import annotations
@@ -78,11 +81,12 @@ def test_problem_2_repo_name_validation_rejects_malicious_inputs():
     assert "PASS: All 6 invalid repo variants rejected with exit code 2." in res.stdout
 
 
-def test_problem_3_apply_requires_explicit_cli_org():
-    """Verify --mode apply requires explicit --org on the CLI."""
+def test_gap_a_apply_requires_explicit_cli_org_rejects_whitespace_and_bad_orgs():
+    """Verify --mode apply requires explicit --org and rejects all whitespace variants & bad orgs."""
     res = run_safety_test("4")
     assert res.returncode == 0, f"STDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
-    assert "PASS: Omission of literal --org under apply rejected with exit code 2." in res.stdout
+    assert "PASS: All 9 whitespace/empty --org variants rejected with exit 2 and zero side-effects." in res.stdout
+    assert "PASS: All 6 invalid --org regex variants rejected with exit 2 and zero side-effects." in res.stdout
 
 
 def test_problem_4_repo_created_private():
@@ -97,3 +101,10 @@ def test_dry_run_mode_preserved_and_safe():
     res = run_safety_test("6")
     assert res.returncode == 0, f"STDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
     assert "PASS: Dry-run planning mode completely functional and unregressed." in res.stdout
+
+
+def test_gap_b_product_name_yaml_escaping_and_integrity():
+    """Verify --product-name YAML characters are properly escaped and parse cleanly."""
+    res = run_safety_test("7")
+    assert res.returncode == 0, f"STDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
+    assert "PASS: All 5 --product-name escaping variants verified with real YAML parser." in res.stdout
