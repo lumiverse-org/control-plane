@@ -443,18 +443,15 @@ def execute_ci_workflows_pinned_tag(
 ) -> dict[str, Any]:
     """Step 7: ci_workflows_pinned_tag (GitHub API write via client).
 
-    Renders CI workflow template with pinned workflows tag and uploads via client.
+    Renders CI workflow templates with pinned workflows tag and uploads via client.
+    Wires all seven required Section 33.2 workflows (ci, build, deploy-staging,
+    deploy-production, migrate, restore-test, restore-production).
     """
-    template_ci = (
+    templates_dir = (
         Path(__file__).resolve().parent.parent.parent
         / "templates"
         / "workflows"
-        / "ci.yml"
     )
-    if template_ci.is_file():
-        raw = template_ci.read_text(encoding="utf-8")
-    else:
-        raw = "name: ci\n# template placeholder\n"
 
     platform_path = fixture_dir / "declared" / "platform.yaml"
     tag = "workflows/v3"
@@ -465,19 +462,116 @@ def execute_ci_workflows_pinned_tag(
             or tag
         )
 
-    rendered = raw.replace("{{PRODUCT_NAME}}", product)
-    rendered = rendered.replace("{{CONTROL_PLANE_REPO}}", "lumiverse-org/control-plane")
-    rendered = rendered.replace("{{WORKFLOWS_TAG}}", tag)
-    rendered = rendered.replace("{{DEFAULT_BRANCH}}", "main")
-    rendered = rendered.replace("{{CONFORMANCE_PROFILE}}", "standard")
-
     repo_name = _resolve_repo_name(product, fixture_dir)
-    return client.put_file(
-        repo=repo_name,
-        path=".github/workflows/ci.yml",
-        content=rendered,
-        message=f"Wire CI workflow pinned to {tag} (§19.1, §33.2)",
+    target_repo = f"lumiverse-org/{repo_name}"
+    control_plane_repo = "lumiverse-org/control-plane"
+    checkout_pin = "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2"
+
+    workflow_files: dict[str, str] = {}
+
+    # 1. ci.yml
+    template_ci = templates_dir / "ci.yml"
+    raw_ci = template_ci.read_text(encoding="utf-8") if template_ci.is_file() else "name: ci\n# template placeholder\n"
+    workflow_files[".github/workflows/ci.yml"] = (
+        raw_ci.replace("{{PRODUCT_NAME}}", product)
+        .replace("{{CONTROL_PLANE_REPO}}", control_plane_repo)
+        .replace("{{WORKFLOWS_TAG}}", tag)
+        .replace("{{DEFAULT_BRANCH}}", "main")
+        .replace("{{CONFORMANCE_PROFILE}}", "standard")
     )
+
+    # 2. build.yml
+    template_build = templates_dir / "build.yml"
+    if template_build.is_file():
+        raw_build = template_build.read_text(encoding="utf-8")
+        workflow_files[".github/workflows/build.yml"] = (
+            raw_build.replace("{{PRODUCT_NAME}}", product)
+            .replace("{{CONTROL_PLANE_REPO}}", control_plane_repo)
+            .replace("{{WORKFLOWS_TAG}}", tag)
+            .replace("{{DEFAULT_BRANCH}}", "main")
+        )
+
+    # 3. deploy-staging.yml
+    template_staging = templates_dir / "deploy-staging.template.yml"
+    if template_staging.is_file():
+        raw_staging = template_staging.read_text(encoding="utf-8")
+        staging = (
+            raw_staging.replace("{{PRODUCT_SLUG}}", product)
+            .replace("{{TARGET_REPO}}", target_repo)
+            .replace("{{RUNNER_LABEL}}", "ubuntu-latest")
+            .replace("{{SELF_HOSTED}}", "false")
+        )
+        staging = staging.replace(
+            "    steps:\n      # >>> RUNNER-TIER-ASSERT v1",
+            f"    steps:\n      - uses: {checkout_pin}\n      # >>> RUNNER-TIER-ASSERT v1",
+        )
+        workflow_files[".github/workflows/deploy-staging.yml"] = staging
+
+    # 4. deploy-production.yml
+    template_prod = templates_dir / "deploy-production.template.yml"
+    if template_prod.is_file():
+        raw_prod = template_prod.read_text(encoding="utf-8")
+        prod = (
+            raw_prod.replace("{{PRODUCT_SLUG}}", product)
+            .replace("{{TARGET_REPO}}", target_repo)
+            .replace("{{RUNNER_LABEL}}", "ubuntu-latest")
+            .replace("{{SELF_HOSTED}}", "false")
+        )
+        prod = prod.replace(
+            "    steps:\n      # >>> RUNNER-TIER-ASSERT v1",
+            f"    steps:\n      - uses: {checkout_pin}\n      # >>> RUNNER-TIER-ASSERT v1",
+        )
+        workflow_files[".github/workflows/deploy-production.yml"] = prod
+
+    # 5. migrate.yml
+    template_migrate = templates_dir / "migrate.yml"
+    if template_migrate.is_file():
+        raw_migrate = template_migrate.read_text(encoding="utf-8")
+        workflow_files[".github/workflows/migrate.yml"] = (
+            raw_migrate.replace("{{PRODUCT_SLUG}}", product)
+            .replace("{{TARGET_REPO}}", target_repo)
+            .replace("{{RUNNER_LABEL}}", "ubuntu-latest")
+            .replace("{{SELF_HOSTED}}", "false")
+        )
+
+    # 6. restore-test.yml
+    template_rtest = templates_dir / "restore-test.template.yml"
+    if template_rtest.is_file():
+        raw_rtest = template_rtest.read_text(encoding="utf-8")
+        workflow_files[".github/workflows/restore-test.yml"] = (
+            raw_rtest.replace("{{PRODUCT_SLUG}}", product)
+            .replace("{{TARGET_REPO}}", target_repo)
+            .replace("{{RUNNER_LABEL}}", "ubuntu-latest")
+            .replace("{{SELF_HOSTED}}", "false")
+        )
+
+    # 7. restore-production.yml
+    template_rprod = templates_dir / "restore-production.template.yml"
+    if template_rprod.is_file():
+        raw_rprod = template_rprod.read_text(encoding="utf-8")
+        workflow_files[".github/workflows/restore-production.yml"] = (
+            raw_rprod.replace("{{PRODUCT_SLUG}}", product)
+            .replace("{{TARGET_REPO}}", target_repo)
+            .replace("{{RUNNER_LABEL}}", "ubuntu-latest")
+            .replace("{{SELF_HOSTED}}", "false")
+        )
+
+    last_res = {}
+    for wf_path, wf_content in workflow_files.items():
+        last_res = client.put_file(
+            repo=repo_name,
+            path=wf_path,
+            content=wf_content,
+            message=f"Wire workflow {Path(wf_path).name} pinned to {tag} (§19.1, §33.2)",
+        )
+
+    return {
+        "status": "written",
+        "repo": repo_name,
+        "path": ".github/workflows/ci.yml",
+        "files": list(workflow_files.keys()),
+        "workflows_tag": tag,
+    }
 
 
 def execute_verification_skeleton(
