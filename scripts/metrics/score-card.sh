@@ -6,21 +6,19 @@
 # whatever record-metric.sh wrote. Use validate-metrics.sh to check that a
 # record exists and parses; this script does not re-check that.
 #
-# TODO(real scoring): no lane task currently defines weighted-metric-vs-target
-# scoring for the records/metrics/<product>/<period>.yaml records this script
-# reads. The nearest analog is lanes/L4-03-metric-register.md Phase 7
-# (L4-P7-01..L4-P7-20), which computes each §103 measure against its own
-# threshold from metrics/register + metrics/compute declarations — but that
-# pipeline is a separate, schema-driven system (metric-declarations.yaml with
-# an owner/source/threshold per measure) that does not read or write this
-# script's records/metrics/*.yaml format, and it deliberately keeps measures
-# separate rather than blending them into one composite score (see
-# L4-05-pipeline-and-boards.md D-L4-P5-01/D-L4-P5-02: weights and thresholds
-# are calibrated values owned by L0/L1, never invented by a lane). Before
-# this script could compute a real score, an L0/L1 decision would need to
-# define, per metric, a target and a weight — schemas/metrics/snapshot.v1
-# .schema.json's `metrics` field is currently untyped free-form YAML with no
-# such attributes. Until that decision exists, this script stays a dump.
+# DEFERRED / OUT OF SCOPE (Composite metric scoring):
+# Weighted-metric-vs-target scoring is deliberately NOT specified in V1 scope
+# and is prohibited from being invented locally. Master Spec v4.0 §91 (Retention,
+# No-Surveillance, Fairness and Anti-Goodhart) explicitly bans single composite
+# productivity scores (enforced by registry rule validators and banned-fixture suites).
+# Furthermore, Master Spec §103 (Measure Computations) defines Level 1, Level 2,
+# and Level 3 operational measures, evaluating each measure independently against
+# its own discrete threshold without blending them into a composite score (see also
+# L4-05-pipeline-and-boards.md D-L4-P5-01/D-L4-P5-02). The Phase 7 metric pipeline
+# (lanes/L4-03-metric-register.md) evaluates per-measure declarations separately.
+# Consequently, records/metrics/<product>/<period>.yaml records remain discrete
+# metric snapshots, and this script correctly operates as a read-only inspector/dump
+# rather than applying an unauthorized composite scoring algorithm.
 # Usage: bash scripts/metrics/score-card.sh [product-id|all] [YYYY-MM]
 # Args are positional (not --product/--period flags, unlike record-metric.sh).
 set -euo pipefail
