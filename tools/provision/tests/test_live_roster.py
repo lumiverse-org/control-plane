@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from unittest.mock import MagicMock, patch
+
 from tools.provision import cli
 from tools.provision.create_product import build_create_product_plan_against_live_roster
 from tools.provision.live_roster import live_registered_product_ids
@@ -99,13 +101,15 @@ def test_live_roster_plan_builder_reflects_live_count():
         assert expected_note in step.description
 
 
-def test_cli_live_roster_dry_run_and_apply_rejection():
+@patch("subprocess.run")
+def test_cli_live_roster_dry_run_and_apply_rejection(mock_run: MagicMock):
     """Verify CLI behavior with --roster-source live."""
+    mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=1, stderr="mock failure")
     # Clean dry-run
     rc = cli.main(["create-product", "--live", "--roster-source", "live", "--product", "Product-9"])
     assert rc == 0
 
-    # Incompatible with --apply
+    # Incompatible with --apply or fails closed without live authorization
     rc_apply = cli.main(["create-product", "--live", "--roster-source", "live", "--product", "Product-9", "--apply"])
     assert rc_apply == 1
 

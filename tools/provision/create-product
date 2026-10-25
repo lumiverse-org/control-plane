@@ -53,12 +53,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     # Optional flags and overrides
-    parser.add_argument("--org", default=os.environ.get("ORG", "lumiverse-org"), help="GitHub organization name")
+    parser.add_argument(
+        "--org",
+        default=None,
+        help="GitHub organization name (required explicitly on CLI for --apply; defaults to ORG env var only for dry-run)",
+    )
     parser.add_argument(
         "--roster-source",
         choices=("fixture", "live"),
-        default="live",
-        help="roster source for discovery steps: 'live' (default) or 'fixture'",
+        default=None,
+        help="roster source for discovery steps: 'live' (default for dry-run) or 'fixture'",
     )
     parser.add_argument(
         "--apply",
@@ -142,20 +146,29 @@ def main(argv: list[str] | None = None) -> int:
     ]
 
     if args.apply:
-        cli_args.extend(["--apply", "--live", "--org", args.org])
+        if not args.org or not args.org.strip():
+            print(
+                "CREATE-PRODUCT FAIL: --org must be passed explicitly on the command line when using --apply; "
+                "it cannot be sourced from the ORG environment variable for a real write.",
+                file=sys.stderr,
+            )
+            return 1
+        cli_args.extend(["--apply", "--live", "--org", args.org.strip()])
         if args.roster_source:
             cli_args.extend(["--roster-source", args.roster_source])
     else:
         # Default safe dry-run mode
+        roster_src = args.roster_source or "live"
+        org_val = args.org.strip() if args.org else os.environ.get("ORG")
         cli_args.extend([
             "--live",
-            "--org",
-            args.org,
             "--roster-source",
-            args.roster_source,
+            roster_src,
             "--summary",
             "--steps",
         ])
+        if org_val:
+            cli_args.extend(["--org", org_val])
 
     return cli.main(cli_args)
 

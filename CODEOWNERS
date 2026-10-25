@@ -49,6 +49,7 @@
 /records/	@bendrohit-eng
 /scripts/	@bendrohit-eng
 /tests/	@bendrohit-eng
+/declared/	@bendrohit-eng
 
 # --- guard-critical: the lane guard itself. L0 only, no override exists. ---
 /CODEOWNERS	@bendrohit-eng

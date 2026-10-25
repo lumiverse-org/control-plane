@@ -1,0 +1,13 @@
+platform_version: "4.0"
+supported_contract_versions:
+  product: [1, 2]
+  verification: [1]
+  people_registry: [1]
+  service: [1]
+reusable_workflow_versions:
+  current: "workflows/v1"
+  supported:
+    - "workflows/v1"
+  deprecated: []
+  deprecation_deadline: {}
+canary_set: []

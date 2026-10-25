@@ -1,0 +1,126 @@
+people:
+  - id: bendrohit-eng
+    name: Founder / L0 Integrator
+    github_login: bendrohit-eng
+    role: founder-integrator
+    availability: active
+    access_status: active
+    capabilities:
+      - platform-admin
+      - production-approval
+      - escalation
+      - devops
+      - break-glass
+      - reviewer-matrix-change
+      - architecture
+  - id: nimesh
+    name: Nimesh
+    github_login: nimesh-lead
+    role: team-lead
+    availability: active
+    access_status: active
+    capabilities:
+      - architecture
+      - plan-approval
+      - escalation
+      - reviewer-matrix-change
+      - code-review
+      - production-approval
+  - id: saumit
+    name: Saumit
+    github_login: saumit-qa
+    role: qa
+    availability: active
+    access_status: active
+    capabilities:
+      - verification
+      - uat
+      - release-signoff
+      - code-review
+  - id: harshal
+    name: Harshal
+    github_login: harshal-ops
+    role: devops
+    availability: active
+    access_status: active
+    capabilities:
+      - devops
+      - code-review
+      - incident-response
+      - infra-attestation
+  - id: bhushan
+    name: Bhushan
+    github_login: bhushan-dev
+    role: senior-developer
+    availability: active
+    access_status: active
+    capabilities:
+      - code-review
+      - architecture
+      - backend
+      - migration-review
+      - incident-response
+  - id: aarti
+    name: Aarti
+    github_login: artilumiverse
+    role: foundational-developer
+    availability: active
+    access_status: active
+    capabilities:
+      - code-review
+      - backend
+  - id: mansi
+    name: Mansi
+    github_login: mansi-voice
+    role: voice-ai-developer
+    availability: active
+    access_status: active
+    capabilities:
+      - code-review
+      - backend
+      - voice-eval
+      - incident-response
+  - id: prathamesh
+    name: Prathamesh
+    github_login: prathamesh-mobile
+    role: mobile-developer
+    availability: active
+    access_status: active
+    capabilities:
+      - code-review
+      - mobile-release
+      - mobile
+      - incident-response
+  - id: shruti
+    name: Shruti
+    github_login: shru-k-23
+    role: developer
+    availability: active
+    access_status: active
+    capabilities:
+      - code-review
+      - backend
+      - frontend
+      - production-approval
+  - id: swati
+    name: Swati
+    github_login: SwatiDerle
+    role: developer
+    availability: active
+    access_status: active
+    capabilities:
+      - code-review
+      - backend
+      - frontend
+      - production-approval
+  - id: unmesh
+    name: Unmesh
+    github_login: unmesh-lumiversesolutions
+    role: developer
+    availability: active
+    access_status: active
+    capabilities:
+      - code-review
+      - backend
+      - frontend
+      - production-approval
