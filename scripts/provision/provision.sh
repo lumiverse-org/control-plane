@@ -19,6 +19,9 @@ MODE="dry"
 PRODUCT_ID=""
 PRODUCT_NAME=""
 REPO_NAME=""
+CLI_ORG=""
+
+ID_REGEX='^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$'
 
 shift || true
 while [[ $# -gt 0 ]]; do
@@ -27,6 +30,7 @@ while [[ $# -gt 0 ]]; do
     --product-id) PRODUCT_ID="$2"; shift 2;;
     --product-name) PRODUCT_NAME="$2"; shift 2;;
     --repo) REPO_NAME="$2"; shift 2;;
+    --org) CLI_ORG="$2"; shift 2;;
     *) shift;;
   esac
 done
@@ -34,7 +38,7 @@ done
 run_live() {
   if [[ "$MODE" == "apply" ]]; then
     echo "[APPLY] $*"
-    eval "$*"
+    "$@"
   else
     echo "[DRY-RUN] Would run: $*"
   fi
@@ -43,9 +47,33 @@ run_live() {
 case "$COMMAND" in
   create-product)
     [[ -z "$PRODUCT_ID" || -z "$PRODUCT_NAME" ]] && {
-      echo "Usage: provision create-product --product-id <id> --product-name <name> --mode dry|apply"
+      echo "Usage: provision create-product --product-id <id> --product-name <name> [--org <org>] [--repo <name>] --mode dry|apply" >&2
       exit 2
     }
+
+    if [[ ! "$PRODUCT_ID" =~ $ID_REGEX ]]; then
+      echo "ERROR: Invalid --product-id '$PRODUCT_ID'. Must match regex: $ID_REGEX" >&2
+      exit 2
+    fi
+
+    if [[ -n "$REPO_NAME" && ! "$REPO_NAME" =~ $ID_REGEX ]]; then
+      echo "ERROR: Invalid --repo '$REPO_NAME'. Must match regex: $ID_REGEX" >&2
+      exit 2
+    fi
+
+    TARGET_REPO="${REPO_NAME:-$PRODUCT_ID}"
+
+    if [[ "$MODE" == "apply" ]]; then
+      if [[ -z "${CLI_ORG// }" ]]; then
+        echo "ERROR: --org must be passed explicitly on the command line when using --mode apply; it cannot be sourced from the ORG environment variable for a real write." >&2
+        exit 2
+      fi
+      TARGET_ORG="$CLI_ORG"
+      echo "Target organisation: $TARGET_ORG"
+    else
+      TARGET_ORG="${CLI_ORG:-$ORG}"
+    fi
+
     echo "=== Create Product: $PRODUCT_ID ($PRODUCT_NAME) ==="
 
     # Step 1: Create product record (DRY-safe)
@@ -82,9 +110,10 @@ EOF
     # This is L3-04-13 LIVE task — do not run during bootstrap without explicit --mode apply
     if [[ "$MODE" == "apply" ]]; then
       echo "WARNING: Creating live GitHub repo requires GITHUB_TOKEN"
-      run_live "gh repo create ${ORG:-lumiverse-org}/${REPO_NAME:-$PRODUCT_ID} --public --description '$PRODUCT_NAME product repo'"
+      run_live gh repo create "${TARGET_ORG}/${TARGET_REPO}" --private --description "${PRODUCT_NAME} product repo"
     else
-      echo "[DRY-RUN] Would create GitHub repo: ${ORG:-lumiverse-org}/${REPO_NAME:-$PRODUCT_ID}"
+      echo "[DRY-RUN] Target organisation: $TARGET_ORG"
+      echo "[DRY-RUN] Would create GitHub repo: ${TARGET_ORG}/${TARGET_REPO}"
     fi
 
     echo "Done: create-product $PRODUCT_ID (mode=$MODE)"
@@ -105,13 +134,17 @@ EOF
     ;;
 
   check-product)
-    [[ -z "$PRODUCT_ID" ]] && { echo "Usage: provision check-product --product-id <id>"; exit 2; }
+    [[ -z "$PRODUCT_ID" ]] && { echo "Usage: provision check-product --product-id <id>" >&2; exit 2; }
+    if [[ ! "$PRODUCT_ID" =~ $ID_REGEX ]]; then
+      echo "ERROR: Invalid --product-id '$PRODUCT_ID'. Must match regex: $ID_REGEX" >&2
+      exit 2
+    fi
     RECORD_FILE="records/products/${PRODUCT_ID}.yaml"
     if [[ -f "$RECORD_FILE" ]]; then
       echo "FOUND: $RECORD_FILE"
       cat "$RECORD_FILE"
     else
-      echo "NOT FOUND: $RECORD_FILE"
+      echo "NOT FOUND: $RECORD_FILE" >&2
       exit 1
     fi
     ;;
@@ -120,11 +153,12 @@ EOF
     echo "L3 Provisioning CLI (FD-087)"
     echo ""
     echo "Commands:"
-    echo "  create-product --product-id <id> --product-name <name> [--repo <name>] --mode dry|apply"
+    echo "  create-product --product-id <id> --product-name <name> [--org <org>] [--repo <name>] --mode dry|apply"
     echo "  list-products"
     echo "  check-product --product-id <id>"
     echo ""
-    echo "Mode: 'dry' (default) is safe during bootstrap. 'apply' makes live changes."
+    echo "Mode: 'dry' (default) is safe during bootstrap. 'apply' makes live changes (requires literal --org)."
+    echo "Repositories are created --private by default."
     echo "See L3-04-provisioning.md for task breakdown (L3-04-13 is the only LIVE task)."
     ;;
 
