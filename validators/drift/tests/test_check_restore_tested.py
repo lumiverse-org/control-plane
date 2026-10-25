@@ -13,11 +13,27 @@ import yaml
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
 CHECK_RESTORE_SCRIPT = REPO_ROOT / "validators" / "drift" / "check-restore-tested"
 
+_IS_WSL = None
+
+
+def _check_is_wsl() -> bool:
+    global _IS_WSL
+    if _IS_WSL is None:
+        try:
+            res = subprocess.run(["bash", "-c", "uname -s"], capture_output=True, text=True, timeout=2)
+            _IS_WSL = "Linux" in res.stdout
+        except Exception:
+            _IS_WSL = False
+    return _IS_WSL
+
 
 def to_bash_path(path: pathlib.Path) -> str:
     p = path.resolve().as_posix()
     if len(p) >= 2 and p[1] == ":":
-        return f"/mnt/{p[0].lower()}{p[2:]}"
+        if _check_is_wsl():
+            return f"/mnt/{p[0].lower()}{p[2:]}"
+        else:
+            return f"/{p[0].lower()}{p[2:]}"
     return p
 
 
