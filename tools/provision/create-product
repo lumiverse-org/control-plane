@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+"""tools/provision/create-product
+
+Spec wrapper for create-product (§19.1, protocol/08-smoke-and-e2e.md line ~342, CP-0101).
+Translates the spec's harness interface:
+  ./tools/provision/create-product \
+    --id "${E2E_PRODUCT}" \
+    --contract e2e/fixtures/pilot-one/product.yaml \
+    --template product-template \
+    --executor devops-1
+into the underlying tools.provision.cli call with strict validation and safe defaults.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent if "__file__" in globals() else Path.cwd().resolve()
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+import yaml
+
+from tools.provision import cli
+from tools.provision.executors import record_executor
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="create-product",
+        description="Scaffold a new product from standard template (CP-0101 / §19.1).",
+    )
+    # Spec mandatory arguments (CP-0101)
+    parser.add_argument("--id", required=True, help="the product id to create")
+    parser.add_argument(
+        "--contract",
+        required=True,
+        type=Path,
+        help="path to product.yaml contract fixture",
+    )
+    parser.add_argument(
+        "--template",
+        required=True,
+        help="template repository name (must be 'product-template')",
+    )
+    parser.add_argument(
+        "--executor",
+        required=True,
+        help="acting devops capability identity (e.g. devops-1)",
+    )
+
+    # Optional flags and overrides
+    parser.add_argument("--org", default=os.environ.get("ORG", "lumiverse-org"), help="GitHub organization name")
+    parser.add_argument(
+        "--roster-source",
+        choices=("fixture", "live"),
+        default="live",
+        help="roster source for discovery steps: 'live' (default) or 'fixture'",
+    )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        default=False,
+        help="perform real writes instead of dry-run (requires live infrastructure)",
+    )
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        default=False,
+        help="run against real live infrastructure",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=True,
+        help="dry run (default)",
+    )
+    parser.add_argument(
+        "--summary",
+        action="store_true",
+        default=True,
+        help="print plan summary line",
+    )
+    parser.add_argument(
+        "--steps",
+        action="store_true",
+        default=True,
+        help="print planned steps",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    # 1. Validate template: must strictly match 'product-template'
+    if args.template != "product-template":
+        print(
+            f"CREATE-PRODUCT FAIL: invalid template {args.template!r} — must be 'product-template' (AGENTS.md / §19.1)",
+            file=sys.stderr,
+        )
+        return 1
+
+    # 2. Validate contract file exists and is valid YAML
+    contract_path = args.contract.resolve()
+    if not contract_path.is_file():
+        print(
+            f"CREATE-PRODUCT FAIL: contract file not found: {args.contract}",
+            file=sys.stderr,
+        )
+        return 1
+
+    try:
+        data = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            print(
+                f"CREATE-PRODUCT FAIL: contract file {args.contract} must contain a YAML mapping",
+                file=sys.stderr,
+            )
+            return 1
+    except Exception as exc:
+        print(
+            f"CREATE-PRODUCT FAIL: failed to parse contract {args.contract}: {exc}",
+            file=sys.stderr,
+        )
+        return 1
+
+    # 3. Record executor provenance
+    record_executor(args.id, args.executor)
+
+    # 4. Translate into tools.provision.cli create-product invocation
+    cli_args = [
+        "create-product",
+        "--product",
+        args.id,
+        "--executor",
+        args.executor,
+    ]
+
+    if args.apply:
+        cli_args.extend(["--apply", "--live", "--org", args.org])
+        if args.roster_source:
+            cli_args.extend(["--roster-source", args.roster_source])
+    else:
+        # Default safe dry-run mode
+        cli_args.extend([
+            "--live",
+            "--org",
+            args.org,
+            "--roster-source",
+            args.roster_source,
+            "--summary",
+            "--steps",
+        ])
+
+    return cli.main(cli_args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

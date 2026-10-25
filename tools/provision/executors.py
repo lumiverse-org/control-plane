@@ -37,6 +37,20 @@ from tools.provision.protection import plan_protection
 from tools.provision.repo import REQUIRED_COMMANDS, TEMPLATE_REPO
 from tools.provision.teams import _product_team_members
 
+# In-memory registry of acting executor provenance per product
+EXECUTOR_PROVENANCE: dict[str, str] = {}
+
+
+def record_executor(product: str, executor: str) -> None:
+    """Record the acting executor identity for a product provisioning run."""
+    EXECUTOR_PROVENANCE[product] = executor
+
+
+def get_executor(product: str) -> str | None:
+    """Retrieve recorded executor provenance for a product."""
+    return EXECUTOR_PROVENANCE.get(product)
+
+
 
 @runtime_checkable
 class GitHubClient(Protocol):
