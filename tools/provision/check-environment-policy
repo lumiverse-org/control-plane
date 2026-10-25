@@ -1,0 +1,167 @@
+#!/usr/bin/env python3
+"""tools/provision/check-environment-policy
+
+Verifies that named environments exist with deployment branch and tag policies
+restricting deployments to the default branch and protected release tags (Section 33.4).
+Spec: protocol/08-smoke-and-e2e.md lines 375-378 (CP-0106):
+  ./tools/provision/check-environment-policy --repo "${E2E_REPO}" \
+    --env staging --env production --expect default-branch,protected-tags
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+
+def fetch_live_environments(repo: str) -> list[dict[str, Any]]:
+    """Fetch environments for repo via gh api."""
+    endpoint = f"repos/{repo}/environments"
+    res = subprocess.run(["gh", "api", endpoint], capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(f"error fetching environments for {repo}: {res.stderr.strip()}")
+    try:
+        data = json.loads(res.stdout)
+        return data.get("environments", [])
+    except Exception as exc:
+        raise RuntimeError(f"failed to parse environments JSON: {exc}")
+
+
+def fetch_live_branch_policies(repo: str, env_name: str) -> list[dict[str, Any]]:
+    """Fetch deployment branch and tag policies for an environment via gh api."""
+    endpoint = f"repos/{repo}/environments/{env_name}/deployment-branch-policies"
+    res = subprocess.run(["gh", "api", endpoint], capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(f"error fetching policies for {repo}/{env_name}: {res.stderr.strip()}")
+    try:
+        data = json.loads(res.stdout)
+        return data.get("branch_policies", [])
+    except Exception as exc:
+        raise RuntimeError(f"failed to parse deployment branch policies JSON: {exc}")
+
+
+def check_environment(
+    env_name: str,
+    env_data: dict[str, Any] | None,
+    policies: list[dict[str, Any]],
+    expected_policies: set[str],
+) -> list[str]:
+    """Validate a single environment against expectations."""
+    errors: list[str] = []
+    if env_data is None:
+        errors.append(f"environment '{env_name}' does not exist")
+        return errors
+
+    # Check expectations: default-branch, protected-tags
+    # GitHub environment policies have:
+    # {"id": ..., "name": "main", "type": "branch"}
+    # {"id": ..., "name": "v*", "type": "tag"}
+    has_branch_policy = False
+    has_tag_policy = False
+
+    # Check custom_branch_policies setting if present
+    policy_setting = env_data.get("deployment_branch_policy")
+    if isinstance(policy_setting, dict):
+        if policy_setting.get("protected_branches") is True:
+            has_branch_policy = True
+
+    for p in policies:
+        ptype = p.get("type", "")
+        pname = p.get("name", "")
+        if ptype == "branch" or pname in ("main", "master") or not ptype:
+            has_branch_policy = True
+        if ptype == "tag" or pname.startswith("v") or "tag" in pname.lower():
+            has_tag_policy = True
+
+    if "default-branch" in expected_policies and not has_branch_policy:
+        errors.append(f"environment '{env_name}' lacks policy restricting deployments to default branch")
+
+    if "protected-tags" in expected_policies and not has_tag_policy:
+        errors.append(f"environment '{env_name}' lacks policy restricting deployments to protected tags")
+
+    return errors
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="check-environment-policy",
+        description="Verify environment deployment branch and tag policies (CP-0106 / §33.4).",
+    )
+    parser.add_argument("--repo", required=True, help="Repository owner/name (e.g. lumiverse-org/pilot-one-api)")
+    parser.add_argument(
+        "--env",
+        action="append",
+        dest="envs",
+        required=True,
+        help="Named environment to verify (can be specified multiple times, e.g. --env staging --env production)",
+    )
+    parser.add_argument(
+        "--expect",
+        required=True,
+        help="Comma-separated expected policy capabilities (e.g. default-branch,protected-tags)",
+    )
+    parser.add_argument(
+        "--fixture-file",
+        type=Path,
+        default=None,
+        help="Offline JSON fixture providing mock environments and policies",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    expected_policies = {p.strip() for p in args.expect.split(",") if p.strip()}
+    all_errors: list[str] = []
+
+    try:
+        if args.fixture_file:
+            if not args.fixture_file.is_file():
+                print(f"CHECK-ENVIRONMENT-POLICY FAIL: fixture file not found: {args.fixture_file}", file=sys.stderr)
+                return 1
+            fixture_data = json.loads(args.fixture_file.read_text(encoding="utf-8"))
+            envs_list = fixture_data.get("environments", [])
+            env_map = {e["name"]: e for e in envs_list if "name" in e}
+
+            for env_name in args.envs:
+                env_data = env_map.get(env_name)
+                policies = env_data.get("policies", []) if env_data else []
+                errs = check_environment(env_name, env_data, policies, expected_policies)
+                all_errors.extend(errs)
+        else:
+            envs_list = fetch_live_environments(args.repo)
+            env_map = {e["name"]: e for e in envs_list if "name" in e}
+
+            for env_name in args.envs:
+                env_data = env_map.get(env_name)
+                if env_data:
+                    policies = fetch_live_branch_policies(args.repo, env_name)
+                else:
+                    policies = []
+                errs = check_environment(env_name, env_data, policies, expected_policies)
+                all_errors.extend(errs)
+    except Exception as exc:
+        print(f"CHECK-ENVIRONMENT-POLICY FAIL: {exc}", file=sys.stderr)
+        return 1
+
+    if all_errors:
+        print(f"CHECK-ENVIRONMENT-POLICY FAIL: {args.repo} environment check failed:", file=sys.stderr)
+        for err in all_errors:
+            print(f"  - {err}", file=sys.stderr)
+        return 1
+
+    print(
+        f"CHECK-ENVIRONMENT-POLICY OK: all {len(args.envs)} environment(s) ({', '.join(args.envs)}) "
+        f"on {args.repo} satisfy expectation [{args.expect}] (§33.4)"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

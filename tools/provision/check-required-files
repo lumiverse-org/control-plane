@@ -1,0 +1,167 @@
+#!/usr/bin/env python3
+"""tools/provision/check-required-files
+
+Asserts required files/directories are present in a repository per Section 33.1.
+Spec: protocol/08-smoke-and-e2e.md line ~357 (CP-0103):
+  ./tools/provision/check-required-files --repo "${E2E_REPO}"
+
+Required Section 33.1 items:
+  1. .env.example
+  2. docker-compose.dev.yml
+  3. Makefile
+  4. seed data (seed/ or seed.json)
+  5. migrations/
+  6. verification/
+  7. AGENTS.md
+  8. product.yaml (or .product-pointer)
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+REQUIRED_ITEMS: list[tuple[str, str]] = [
+    (".env.example", ".env.example"),
+    ("docker-compose.dev.yml", "docker-compose.dev.yml"),
+    ("Makefile", "Makefile"),
+    ("seed data", "seed/"),
+    ("migrations/", "migrations/"),
+    ("verification/", "verification/"),
+    ("AGENTS.md", "AGENTS.md"),
+    ("product.yaml", "product.yaml"),
+]
+
+
+def check_paths_against_requirements(paths: set[str]) -> list[str]:
+    """Return list of missing required item names."""
+    missing: list[str] = []
+
+    # 1. .env.example
+    if ".env.example" not in paths:
+        missing.append(".env.example")
+
+    # 2. docker-compose.dev.yml
+    if "docker-compose.dev.yml" not in paths:
+        missing.append("docker-compose.dev.yml")
+
+    # 3. Makefile
+    if "Makefile" not in paths:
+        missing.append("Makefile")
+
+    # 4. seed data (seed/ or seeds/ or seed.json or seed.sql)
+    if not any(
+        p.startswith("seed/")
+        or p.startswith("seeds/")
+        or p in ("seed", "seed.json", "seed.sql")
+        for p in paths
+    ):
+        missing.append("seed data")
+
+    # 5. migrations/
+    if not any(p.startswith("migrations/") or p == "migrations" for p in paths):
+        missing.append("migrations/")
+
+    # 6. verification/
+    if not any(p.startswith("verification/") or p == "verification" for p in paths):
+        missing.append("verification/")
+
+    # 7. AGENTS.md
+    if "AGENTS.md" not in paths:
+        missing.append("AGENTS.md")
+
+    # 8. product.yaml (or .product-pointer per §33.1)
+    if "product.yaml" not in paths and ".product-pointer" not in paths:
+        missing.append("product.yaml")
+
+    return missing
+
+
+def fetch_repo_tree(repo: str, ref: str = "HEAD") -> set[str]:
+    """Fetch tree paths via GitHub CLI gh api."""
+    endpoint = f"repos/{repo}/git/trees/{ref}?recursive=1"
+    res = subprocess.run(
+        ["gh", "api", endpoint, "--jq", ".tree[].path"],
+        capture_output=True,
+        text=True,
+    )
+    if res.returncode != 0:
+        raise RuntimeError(
+            f"gh api error fetching tree for {repo} ({endpoint}): {res.stderr.strip()}"
+        )
+    return {line.strip() for line in res.stdout.splitlines() if line.strip()}
+
+
+def load_local_dir_tree(dir_path: Path) -> set[str]:
+    """Scan local directory for paths relative to dir_path."""
+    paths: set[str] = set()
+    for p in dir_path.rglob("*"):
+        rel = p.relative_to(dir_path).as_posix()
+        paths.add(rel)
+        if p.is_dir():
+            paths.add(rel + "/")
+    return paths
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="check-required-files",
+        description="Assert Section 33.1 required files are present in repository (CP-0103).",
+    )
+    parser.add_argument("--repo", default=None, help="Repository owner/name (e.g. lumiverse-org/pilot-one-api)")
+    parser.add_argument("--ref", default="HEAD", help="Git reference/branch to check (default: HEAD)")
+    parser.add_argument("--tree-file", type=Path, default=None, help="Offline JSON file containing tree list")
+    parser.add_argument("--local-dir", type=Path, default=None, help="Offline local directory to scan")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if not args.repo and not args.local_dir and not args.tree_file:
+        print("CHECK-REQUIRED-FILES FAIL: one of --repo, --local-dir, or --tree-file is required", file=sys.stderr)
+        return 2
+
+    try:
+        if args.local_dir:
+            if not args.local_dir.is_dir():
+                print(f"CHECK-REQUIRED-FILES FAIL: local dir not found: {args.local_dir}", file=sys.stderr)
+                return 1
+            paths = load_local_dir_tree(args.local_dir)
+        elif args.tree_file:
+            if not args.tree_file.is_file():
+                print(f"CHECK-REQUIRED-FILES FAIL: tree file not found: {args.tree_file}", file=sys.stderr)
+                return 1
+            content = json.loads(args.tree_file.read_text(encoding="utf-8"))
+            if isinstance(content, dict) and "tree" in content:
+                paths = {item["path"] for item in content["tree"] if "path" in item}
+            elif isinstance(content, list):
+                paths = {str(item) for item in content}
+            else:
+                paths = set()
+        else:
+            paths = fetch_repo_tree(args.repo, ref=args.ref)
+    except Exception as exc:
+        print(f"CHECK-REQUIRED-FILES FAIL: {exc}", file=sys.stderr)
+        return 1
+
+    target_desc = args.repo or str(args.local_dir) or str(args.tree_file)
+    missing = check_paths_against_requirements(paths)
+    if missing:
+        print(
+            f"CHECK-REQUIRED-FILES FAIL: {target_desc} is missing {len(missing)} required item(s): {', '.join(missing)}",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"CHECK-REQUIRED-FILES OK: all 8 Section 33.1 required items present in {target_desc}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
