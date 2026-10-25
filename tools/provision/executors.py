@@ -33,6 +33,7 @@ from tools.provision.create_product import (
     _current_product_contract_version,
 )
 from tools.provision.environments import plan_environments
+from tools.provision.github_client import GitHubClientError, RealGitHubClient
 from tools.provision.protection import plan_protection
 from tools.provision.repo import REQUIRED_COMMANDS, TEMPLATE_REPO
 from tools.provision.teams import _product_team_members

@@ -132,8 +132,9 @@ class CreateProductPlan(Plan):
 
     manual_steps: tuple[Step, ...] = ()
 
-    def summary_line(self, operation: str, *, applied: bool = False) -> str:
-        writes = self.count(StepKind.WRITE) if applied else 0
+    def summary_line(self, operation: str, *, applied: bool = False, writes: int | None = None) -> str:
+        if writes is None:
+            writes = self.count(StepKind.WRITE) if applied else 0
         return f"PLAN {operation} steps={len(self.steps)} writes={writes} manual={len(self.manual_steps)}"
 
 
@@ -200,6 +201,34 @@ def build_create_product_plan(product: str, fixture: str) -> CreateProductPlan:
     `.manual_steps` (see `CreateProductPlan`).
     """
     automated = _automated_step_descriptions(product, fixture)
+    steps = [Step(step_id, automated[step_id], StepKind.WRITE) for step_id in CREATE_PRODUCT_STEPS]
+
+    manual_text = _manual_step_descriptions(product)
+    manual_steps = tuple(
+        Step(step_id, manual_text[step_id], StepKind.MANUAL) for step_id in CREATE_PRODUCT_MANUAL_STEPS
+    )
+
+    return CreateProductPlan(steps=steps, manual_steps=manual_steps)
+
+
+
+
+def declared_registered_product_ids(declared_dir: Path | None = None) -> tuple[str, ...]:
+    """The product roster read from declared/products/*.yaml, sorted."""
+    if declared_dir is None:
+        declared_dir = Path(__file__).resolve().parent.parent.parent / "declared"
+    products_dir = declared_dir / "products" if declared_dir.name != "products" else declared_dir
+    if not products_dir.is_dir():
+        return ()
+    return tuple(sorted(p.stem for p in products_dir.glob("*.yaml") if not p.name.startswith(".")))
+
+
+def build_create_product_plan_against_declared(
+    product: str, declared_dir: Path | None = None
+) -> CreateProductPlan:
+    """Build the create-product plan for `product` using the permanent declared/ directory."""
+    existing = declared_registered_product_ids(declared_dir)
+    automated = _automated_step_descriptions_from_roster(product, existing)
     steps = [Step(step_id, automated[step_id], StepKind.WRITE) for step_id in CREATE_PRODUCT_STEPS]
 
     manual_text = _manual_step_descriptions(product)

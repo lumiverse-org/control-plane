@@ -72,14 +72,16 @@ class Plan:
     def count(self, kind: StepKind) -> int:
         return sum(1 for step in self.steps if step.kind == kind)
 
-    def summary_line(self, operation: str, *, applied: bool = False) -> str:
+    def summary_line(self, operation: str, *, applied: bool = False, writes: int | None = None) -> str:
         """Render the Section 7 dry-run summary line.
 
         ``applied`` is False for every dry-run (the CLI default and the
         only mode this skeleton ever exercises without ``--apply
         --live``): writes is then always 0, regardless of how many
         write-kind steps the plan holds, because none of them ran.
+        When ``writes`` is provided, that explicit count is reported.
         """
-        writes = self.count(StepKind.WRITE) if applied else 0
+        if writes is None:
+            writes = self.count(StepKind.WRITE) if applied else 0
         manual = self.count(StepKind.MANUAL)
         return f"PLAN {operation} steps={len(self.steps)} writes={writes} manual={manual}"

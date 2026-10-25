@@ -80,11 +80,13 @@ def test_fixture_or_live_is_required():
 
 
 def test_apply_with_live_performs_zero_writes_when_plan_is_empty():
-    # Skeleton-level: no orchestrator wires real steps into any plan yet
-    # (that lands in L3-P4-07/09, L3-P7-01/02), so an --apply --live run
-    # has nothing to write and must say so honestly, not report a write
-    # that never happened.
-    assert main(["create-product", "--live", "--apply", "--product", "gamma"]) == 0
+    # When plan has zero steps, an --apply --live run performs zero writes
+    # and must report writes=0 honestly, not report a write that never happened.
+    parser = build_parser()
+    args = parser.parse_args(["create-product", "--live", "--apply", "--product", "gamma"])
+    from tools.provision.cli import _run_operation
+    from tools.provision.plan import Plan
+    assert _run_operation(args, "create-product", Plan()) == 0
 
 
 def test_unknown_fixture_is_a_clean_error_not_a_crash():
