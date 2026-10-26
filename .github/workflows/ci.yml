@@ -86,6 +86,11 @@ on:
         type: string
         required: false
         default: "verification/seeded-results.json"
+      workflows_ref:
+        description: "Control-plane ref that contains this workflow file and its tools."
+        type: string
+        required: false
+        default: "workflows/v4"
     secrets:
       CONTROL_PLANE_TOKEN:
         description: "Read-only token for the control-plane repository"
@@ -169,6 +174,7 @@ jobs:
       product: ${{ inputs.product_name }}
       identity_mode: digest
       control_plane_ref: ${{ inputs.default_branch }}
+      image_repo: ghcr.io/${{ github.repository }}
       job: ${{ inputs.job }}
     secrets:
       control_plane_read_token: ${{ secrets.CONTROL_PLANE_TOKEN || secrets.GITHUB_TOKEN }}
@@ -199,7 +205,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ github.repository_owner }}/control-plane
-          ref: ${{ github.workflow_sha }}
+          ref: ${{ inputs.workflows_ref }}
           path: control-plane
           fetch-depth: 1
 
@@ -303,7 +309,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ github.repository_owner }}/control-plane
-          ref: ${{ github.workflow_sha }}
+          ref: ${{ inputs.workflows_ref }}
           path: control-plane
           fetch-depth: 1
 
@@ -408,7 +414,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ github.repository_owner }}/control-plane
-          ref: ${{ github.workflow_sha }}
+          ref: ${{ inputs.workflows_ref }}
           path: control-plane
           fetch-depth: 1
 
@@ -473,7 +479,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ github.repository_owner }}/control-plane
-          ref: ${{ github.workflow_sha }}
+          ref: ${{ inputs.workflows_ref }}
           path: control-plane
           fetch-depth: 1
 
@@ -555,7 +561,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ github.repository_owner }}/control-plane
-          ref: ${{ github.workflow_sha }}
+          ref: ${{ inputs.workflows_ref }}
           path: control-plane
           fetch-depth: 1
 
@@ -627,7 +633,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ github.repository_owner }}/control-plane
-          ref: ${{ github.workflow_sha }}
+          ref: ${{ inputs.workflows_ref }}
           path: control-plane
           fetch-depth: 1
 
@@ -684,7 +690,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ github.repository_owner }}/control-plane
-          ref: ${{ github.workflow_sha }}
+          ref: ${{ inputs.workflows_ref }}
           path: control-plane
           fetch-depth: 1
 
