@@ -8,10 +8,15 @@ cp_assert CP-0701 "migration applied through CI, not by hand" \
   ./tools/e2e-drive/run-workflow --repo "${E2E_REPO}" --workflow migrate.yml \
     --env staging --digest "${DIGEST}" --expect success
 
-# CP-0702 Backward compatibility for one release cycle (Section 34.3): the PREVIOUS digest must still run
-#         against the NEW schema. This is what makes rollback possible, so it is proven, not assumed.
+# CP-0702 Backward compatibility for one release cycle (Section 34.3 / CCR-007): the PREVIOUS digest
+#         must still run against the NEW schema on release >= 2. Exempted on initial greenfield deploy.
+PREV_DIGEST=""
+if [[ -f "${E2E_OUT}/prev-digest" ]]; then
+  PREV_DIGEST="$(cat "${E2E_OUT}/prev-digest")"
+fi
+
 cp_assert CP-0702 "previous digest runs against the new schema" \
-  ./tools/e2e-drive/compat-probe --env staging --schema new --digest "$(cat "${E2E_OUT}/prev-digest")"
+  ./tools/e2e-drive/compat-probe --env staging --schema new --digest "${PREV_DIGEST}"
 
 cp_assert CP-0703 "staging deploy succeeded with the built digest" \
   ./tools/e2e-drive/run-workflow --repo "${E2E_REPO}" --workflow deploy-staging.yml \
