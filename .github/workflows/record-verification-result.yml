@@ -84,6 +84,7 @@ jobs:
         run: |
           export CP_ROOT="$GITHUB_WORKSPACE/control-plane"
           export CPR_ROOT="$GITHUB_WORKSPACE/control-plane-records"
+          export PYTHONPATH="$CP_ROOT:${PYTHONPATH:-}"
           EV_LINK="${{ github.event.inputs.evidence_link || github.event.inputs.evidence }}"
           ACTOR_NAME="${{ github.event.inputs.actor || github.actor }}"
           bash "$CP_ROOT/tools/records/record-verification-result" \
