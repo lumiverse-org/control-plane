@@ -93,6 +93,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 concurrency:
   group: ci-${{ github.ref }}-${{ inputs.product_name }}
@@ -170,7 +171,7 @@ jobs:
       control_plane_ref: ${{ inputs.default_branch }}
       job: ${{ inputs.job }}
     secrets:
-      control_plane_read_token: ${{ secrets.CONTROL_PLANE_TOKEN }}
+      control_plane_read_token: ${{ secrets.CONTROL_PLANE_TOKEN || secrets.GITHUB_TOKEN }}
 
   security-scan:
     name: security-scan
@@ -193,6 +194,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout control-plane tools
+        if: ${{ inputs.job == '' || inputs.job == 'security-scan' }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ github.repository_owner }}/control-plane
+          ref: ${{ github.workflow_sha }}
+          path: control-plane
+          fetch-depth: 1
+
       - name: Set up Python
         if: ${{ inputs.job == '' || inputs.job == 'security-scan' }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
@@ -201,7 +211,7 @@ jobs:
 
       - name: Install evidence toolchain
         if: ${{ inputs.job == '' || inputs.job == 'security-scan' }}
-        run: pip install -r tools/evidence/requirements.txt
+        run: pip install -r control-plane/tools/evidence/requirements.txt
 
       - name: Run security scanner
         if: ${{ inputs.job == '' || inputs.job == 'security-scan' }}
@@ -213,15 +223,47 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${SCANNER_IMAGE:-}" ]; then
-            echo "ERROR: security_scanner_image input is empty — scanner toolchain undeclared" >&2
+            set -a
+            # FD-107 pins. An empty caller input reads that decision.
+            . control-plane/templates/workflows/scan-tools.env
+            set +a
+            SCANNER_IMAGE="${SECURITY_SCANNER_IMAGE}"
+            SCANNER_DIGEST="${SECURITY_SCANNER_DIGEST}"
+          fi
+          if [ -z "${SCANNER_IMAGE:-}" ] || [ -z "${SCANNER_DIGEST:-}" ]; then
+            echo "ERROR: security scanner image and digest are unset" >&2
             exit 3
           fi
+          docker pull "${SCANNER_IMAGE}@${SCANNER_DIGEST}"
           docker run --rm \
             --pull=never \
-            -v "$(pwd):/workspace:ro" \
+            -v "$(pwd):/workspace" \
             "${SCANNER_IMAGE}@${SCANNER_DIGEST}" \
-            /workspace \
-            --output "${SARIF_PATH}" || true
+            fs --format json --output /workspace/trivy-security.json \
+            --skip-dirs control-plane \
+            /workspace
+          SARIF_PATH="${SARIF_PATH}" python - <<'PY'
+          import json, os
+          doc = json.load(open("trivy-security.json", encoding="utf-8"))
+          findings = []
+          for result in doc.get("Results") or []:
+              target = result.get("Target") or ""
+              for vuln in result.get("Vulnerabilities") or []:
+                  vid = vuln.get("VulnerabilityID") or ""
+                  pkg = vuln.get("PkgName") or ""
+                  findings.append({
+                      "id": f"{vid}|{pkg}|{target}",
+                      "rule": vid,
+                      "package": pkg,
+                      "location": target,
+                  })
+          out = os.environ["SARIF_PATH"]
+          os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
+          with open(out, "w", encoding="utf-8") as fh:
+              json.dump({"findings": findings}, fh, indent=2)
+              fh.write("\n")
+          print(f"FINDINGS {len(findings)} written to {out}")
+          PY
           echo "FINDINGS_PATH=${SARIF_PATH}" >> "$GITHUB_OUTPUT"
 
       - name: Delta gate — new findings only
@@ -231,7 +273,7 @@ jobs:
           BASELINE: ${{ inputs.security_baseline_path }}
         run: |
           set -euo pipefail
-          python -m tools.evidence.delta_gate \
+          PYTHONPATH=control-plane python -m tools.evidence.delta_gate \
             --baseline "${BASELINE}" \
             --current "${FINDINGS}"
 
@@ -256,6 +298,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout control-plane tools
+        if: ${{ inputs.job == '' || inputs.job == 'licence-scan' }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ github.repository_owner }}/control-plane
+          ref: ${{ github.workflow_sha }}
+          path: control-plane
+          fetch-depth: 1
+
       - name: Set up Python
         if: ${{ inputs.job == '' || inputs.job == 'licence-scan' }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
@@ -264,7 +315,7 @@ jobs:
 
       - name: Install evidence toolchain
         if: ${{ inputs.job == '' || inputs.job == 'licence-scan' }}
-        run: pip install -r tools/evidence/requirements.txt
+        run: pip install -r control-plane/tools/evidence/requirements.txt
 
       - name: Run licence scanner
         if: ${{ inputs.job == '' || inputs.job == 'licence-scan' }}
@@ -277,15 +328,47 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${SCANNER_IMAGE:-}" ]; then
-            echo "ERROR: licence_scanner_image input is empty — scanner toolchain undeclared" >&2
+            set -a
+            # FD-107 pins. An empty caller input reads that decision.
+            . control-plane/templates/workflows/scan-tools.env
+            set +a
+            SCANNER_IMAGE="${LICENCE_SCANNER_IMAGE}"
+            SCANNER_DIGEST="${LICENCE_SCANNER_DIGEST}"
+          fi
+          if [ -z "${SCANNER_IMAGE:-}" ] || [ -z "${SCANNER_DIGEST:-}" ]; then
+            echo "ERROR: licence scanner image and digest are unset" >&2
             exit 3
           fi
+          docker pull "${SCANNER_IMAGE}@${SCANNER_DIGEST}"
           docker run --rm \
             --pull=never \
-            -v "$(pwd):/workspace:ro" \
-            -v "${POLICY_PATH}:/policy:ro" \
+            -v "$(pwd):/workspace" \
             "${SCANNER_IMAGE}@${SCANNER_DIGEST}" \
-            /workspace --policy /policy --output "${REPORT_PATH}" || true
+            fs --scanners license --format json --output /workspace/trivy-licence.json \
+            --skip-dirs control-plane \
+            /workspace
+          REPORT_PATH="${REPORT_PATH}" python - <<'PY'
+          import json, os
+          doc = json.load(open("trivy-licence.json", encoding="utf-8"))
+          findings = []
+          for result in doc.get("Results") or []:
+              target = result.get("Target") or ""
+              for lic in result.get("Licenses") or []:
+                  name = lic.get("Name") or lic.get("Category") or ""
+                  pkg = lic.get("PkgName") or ""
+                  findings.append({
+                      "id": f"{name}|{pkg}|{target}",
+                      "rule": name,
+                      "package": pkg,
+                      "location": target,
+                  })
+          out = os.environ["REPORT_PATH"]
+          os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
+          with open(out, "w", encoding="utf-8") as fh:
+              json.dump({"findings": findings}, fh, indent=2)
+              fh.write("\n")
+          print(f"FINDINGS {len(findings)} written to {out}")
+          PY
           echo "FINDINGS_PATH=${REPORT_PATH}" >> "$GITHUB_OUTPUT"
 
       - name: Delta gate — new licence findings only
@@ -295,7 +378,7 @@ jobs:
           BASELINE: ${{ inputs.licence_baseline_path }}
         run: |
           set -euo pipefail
-          python -m tools.evidence.delta_gate \
+          PYTHONPATH=control-plane python -m tools.evidence.delta_gate \
             --baseline "${BASELINE}" \
             --current "${FINDINGS}"
 
@@ -320,6 +403,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout control-plane tools
+        if: ${{ inputs.job == '' || inputs.job == 'slopsquat-check' }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ github.repository_owner }}/control-plane
+          ref: ${{ github.workflow_sha }}
+          path: control-plane
+          fetch-depth: 1
+
       - name: Set up Python
         if: ${{ inputs.job == '' || inputs.job == 'slopsquat-check' }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
@@ -328,7 +420,7 @@ jobs:
 
       - name: Install evidence toolchain
         if: ${{ inputs.job == '' || inputs.job == 'slopsquat-check' }}
-        run: pip install -r tools/evidence/requirements.txt
+        run: pip install -r control-plane/tools/evidence/requirements.txt
 
       - name: Slopsquat legitimacy check (execute time)
         if: ${{ inputs.job == '' || inputs.job == 'slopsquat-check' }}
@@ -351,7 +443,7 @@ jobs:
           echo "$CHANGED_LOCKFILES"
           python -c "import sys, json; files = '''$CHANGED_LOCKFILES'''.splitlines(); print(json.dumps([{'id': f, 'path': f} for f in files if f]))" > /tmp/slopsquat-current.json
 
-          python -m tools.evidence.delta_gate \
+          PYTHONPATH=control-plane python -m tools.evidence.delta_gate \
             --baseline "${{ inputs.slopsquat_baseline_path }}" \
             --current /tmp/slopsquat-current.json
 
@@ -376,6 +468,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout control-plane tools
+        if: ${{ inputs.job == '' || inputs.job == 'contract-validation' }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ github.repository_owner }}/control-plane
+          ref: ${{ github.workflow_sha }}
+          path: control-plane
+          fetch-depth: 1
+
       - name: Set up Python
         if: ${{ inputs.job == '' || inputs.job == 'contract-validation' }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
@@ -384,7 +485,7 @@ jobs:
 
       - name: Install evidence toolchain
         if: ${{ inputs.job == '' || inputs.job == 'contract-validation' }}
-        run: pip install -r tools/evidence/requirements.txt
+        run: pip install -r control-plane/tools/evidence/requirements.txt
 
       - name: Assert §33.1 required-file presence
         if: ${{ inputs.job == '' || inputs.job == 'contract-validation' }}
@@ -449,6 +550,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout control-plane tools
+        if: ${{ inputs.job == '' || inputs.job == 'registry-validation' }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ github.repository_owner }}/control-plane
+          ref: ${{ github.workflow_sha }}
+          path: control-plane
+          fetch-depth: 1
+
       - name: Set up Python
         if: ${{ inputs.job == '' || inputs.job == 'registry-validation' }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
@@ -457,7 +567,7 @@ jobs:
 
       - name: Install evidence toolchain
         if: ${{ inputs.job == '' || inputs.job == 'registry-validation' }}
-        run: pip install -r tools/evidence/requirements.txt
+        run: pip install -r control-plane/tools/evidence/requirements.txt
 
       - name: Invoke Lane 1 registry and assignment validator
         if: ${{ inputs.job == '' || inputs.job == 'registry-validation' }}
@@ -512,11 +622,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout control-plane tools
+        if: ${{ inputs.job == '' || inputs.job == 'verification-contract' }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ github.repository_owner }}/control-plane
+          ref: ${{ github.workflow_sha }}
+          path: control-plane
+          fetch-depth: 1
+
       - name: Set up Python
         if: ${{ inputs.job == '' || inputs.job == 'verification-contract' }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
         with:
           python-version: "3.12"
+
+      - name: Install evidence toolchain
+        if: ${{ inputs.job == '' || inputs.job == 'verification-contract' }}
+        run: pip install -r control-plane/tools/evidence/requirements.txt
 
       - name: Check verification contract
         if: ${{ inputs.job == '' || inputs.job == 'verification-contract' }}
@@ -529,7 +652,7 @@ jobs:
             echo "Verification contract check not due this run — explicit recorded success (§33.2)"
             exit 0
           fi
-          python -m tools.evidence.verification_contract_check \
+          PYTHONPATH=control-plane python -m tools.evidence.verification_contract_check \
             --contract verification/contract.yaml \
             --criticality "${{ inputs.reliability_criticality || 'standard' }}" \
             --summary
@@ -556,6 +679,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout control-plane tools
+        if: ${{ inputs.job == '' || inputs.job == 'seeded-defect-case' }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ github.repository_owner }}/control-plane
+          ref: ${{ github.workflow_sha }}
+          path: control-plane
+          fetch-depth: 1
+
       - name: Set up Python
         if: ${{ inputs.job == '' || inputs.job == 'seeded-defect-case' }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5.4.0
@@ -571,6 +703,6 @@ jobs:
             echo "Seeded-defect check not due this run — explicit recorded success (§33.2)"
             exit 0
           fi
-          python -m tools.evidence.seeded_defect \
+          PYTHONPATH=control-plane python -m tools.evidence.seeded_defect \
             --result "${{ inputs.seeded_defect_result_path || 'verification/seeded-results.json' }}" \
             --summary
