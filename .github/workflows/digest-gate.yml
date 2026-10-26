@@ -59,7 +59,7 @@ jobs:
           if [ -z "${RECORDS_REPO}" ]; then echo "RECORDS_REPO_UNDECLARED"; exit 1; fi
           echo "GATE_INPUTS_PRESENT"
       - name: Checkout the control-plane build surface at the pinned ref
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ github.repository_owner }}/control-plane
           ref: ${{ inputs.control_plane_ref }}
@@ -67,7 +67,7 @@ jobs:
           path: control-plane
           sparse-checkout: tools/evidence
       - name: Checkout the records store
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.records_repo }}
           ref: ${{ inputs.records_ref }}

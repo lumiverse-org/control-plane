@@ -80,7 +80,7 @@ jobs:
 
       - name: Checkout product repository
         if: ${{ inputs.job == '' || inputs.job == 'build' }}
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           path: product
@@ -100,7 +100,7 @@ jobs:
 
       - name: Checkout the control-plane build surface at the pinned ref
         if: ${{ inputs.job == '' || inputs.job == 'build' }}
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ github.repository_owner }}/control-plane
           ref: ${{ inputs.control_plane_ref }}
