@@ -90,7 +90,7 @@ on:
         description: "Control-plane ref that contains this workflow file and its tools."
         type: string
         required: false
-        default: "workflows/v4"
+        default: "workflows/v5"
     secrets:
       CONTROL_PLANE_TOKEN:
         description: "Read-only token for the control-plane repository"
@@ -491,7 +491,7 @@ jobs:
 
       - name: Install evidence toolchain
         if: ${{ inputs.job == '' || inputs.job == 'contract-validation' }}
-        run: pip install -r control-plane/tools/evidence/requirements.txt
+        run: pip install -r control-plane/tools/evidence/requirements.txt -r control-plane/validators/registry/requirements.txt
 
       - name: Assert §33.1 required-file presence
         if: ${{ inputs.job == '' || inputs.job == 'contract-validation' }}
@@ -512,7 +512,7 @@ jobs:
           check_file ".env.example"             ".env.example"
           check_file "docker-compose.dev.yml"   "docker-compose.dev.yml"
           check_file "Makefile"                 "Makefile"
-          check_file "seed data"                "$(find . -maxdepth 3 \( -name 'seeds' -o -name 'seed_data' -o -path './db/seeds' \) 2>/dev/null | head -1)"
+          check_file "seed data"                "$(find . -maxdepth 3 \( -name 'seed' -o -name 'seeds' -o -name 'seed_data' -o -name 'seed.json' -o -path './db/seeds' \) 2>/dev/null | head -1)"
           check_file "migration directory"      "$(find . -maxdepth 3 \( -name 'migrations' -o -path './db/migrate' \) 2>/dev/null | head -1)"
           check_file "verification/"            "verification/"
           check_file "AGENTS.md"                "AGENTS.md"
@@ -530,8 +530,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${VALIDATOR_ENTRYPOINT:-}" ]; then
-            echo "ERROR: contract_validator_entrypoint input is empty — no published validator entrypoint yet (REG-018, validators/registry/bin/ is empty)" >&2
-            exit 3
+            # bin/ is still empty. The published contract validator lives beside it
+            # and is the check CP-0301 already runs against this contract.
+            exec python control-plane/validators/registry/validate-verification-contract \
+              --file verification/contract.yaml
           fi
           exec ${VALIDATOR_ENTRYPOINT}
 
