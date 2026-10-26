@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+"""REG-018 registry entrypoint.
+
+Delegates to the FD-094 validator. With no arguments it validates the
+control-plane tree that contains this file. Exit 0 pass, 1 findings, 2 usage.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT))
+
+from validators.registry.cli import main  # noqa: E402
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        sys.argv.extend(["--root", str(ROOT), "--format", "json"])
+    main()
