@@ -32,4 +32,12 @@ BLAST RADIUS I CAN OBSERVE
 - `e2e/stages/07-staging.sh` and `e2e/run.sh`
 
 I HAVE NOT ALTERED compat-probe's fail-closed behavior pending Founder decision.
-STATUS: PENDING FOUNDER DECISION (2026-10-26)
+STATUS: RESOLVED BY FOUNDER (2026-10-26)
+
+FOUNDER RESOLUTION (2026-10-26):
+Adopt Reading B (Greenfield Exemption / Baseline Skip). When no predecessor release digest exists for a product (a genuine first-ever deploy), compat-probe should NOT fail closed — there is nothing to be incompatible with. It must report a distinct, honestly-labeled PASS/SKIP state ("COMPAT-PROBE EXEMPT (PASS/SKIP): No predecessor release exists in estate; backward compatibility check not applicable on initial release (CCR-007 resolution). Baseline established for subsequent releases.") and exit 0. Compatibility enforcement begins strictly on a product's SECOND deploy onward (Release >= 2), where a real predecessor digest exists to compare against. Any other error path (e.g., malformed digest format, unreadable existing digest file, or endpoint refusal when predecessor is supplied) must continue to fail closed with exit code 1.
+
+IMPLEMENTATION:
+- Implemented in `tools/e2e-drive/compat-probe`: detects absence of predecessor digest or explicit `--no-predecessor`/`--digest none` and exits 0 with distinct exemption message. Validates digest format strictly if predecessor provided.
+- Added comprehensive unit tests in `tools/provision/tests/test_compat_probe.py` covering: (a) no predecessor at all -> exempted/pass with distinct message; (b) predecessor exists and endpoint compatible -> normal pass; (c) predecessor exists and endpoint incompatible or digest invalid -> fail-closed.
+- Re-run CP-0702 against `pilot-one-api`: verified `COMPAT-PROBE EXEMPT (PASS/SKIP)` exits 0.

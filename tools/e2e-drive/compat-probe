@@ -3,15 +3,20 @@
 
 Spec §34.3: "Backward compatibility for one release cycle: the PREVIOUS digest must still
 run against the NEW schema. This is what makes rollback possible, so it is proven, not assumed."
+CCR-007 Resolution (2026-10-26): Greenfield first-ever deploy is exempted when no predecessor
+release digest exists in estate; compatibility enforcement begins on Release >= 2.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 import urllib.request
 import urllib.error
+
+DIGEST_RE = re.compile(r"^(sha256:[0-9a-fA-F]{64}|platform-rebuild:v1:[0-9a-fA-F]{64})$")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -21,7 +26,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--env", default="staging", help="target environment (default: staging)")
     parser.add_argument("--schema", default="new", help="target schema version/state (default: new)")
-    parser.add_argument("--digest", default="", help="previous artifact digest to probe")
+    parser.add_argument("--digest", nargs="?", const="", default="", help="previous artifact digest to probe")
+    parser.add_argument("--prev-digest-file", default=None, help="path to file containing previous release digest")
+    parser.add_argument("--no-predecessor", action="store_true", help="assert this is an initial release with no predecessor")
     parser.add_argument("--endpoint", default=None, help="explicit health/probe URL")
     return parser
 
@@ -32,34 +39,71 @@ def main(argv: list[str] | None = None) -> int:
 
     env = args.env.strip()
     schema = args.schema.strip()
-    digest = args.digest.strip()
+    is_no_predecessor = bool(args.no_predecessor)
+    digest = ""
 
-    print(f"COMPAT-PROBE: Probing environment '{env}' with schema '{schema}' for digest '{digest or '<none>'}'...")
+    if args.prev_digest_file:
+        if not os.path.exists(args.prev_digest_file):
+            is_no_predecessor = True
+        else:
+            try:
+                with open(args.prev_digest_file, "r", encoding="utf-8") as fh:
+                    content = fh.read().strip()
+                if not content or content.lower() in ("none", "<none>", "absent", "null"):
+                    is_no_predecessor = True
+                else:
+                    digest = content
+            except Exception as exc:
+                print(
+                    f"COMPAT-PROBE FAIL: Predecessor digest file '{args.prev_digest_file}' exists but could not be read: {exc}",
+                    file=sys.stderr,
+                )
+                return 1
+    else:
+        raw_digest = (args.digest or "").strip()
+        if not raw_digest or raw_digest.lower() in ("none", "<none>", "absent", "null", "no-predecessor"):
+            is_no_predecessor = True
+        else:
+            digest = raw_digest
 
-    if not digest:
+    if is_no_predecessor:
         print(
-            f"COMPAT-PROBE NOTICE: No previous digest provided. On initial estate provisioning (§34.3), "
-            f"there is no predecessor release in the estate; rollback baseline is established on release 2.",
+            "COMPAT-PROBE EXEMPT (PASS/SKIP): No predecessor release exists in estate; "
+            "backward compatibility check not applicable on initial release (CCR-007 resolution). "
+            "Baseline established for subsequent releases."
+        )
+        return 0
+
+    # If predecessor exists, validate digest format strictly
+    if not DIGEST_RE.match(digest):
+        print(
+            f"COMPAT-PROBE FAIL: Predecessor digest '{digest}' is invalid (must match sha256:<64 hex> "
+            f"or explicit 'none' for initial release).",
             file=sys.stderr,
         )
         return 1
 
-    # Attempt to probe staging endpoint
-    endpoint = args.endpoint or f"http://localhost:8080/health"
+    endpoint = args.endpoint or "http://localhost:8080/health"
+    print(f"COMPAT-PROBE: Probing environment '{env}' with schema '{schema}' for predecessor digest '{digest[:19]}...' at {endpoint}...")
+
     try:
         req = urllib.request.Request(endpoint, headers={"User-Agent": "compat-probe/1.0"})
         with urllib.request.urlopen(req, timeout=5) as resp:
             if resp.status == 200:
-                print(f"COMPAT-PROBE PASS: Staging endpoint {endpoint} verified compatible with digest '{digest[:16]}...'.")
+                print(f"COMPAT-PROBE PASS: Staging endpoint {endpoint} verified compatible with previous digest '{digest[:19]}...'.")
                 return 0
+            else:
+                print(
+                    f"COMPAT-PROBE FAIL: Staging endpoint {endpoint} returned status {resp.status} for digest '{digest[:19]}...'.",
+                    file=sys.stderr,
+                )
+                return 1
     except Exception as exc:
         print(
-            f"COMPAT-PROBE FAIL: Staging environment endpoint ({endpoint}) unreachable for compatibility check: {exc}",
+            f"COMPAT-PROBE FAIL: Staging endpoint ({endpoint}) unreachable or incompatible for digest '{digest[:19]}...': {exc}",
             file=sys.stderr,
         )
         return 1
-
-    return 0
 
 
 if __name__ == "__main__":
