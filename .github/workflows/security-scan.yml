@@ -50,7 +50,7 @@ jobs:
       - name: Licence scan
         run: bash scripts/security/licence-scan.sh --product "${{ inputs.product_id || 'control-plane' }}"
       - name: Upload licence inventory
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4.6.1
         with:
           name: licence-inventory
           path: records/licences/
@@ -71,7 +71,7 @@ jobs:
             --product "${{ inputs.product_id || 'control-plane' }}" \
             --tag "${{ github.ref_name || '0.0.1' }}"
       - name: Upload SBOM
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4.6.1
         with:
           name: sbom
           path: records/sbom/
