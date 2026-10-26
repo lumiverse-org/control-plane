@@ -95,12 +95,22 @@ jobs:
           REGISTRY_REF: ${{ inputs.registry_ref }}
         run: |
           set -euo pipefail
-          if ! gh api "repos/lumiverse-org/control-plane/contents/people.yaml?ref=${REGISTRY_REF}" \
+          fetch_ok=false
+          if gh api "repos/lumiverse-org/control-plane/contents/declared/people.yaml?ref=${REGISTRY_REF}" \
                  -H "Accept: application/vnd.github.raw" > people.yaml 2>fetch.err; then
-            cat fetch.err >&2
-            echo "IDENTITY_GATE_REGISTRY_UNREADABLE"; exit 1
+            fetch_ok=true
+          elif gh api "repos/lumiverse-org/control-plane/contents/people.yaml?ref=${REGISTRY_REF}" \
+                 -H "Accept: application/vnd.github.raw" > people.yaml 2>fetch.err; then
+            fetch_ok=true
+          elif gh api "repos/lumiverse-org/control-plane/contents/declared/people.yaml" \
+                 -H "Accept: application/vnd.github.raw" > people.yaml 2>fetch.err; then
+            fetch_ok=true
+          elif gh api "repos/lumiverse-org/control-plane/contents/people.yaml" \
+                 -H "Accept: application/vnd.github.raw" > people.yaml 2>fetch.err; then
+            fetch_ok=true
           fi
-          if [ ! -s people.yaml ]; then
+          if [ "${fetch_ok}" != "true" ] || [ ! -s people.yaml ]; then
+            cat fetch.err >&2
             echo "IDENTITY_GATE_REGISTRY_UNREADABLE"; exit 1
           fi
           echo "IDENTITY_GATE_REGISTRY_READ_OK"

@@ -659,7 +659,31 @@ def execute_verification_skeleton(
     ):
         (v_dir / baseline).write_text(json.dumps({"findings": []}, indent=2), encoding="utf-8")
 
-    # If client is provided, write contract.yaml to the product repository
+    smoke_dir = v_dir / "smoke"
+    smoke_dir.mkdir(parents=True, exist_ok=True)
+    smoke_content = (
+        '"""Smoke test suite (§33.4, CP-0705)."""\n'
+        'import os, urllib.request, pytest\n\n'
+        'TARGET_URL = os.environ.get("TARGET_URL") or os.environ.get("STAGING_URL") or "http://localhost:8080"\n\n'
+        'def test_health():\n'
+        '    url = f"{TARGET_URL.rstrip(\'/\')}/health"\n'
+        '    req = urllib.request.Request(url, headers={"User-Agent": "smoke-tests/1.0"})\n'
+        '    with urllib.request.urlopen(req, timeout=5) as resp:\n'
+        '        assert resp.status == 200\n\n'
+        'def test_version():\n'
+        '    url = f"{TARGET_URL.rstrip(\'/\')}/version"\n'
+        '    req = urllib.request.Request(url, headers={"User-Agent": "smoke-tests/1.0"})\n'
+        '    with urllib.request.urlopen(req, timeout=5) as resp:\n'
+        '        assert resp.status == 200\n\n'
+        'def test_metrics():\n'
+        '    url = f"{TARGET_URL.rstrip(\'/\')}/metrics"\n'
+        '    req = urllib.request.Request(url, headers={"User-Agent": "smoke-tests/1.0"})\n'
+        '    with urllib.request.urlopen(req, timeout=5) as resp:\n'
+        '        assert resp.status == 200\n'
+    )
+    (smoke_dir / "test_smoke.py").write_text(smoke_content, encoding="utf-8")
+
+    # If client is provided, write contract.yaml and smoke suite to the product repository
     repo_name = f"{product}-api"
     if client is not None:
         try:
@@ -669,10 +693,16 @@ def execute_verification_skeleton(
                 content=contract_yaml_str,
                 message=f"Update verification contract: declare performance mechanism and seeded defect (§31.2, §31.3)",
             )
+            client.put_file(
+                repo=repo_name,
+                path="verification/smoke/test_smoke.py",
+                content=smoke_content,
+                message="Scaffold smoke test suite (§33.4, CP-0705)",
+            )
         except Exception:
             pass
 
-    return {"path": str(v_dir), "files_created": 4, "status": "scaffolded"}
+    return {"path": str(v_dir), "files_created": 5, "status": "scaffolded"}
 
 
 def execute_local_environment_contract(

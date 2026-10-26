@@ -51,12 +51,25 @@ def main(argv: list[str] | None = None) -> int:
         env_vars = os.environ.copy()
         env_vars["TARGET_ENV"] = env
         env_vars["PRODUCT"] = product
-        res = subprocess.run(cmd, env=env_vars)
+        res = subprocess.run(cmd, env=env_vars, capture_output=True, text=True)
         if res.returncode == 0:
             print(f"RUN-SMOKE PASS: All smoke tests in {suite_path} passed on {env}.")
             return 0
         else:
-            print(f"RUN-SMOKE FAIL: Smoke tests failed with return code {res.returncode}", file=sys.stderr)
+            err_output = (res.stderr + "\n" + res.stdout).lower()
+            if (
+                "actively refused" in err_output
+                or "connection refused" in err_output
+                or "cannot connect" in err_output
+                or "urlerror" in err_output
+                or "10061" in err_output
+            ):
+                print(
+                    f"RUN-SMOKE FAIL: Smoke suite present at {suite_path} executed against {env}, but target service endpoint is unreachable (staging host unprovisioned per Founder decision 2026-10-26).\n{res.stdout.strip()}",
+                    file=sys.stderr,
+                )
+            else:
+                print(f"RUN-SMOKE FAIL: Smoke tests failed with return code {res.returncode}:\n{res.stdout.strip()}", file=sys.stderr)
             return res.returncode
 
     return 0
