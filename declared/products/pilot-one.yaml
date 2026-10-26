@@ -4,15 +4,15 @@ ai_restrictions:
   restricted_paths: []
 ai_runtime_dependency: null
 assignments:
-  primary_owner: dev-a
-  cross_reviewer: dev-b
-  backup_owner: dev-b
-  primary_responder: dev-a
-  incident_responder_primary: dev-a
-  backup_responder: dev-b
-  incident_responder_backup: dev-b
-  verification: qa-1
-  verification_responsibility: qa-1
+  primary_owner: bendrohit-eng
+  cross_reviewer: artilumiverse
+  backup_owner: SwatiDerle
+  primary_responder: unmesh-lumiversesolutions
+  incident_responder_primary: unmesh-lumiversesolutions
+  backup_responder: shru-k-23
+  incident_responder_backup: shru-k-23
+  verification: saumit-qa
+  verification_responsibility: saumit-qa
 automated_containment: null
 business:
   active_customers: 100

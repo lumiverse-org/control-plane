@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""tools/evidence/check-job — Verify a specific CI job conclusion on a PR (CP-0503, CP-0504).
+
+Spec §33.2: "The full CI set ran: unit, integration, build, security scan, licence
+scan, contract validation, registry validation, parity, verification contract."
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="check-job",
+        description="Verify conclusion of a specific CI job on a PR (§33.2, CP-0503).",
+    )
+    parser.add_argument("--pr", required=True, help="pull request number or url")
+    parser.add_argument("--job", required=True, help="job name or identifier (e.g. unit, parity)")
+    parser.add_argument("--expect", default="success", help="expected conclusion (default: success)")
+    parser.add_argument("--repo", default=None, help="repository (defaults to E2E_REPO or lumiverse-org/pilot-one-api)")
+    return parser
+
+
+def _run_gh(cmd: list[str]) -> subprocess.CompletedProcess[str]:
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        err = proc.stderr.strip() or proc.stdout.strip()
+        raise RuntimeError(f"gh command failed: {' '.join(cmd)}\n{err}")
+    return proc
+
+
+def _normalize(name: str) -> str:
+    return name.lower().replace("_", "-").strip()
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    repo = args.repo or os.environ.get("E2E_REPO", "lumiverse-org/pilot-one-api")
+    pr = args.pr.strip()
+    target_job = _normalize(args.job)
+    expect = args.expect.lower().strip()
+
+    cmd = [
+        "gh",
+        "pr",
+        "view",
+        pr,
+        "--repo",
+        repo,
+        "--json",
+        "number,headRefOid,statusCheckRollup",
+    ]
+    try:
+        res = _run_gh(cmd)
+        pr_data = json.loads(res.stdout)
+    except Exception as exc:
+        print(f"CHECK-JOB FAIL: failed to query PR #{pr} on '{repo}': {exc}", file=sys.stderr)
+        return 1
+
+    rollup = pr_data.get("statusCheckRollup") or []
+    matching: list[dict] = []
+    available_names: list[str] = []
+
+    for item in rollup:
+        name = item.get("name") or item.get("context") or ""
+        norm_name = _normalize(name)
+        available_names.append(name)
+        # Check if matches target_job
+        # E.g. target "unit" matches "unit-tests" or "ci / unit-tests" or "unit"
+        # target "parity" matches "parity-check" or "parity"
+        parts = norm_name.replace("/", " ").split()
+        if target_job == norm_name or any(p == target_job or p.startswith(target_job) for p in parts):
+            matching.append(item)
+
+    if not matching:
+        print(
+            f"CHECK-JOB FAIL: no job matching '{args.job}' found in PR #{pr}.\n"
+            f"Available jobs ({len(available_names)}): {', '.join(available_names) if available_names else 'none'}",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Evaluate matching jobs
+    all_matched_pass = True
+    for job_info in matching:
+        name = job_info.get("name") or job_info.get("context")
+        status = (job_info.get("status") or job_info.get("state") or "").lower()
+        conclusion = (job_info.get("conclusion") or "").lower()
+
+        if status in ("in_progress", "queued", "pending"):
+            print(f"CHECK-JOB PENDING: Job '{name}' is still in progress (status: {status}).", file=sys.stderr)
+            return 1
+
+        actual = conclusion or status
+        if actual != expect:
+            print(
+                f"CHECK-JOB FAIL: Job '{name}' concluded '{actual}' (expected '{expect}').",
+                file=sys.stderr,
+            )
+            all_matched_pass = False
+
+    if not all_matched_pass:
+        return 1
+
+    print(f"CHECK-JOB PASS: CI job '{args.job}' concluded '{expect}' on PR #{pr}.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

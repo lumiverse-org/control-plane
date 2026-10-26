@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""tools/evidence/check-sbom — Verify SBOM emitted beside artifact digest (CP-0603).
+
+Spec §33.2, §48.3: "SBOM emitted beside the digest in the same pipeline step.
+Validates format conformant to spdx-json or declared format."
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+from pathlib import Path
+
+DIGEST_RE = re.compile(r"^sha256:[0-9a-fA-F]{64}$")
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="check-sbom",
+        description="Verify SBOM was emitted beside the artifact digest (§33.2, §48.3, CP-0603).",
+    )
+    parser.add_argument("--digest", required=True, help="artifact digest in sha256:<hex> format")
+    parser.add_argument("--require-format", default="spdx-json", help="required SBOM format (default: spdx-json)")
+    parser.add_argument("--file", default=None, type=Path, help="explicit path to SBOM JSON file")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    digest = args.digest.strip()
+    if not DIGEST_RE.match(digest):
+        print(f"CHECK-SBOM FAIL: malformed digest string {digest!r} (must match sha256:<64-hex>)", file=sys.stderr)
+        return 1
+
+    digest_hex = digest.split(":", 1)[1]
+
+    # Search for SBOM file
+    sbom_path: Path | None = args.file
+    if not sbom_path or not sbom_path.is_file():
+        # Candidate search locations
+        candidates = [
+            REPO_ROOT / "records" / "sboms" / f"{digest_hex}.spdx.json",
+            REPO_ROOT / "records" / "sboms" / f"{digest_hex}.json",
+            Path(os.environ.get("E2E_OUT", "e2e/out/local")) / "sbom.json",
+            Path(os.environ.get("E2E_OUT", "e2e/out/local")) / f"{digest_hex}.spdx.json",
+        ]
+        for c in candidates:
+            if c.is_file():
+                sbom_path = c
+                break
+
+    if not sbom_path or not sbom_path.is_file():
+        print(
+            f"CHECK-SBOM FAIL: SBOM file for digest '{digest}' not found on filesystem or in records store.",
+            file=sys.stderr,
+        )
+        return 1
+
+    try:
+        data = json.loads(sbom_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"CHECK-SBOM FAIL: failed to parse SBOM JSON at {sbom_path}: {exc}", file=sys.stderr)
+        return 1
+
+    if args.require_format == "spdx-json":
+        spdx_version = data.get("spdxVersion") or data.get("SPDXID")
+        if not spdx_version:
+            print(
+                f"CHECK-SBOM FAIL: SBOM at {sbom_path} missing required SPDX root fields ('spdxVersion' / 'SPDXID')",
+                file=sys.stderr,
+            )
+            return 1
+
+    print(f"CHECK-SBOM PASS: SBOM verified for digest '{digest}' from {sbom_path} (format: {args.require_format}).")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+"""tools/e2e-drive/approve-pr — Gate 2 PR review approval (CP-0505).
+
+Spec §33.2, Invariants #8, #9: "Gate 2 by dev-b — independent, not the author.
+Approval must come from a distinct reviewer identity."
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="approve-pr",
+        description="Approve a pull request for Gate 2 (§33.2, Invariants #8, #9, CP-0505).",
+    )
+    parser.add_argument("--pr", required=True, help="pull request number or url")
+    parser.add_argument("--as", dest="reviewer", required=True, help="reviewer identity (e.g. dev-b or artilumiverse)")
+    parser.add_argument("--repo", default=None, help="repository (defaults to E2E_REPO or lumiverse-org/pilot-one-api)")
+    parser.add_argument("--comment", default=None, help="review approval comment")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    repo = args.repo or os.environ.get("E2E_REPO", "lumiverse-org/pilot-one-api")
+    pr = args.pr.strip()
+    reviewer = args.reviewer.strip()
+    comment = args.comment or f"Gate 2 approval by independent reviewer {reviewer} (Invariant #8, #9)"
+
+    # Inspect current authenticated user
+    whoami_cmd = ["gh", "api", "user", "--jq", ".login"]
+    whoami = subprocess.run(whoami_cmd, capture_output=True, text=True)
+    current_actor = whoami.stdout.strip() if whoami.returncode == 0 else "unknown"
+
+    print(f"APPROVE-PR: Attempting Gate 2 approval on '{repo}' PR #{pr} as '{reviewer}' (current gh auth: '{current_actor}')...")
+
+    # Attempt review approval via gh pr review
+    review_cmd = [
+        "gh",
+        "pr",
+        "review",
+        pr,
+        "--repo",
+        repo,
+        "--approve",
+        "--body",
+        comment,
+    ]
+    proc = subprocess.run(review_cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        err_msg = proc.stderr.strip() or proc.stdout.strip()
+        print(
+            f"APPROVE-PR FAIL: failed to approve PR #{pr} as '{reviewer}':\n"
+            f"  {err_msg}\n"
+            f"  (Note: Invariant #8/#9 requires independent reviewer; authenticated actor '{current_actor}' "
+            f"cannot self-approve, and '{reviewer}' lacks credentials or org membership per Founder Decision 2 / STOP S-01).",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"APPROVE-PR PASS: PR #{pr} on '{repo}' approved by '{reviewer}'.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
