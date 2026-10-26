@@ -90,7 +90,7 @@ on:
         description: "Control-plane ref that contains this workflow file and its tools."
         type: string
         required: false
-        default: "workflows/v5"
+        default: "workflows/v6"
     secrets:
       CONTROL_PLANE_TOKEN:
         description: "Read-only token for the control-plane repository"
@@ -584,8 +584,9 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${VALIDATOR_ENTRYPOINT:-}" ]; then
-            echo "ERROR: registry_validator_entrypoint input is empty — no published validator entrypoint yet (REG-018, validators/registry/bin/ is empty)" >&2
-            exit 3
+            # REG-018 entrypoint. bin/validate runs the FD-094 registry CLI
+            # against the control-plane checkout this job already fetched.
+            exec python control-plane/validators/registry/bin/validate
           fi
           exec ${VALIDATOR_ENTRYPOINT}
 

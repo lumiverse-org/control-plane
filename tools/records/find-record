@@ -101,8 +101,11 @@ for d in search_dirs:
             except Exception:
                 continue
 
-if not matched_files:
-    # Try querying remote records repository if available (§97.2, CP-0708)
+local_store_present = any(os.path.isdir(d) for d in search_dirs)
+if not matched_files and not local_store_present:
+    # Remote fallback only when this checkout has no local store.
+    # A present local store that does not match is a real miss (CP-0708
+    # still reaches GitHub when records/ is not checked out here).
     try:
         import subprocess, json
         repo_slug = os.environ.get("E2E_RECORDS_REPO") or os.environ.get("RECORDS_REPO_SLUG") or "lumiverse-org/control-plane-records"
