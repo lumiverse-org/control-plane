@@ -132,7 +132,7 @@ jobs:
     outputs:
       snapshot_ref: ${{ steps.capture.outputs.ref }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Assert runner tier (D87)
@@ -167,7 +167,7 @@ jobs:
     outputs:
       result: ${{ steps.integrity.outputs.result }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Restore the named backup into the parameterised target (Section 44.5)

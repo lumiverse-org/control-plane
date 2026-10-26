@@ -62,7 +62,7 @@ jobs:
             --summary
 
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # actions/checkout v7.0.1
 
       # Forensic-snapshot stage — MUST precede restore stage and gate it (§44.5, §34.4 case F step 0)
       - name: Forensic snapshot (precedes restore — gates proceed)
