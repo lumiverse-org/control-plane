@@ -489,6 +489,7 @@ def execute_ci_workflows_pinned_tag(
             .replace("{{CONTROL_PLANE_REPO}}", control_plane_repo)
             .replace("{{WORKFLOWS_TAG}}", tag)
             .replace("{{DEFAULT_BRANCH}}", "main")
+            .replace("{{TARGET_REPO}}", target_repo)
         )
 
     # 3. deploy-staging.yml

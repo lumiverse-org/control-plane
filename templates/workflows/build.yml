@@ -1,7 +1,7 @@
 # L2-T302 — templates/workflows/build.yml
 # Per-product caller for build. Consumed by create-product (Lane 3) at product creation.
 # Substitution performed by create-product, never by Lane 2.
-# Tokens: {{CONTROL_PLANE_REPO}} {{WORKFLOWS_TAG}} {{PRODUCT_NAME}} {{DEFAULT_BRANCH}}
+# Tokens: {{CONTROL_PLANE_REPO}} {{WORKFLOWS_TAG}} {{PRODUCT_NAME}} {{DEFAULT_BRANCH}} {{TARGET_REPO}}
 # §0.5: caller job name is the authoritative context name.
 # §33.3 L2870-2886: consumed by pinned tag, never by branch.
 # No token may appear inside a GitHub Actions ${{ }} expression.
@@ -12,6 +12,7 @@ on:
     branches:
       - "{{DEFAULT_BRANCH}}"
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,17 +23,27 @@ jobs:
     name: artifact-digest-recorded
     uses: {{CONTROL_PLANE_REPO}}/.github/workflows/build.yml@{{WORKFLOWS_TAG}}
     with:
-      build_command: make docker-build
-      image_name: {{PRODUCT_NAME}}
+      product: "{{PRODUCT_NAME}}"
+      identity_mode: "digest"
+      image_repo: "ghcr.io/{{TARGET_REPO}}"
+      dockerfile: "Dockerfile"
+      build_context: "."
+      control_plane_ref: "{{WORKFLOWS_TAG}}"
+      job: "build"
     secrets:
-      REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+      control_plane_read_token: ${{ secrets.CONTROL_PLANE_READ_TOKEN || secrets.GITHUB_TOKEN }}
 
   sbom-emitted:
     name: sbom-emitted
     needs: artifact-digest-recorded
     uses: {{CONTROL_PLANE_REPO}}/.github/workflows/build.yml@{{WORKFLOWS_TAG}}
     with:
-      build_command: make docker-build
-      image_name: {{PRODUCT_NAME}}
+      product: "{{PRODUCT_NAME}}"
+      identity_mode: "digest"
+      image_repo: "ghcr.io/{{TARGET_REPO}}"
+      dockerfile: "Dockerfile"
+      build_context: "."
+      control_plane_ref: "{{WORKFLOWS_TAG}}"
+      job: "sbom-emitted"
     secrets:
-      REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+      control_plane_read_token: ${{ secrets.CONTROL_PLANE_READ_TOKEN || secrets.GITHUB_TOKEN }}

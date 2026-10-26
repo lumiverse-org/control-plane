@@ -46,6 +46,12 @@ case "$IDENTITY_MODE" in
     [ -n "$IMAGE_REPO" ] || { echo "IMAGE_REPO_UNDECLARED"; exit 1; }
     [ -f "$REPO_ROOT/$DOCKERFILE" ] || { echo "DOCKERFILE_MISSING path=$DOCKERFILE"; exit 1; }
     META="$OUT_DIR/build-metadata.json"
+    # Ensure a docker-container buildx builder is active to support attestations and SBOM emission (§48.3)
+    if ! docker buildx inspect mp-builder >/dev/null 2>&1; then
+      docker buildx create --name mp-builder --driver docker-container --use >/dev/null 2>&1 || true
+    else
+      docker buildx use mp-builder >/dev/null 2>&1 || true
+    fi
     # --sbom=true makes the builder emit the SBOM in this same step and store it
     # in the registry against this same digest (Section 48.3).
     docker buildx build \
