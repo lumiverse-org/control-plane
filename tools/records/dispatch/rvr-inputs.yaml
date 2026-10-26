@@ -31,6 +31,12 @@ mechanisms:
     event_type: uat_executed
     armed: true
     spec_ref: "Section 31.2 line 2790; Section 97.2 line 8871; event in the Section 97.3 tracked list line 8951 as 'UAT executed with result'"
+  - mechanism: manual_uat
+    target_store: uat
+    schema: uat.schema.json
+    event_type: uat_executed
+    armed: true
+    spec_ref: "Section 31.2 line 2790; Section 97.2 line 8871; event in the Section 97.3 tracked list line 8951 as 'UAT executed with result'"
   - mechanism: restore_test_confirmation
     target_store: restore-tests
     schema: restore-test.schema.json

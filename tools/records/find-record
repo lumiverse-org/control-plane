@@ -102,6 +102,48 @@ for d in search_dirs:
                 continue
 
 if not matched_files:
+    # Try querying remote records repository if available (§97.2, CP-0708)
+    try:
+        import subprocess, json
+        repo_slug = os.environ.get("E2E_RECORDS_REPO") or os.environ.get("RECORDS_REPO_SLUG") or "lumiverse-org/control-plane-records"
+        res = subprocess.run(["gh", "api", f"repos/{repo_slug}/contents/{store}"], capture_output=True, text=True)
+        if res.returncode == 0:
+            entries = json.loads(res.stdout)
+            for item in entries:
+                if item.get("type") == "file" and item.get("name", "").endswith((".yaml", ".yml", ".json")):
+                    fpath = item.get("path")
+                    raw_res = subprocess.run(["gh", "api", f"repos/{repo_slug}/contents/{fpath}", "-H", "Accept: application/vnd.github.raw"], capture_output=True, text=True)
+                    if raw_res.returncode == 0:
+                        data = yaml.safe_load(raw_res.stdout) or {}
+                        if not isinstance(data, dict):
+                            continue
+                        if product and data.get("product") and data.get("product") != product:
+                            continue
+                        if not all(get_nested(data, f) is not None for f in required_fields):
+                            continue
+                        match_all_reqs = True
+                        for k, v in requires:
+                            val = str(get_nested(data, k) or "")
+                            if val != str(v):
+                                match_all_reqs = False
+                                break
+                        if not match_all_reqs:
+                            continue
+                        if newer_than_str:
+                            rec_ts_str = data.get("timestamp") or data.get("recorded_at") or data.get("created_at")
+                            if rec_ts_str:
+                                try:
+                                    rec_dt = datetime.datetime.fromisoformat(str(rec_ts_str).replace("Z", "+00:00"))
+                                    newer_dt = datetime.datetime.fromisoformat(newer_than_str.replace("Z", "+00:00"))
+                                    if rec_dt < newer_dt:
+                                        continue
+                                except Exception:
+                                    pass
+                        matched_files.append((fpath, data))
+    except Exception:
+        pass
+
+if not matched_files:
     print(f"FIND-RECORD FAIL: no matching records found in store '{store}' (product={product}, requires={requires})")
     sys.exit(1)
 

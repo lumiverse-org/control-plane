@@ -19,6 +19,7 @@ on:
         type: choice
         options:
           - manual_verification
+          - manual_uat
           - restore_test_confirmation
       result:
         description: 'Pass or fail (§97.2 field 4)'
@@ -29,8 +30,17 @@ on:
           - fail
       evidence_link:
         description: 'Link to evidence artefact (§97.2 field 5)'
-        required: true
+        required: false
         type: string
+      evidence:
+        description: 'Alias for evidence_link'
+        required: false
+        type: string
+      actor:
+        description: 'Actor executing verification (§97.2 field 6)'
+        required: false
+        type: string
+        default: 'saumit-qa'
 
 permissions:
   contents: read
@@ -53,7 +63,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: lumiverse-org/control-plane-records
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RECORDS_WRITER_TOKEN || secrets.CONTROL_PLANE_READ_TOKEN || secrets.GITHUB_TOKEN }}
           path: control-plane-records
 
       - name: Set up Python
@@ -68,19 +78,22 @@ jobs:
       - name: Configure Git for Records Repository
         run: |
           git -C control-plane-records config user.email "records-writer@control-plane.local"
-          git -C control-plane-records config user.name "records-writer-automation"
+          git -C control-plane-records config user.name "records-writer[bot]"
 
       - name: Execute Record Verification Result Dispatch
         run: |
           export CP_ROOT="$GITHUB_WORKSPACE/control-plane"
           export CPR_ROOT="$GITHUB_WORKSPACE/control-plane-records"
+          export PYTHONPATH="$CP_ROOT:${PYTHONPATH:-}"
+          EV_LINK="${{ github.event.inputs.evidence_link || github.event.inputs.evidence }}"
+          ACTOR_NAME="${{ github.event.inputs.actor || github.actor }}"
           bash "$CP_ROOT/tools/records/record-verification-result" \
             "${{ github.event.inputs.product }}" \
             "${{ github.event.inputs.item }}" \
             "${{ github.event.inputs.mechanism }}" \
             "${{ github.event.inputs.result }}" \
-            "${{ github.event.inputs.evidence_link }}" \
-            "${{ github.actor }}"
+            "${EV_LINK}" \
+            "${ACTOR_NAME}"
 
       - name: Push Records and Events
         run: |

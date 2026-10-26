@@ -28,12 +28,12 @@ cp_assert CP-0705 "staging smoke passed" \
 cp_assert CP-0706 "performance assertions within declared thresholds" \
   ./tools/evidence/run-performance --env staging --product "${E2E_PRODUCT}" --contract verification/contract.yaml
 
-# CP-0707 Manual UAT by qa-1, reaching the record store through RECORD-VERIFICATION-RESULT and NOT by
+# CP-0707 Manual UAT by saumit-qa, reaching the record store through RECORD-VERIFICATION-RESULT and NOT by
 #         anyone editing a record file by hand (Section 97.2).
 cp_assert CP-0707 "UAT result recorded via RECORD-VERIFICATION-RESULT" \
   gh workflow run record-verification-result.yml -R "${E2E_CP_REPO}" \
     -f product="${E2E_PRODUCT}" -f item="$(cat "${E2E_OUT}/pr")" -f mechanism=manual_uat \
-    -f result=pass -f evidence="$(cat "${E2E_OUT}/uat-evidence-url")" -f actor=qa-1
+    -f result=pass -f evidence="$(cat "${E2E_OUT}/uat-evidence-url")" -f actor=saumit-qa
 
 cp_assert CP-0708 "records/uat/ carries the run's UAT record" \
   ./tools/records/find-record --store records/uat --product "${E2E_PRODUCT}" \

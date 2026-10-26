@@ -4,7 +4,7 @@ people:
     github_login: bendrohit-eng
     role: founder-integrator
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - platform-admin
       - production-approval
@@ -18,7 +18,7 @@ people:
     github_login: nimesh-lead
     role: team-lead
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - architecture
       - plan-approval
@@ -31,7 +31,7 @@ people:
     github_login: saumit-qa
     role: qa
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - verification
       - uat
@@ -42,7 +42,7 @@ people:
     github_login: harshal-ops
     role: devops
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - devops
       - code-review
@@ -53,7 +53,7 @@ people:
     github_login: bhushan-dev
     role: senior-developer
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - code-review
       - architecture
@@ -65,7 +65,7 @@ people:
     github_login: artilumiverse
     role: foundational-developer
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - code-review
       - backend
@@ -74,7 +74,7 @@ people:
     github_login: mansi-voice
     role: voice-ai-developer
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - code-review
       - backend
@@ -85,7 +85,7 @@ people:
     github_login: prathamesh-mobile
     role: mobile-developer
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - code-review
       - mobile-release
@@ -96,7 +96,7 @@ people:
     github_login: shru-k-23
     role: developer
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - code-review
       - backend
@@ -107,7 +107,7 @@ people:
     github_login: SwatiDerle
     role: developer
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - code-review
       - backend
@@ -118,7 +118,7 @@ people:
     github_login: unmesh-lumiversesolutions
     role: developer
     availability: active
-    access_status: active
+    access_status: provisioned
     capabilities:
       - code-review
       - backend

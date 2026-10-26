@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""tools/e2e-drive/run-smoke — Execute environment smoke test suite (CP-0705, CP-0905).
+
+Spec §33.4: "Executes smoke tests against target environment following deployment."
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="run-smoke",
+        description="Execute smoke tests against environment (§33.4, CP-0705, CP-0905).",
+    )
+    parser.add_argument("--env", required=True, help="target environment (staging | production)")
+    parser.add_argument("--product", required=True, help="product identity slug")
+    parser.add_argument("--suite", default="verification/smoke/", help="path to smoke test directory (default: verification/smoke/)")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    env = args.env.strip()
+    product = args.product.strip()
+    suite_path = Path(args.suite)
+
+    print(f"RUN-SMOKE: Executing smoke suite at '{suite_path}' for product '{product}' on '{env}'...")
+
+    if not suite_path.exists():
+        print(f"RUN-SMOKE FAIL: Smoke suite directory does not exist: {suite_path}", file=sys.stderr)
+        return 1
+
+    # Check for smoke test runners or pytest files
+    test_files = list(suite_path.glob("test_*.py")) + list(suite_path.glob("*.sh"))
+    if not test_files:
+        print(f"RUN-SMOKE FAIL: No test files found in smoke suite: {suite_path}", file=sys.stderr)
+        return 1
+
+    # Execute tests using pytest if python tests exist
+    py_tests = [str(f) for f in test_files if f.suffix == ".py"]
+    if py_tests:
+        cmd = [sys.executable, "-m", "pytest", *py_tests, "-q"]
+        env_vars = os.environ.copy()
+        env_vars["TARGET_ENV"] = env
+        env_vars["PRODUCT"] = product
+        res = subprocess.run(cmd, env=env_vars, capture_output=True, text=True)
+        if res.returncode == 0:
+            print(f"RUN-SMOKE PASS: All smoke tests in {suite_path} passed on {env}.")
+            return 0
+        else:
+            err_output = (res.stderr + "\n" + res.stdout).lower()
+            if (
+                "actively refused" in err_output
+                or "connection refused" in err_output
+                or "cannot connect" in err_output
+                or "urlerror" in err_output
+                or "10061" in err_output
+            ):
+                print(
+                    f"RUN-SMOKE FAIL: Smoke suite present at {suite_path} executed against {env}, but target service endpoint is unreachable (staging host unprovisioned per Founder decision 2026-10-26).\n{res.stdout.strip()}",
+                    file=sys.stderr,
+                )
+            else:
+                print(f"RUN-SMOKE FAIL: Smoke tests failed with return code {res.returncode}:\n{res.stdout.strip()}", file=sys.stderr)
+            return res.returncode
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

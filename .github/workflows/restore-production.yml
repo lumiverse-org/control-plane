@@ -42,7 +42,7 @@ on:
         required: true
         type: string
       actor:
-        description: 'The caller passes ${{ github.actor }}.'
+        description: 'The caller passes github.actor.'
         required: true
         type: string
       registry_ref:
@@ -58,7 +58,7 @@ on:
         required: true
         type: string
       deploy_ref:
-        description: 'The caller passes ${{ github.ref }}.'
+        description: 'The caller passes github.ref.'
         required: true
         type: string
       runner_label:

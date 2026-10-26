@@ -21,7 +21,7 @@ on:
         required: true
         type: string
       deploy_ref:
-        description: 'The caller passes ${{ github.ref }} — the ref this run resolved from.'
+        description: 'The caller passes github.ref — the ref this run resolved from.'
         required: true
         type: string
     secrets:
