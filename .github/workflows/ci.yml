@@ -96,7 +96,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: ci-${{ github.ref }}-${{ inputs.product_name }}
+  group: ci-${{ github.ref }}-${{ inputs.product_name }}-${{ inputs.job }}
   cancel-in-progress: true
 
 jobs:
