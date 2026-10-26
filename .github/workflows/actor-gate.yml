@@ -18,7 +18,7 @@ on:
         required: true
         type: string
       actor:
-        description: 'The caller passes ${{ github.actor }}. Never a literal.'
+        description: 'The caller passes github.actor. Never a literal.'
         required: true
         type: string
       registry_ref:

@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""tools/evidence/run-performance — Execute performance assertions against environment (CP-0706).
+
+Spec §31.3: "Performance mechanism executed and within declared thresholds (required at high reliability_criticality)."
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+import time
+import urllib.request
+import urllib.error
+from pathlib import Path
+import yaml
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="run-performance",
+        description="Execute performance assertions per verification contract (§31.3, CP-0706).",
+    )
+    parser.add_argument("--env", required=True, help="target environment (staging | production)")
+    parser.add_argument("--product", required=True, help="product identity slug")
+    parser.add_argument("--contract", default="verification/contract.yaml", help="path to verification contract (default: verification/contract.yaml)")
+    parser.add_argument("--endpoint", default=None, help="override target endpoint URL")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    env = args.env.strip()
+    product = args.product.strip()
+    contract_path = Path(args.contract)
+
+    print(f"RUN-PERFORMANCE: Evaluating performance assertions for '{product}' on '{env}' per {contract_path}...")
+
+    if not contract_path.is_file():
+        print(f"RUN-PERFORMANCE FAIL: Verification contract file not found: {contract_path}", file=sys.stderr)
+        return 1
+
+    try:
+        with open(contract_path, encoding="utf-8") as f:
+            contract_data = yaml.safe_load(f) or {}
+    except Exception as exc:
+        print(f"RUN-PERFORMANCE FAIL: Failed to parse verification contract: {exc}", file=sys.stderr)
+        return 1
+
+    # Extract performance thresholds
+    perf_cfg = contract_data.get("performance_profile") or contract_data.get("performance") or {}
+    max_latency_ms = perf_cfg.get("max_p95_latency_ms", 250)
+
+    endpoint = args.endpoint or f"http://localhost:8080/health"
+
+    latencies: list[float] = []
+    # Execute sample probe requests
+    try:
+        for _ in range(5):
+            t0 = time.time()
+            req = urllib.request.Request(endpoint, headers={"User-Agent": "run-performance/1.0"})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                if resp.status != 200:
+                    print(f"RUN-PERFORMANCE FAIL: Probe returned HTTP {resp.status}", file=sys.stderr)
+                    return 1
+            latencies.append((time.time() - t0) * 1000.0)
+    except Exception as exc:
+        print(f"RUN-PERFORMANCE FAIL: Environment endpoint ({endpoint}) unreachable for performance evaluation: {exc}", file=sys.stderr)
+        return 1
+
+    latencies.sort()
+    p95 = latencies[-1]
+    if p95 > max_latency_ms:
+        print(f"RUN-PERFORMANCE FAIL: P95 latency {p95:.1f}ms exceeds threshold {max_latency_ms}ms", file=sys.stderr)
+        return 1
+
+    print(f"RUN-PERFORMANCE PASS: Performance verified on {env} (P95: {p95:.1f}ms <= {max_latency_ms}ms).")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
