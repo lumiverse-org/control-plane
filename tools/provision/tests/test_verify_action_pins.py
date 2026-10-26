@@ -17,7 +17,7 @@ def _check_is_wsl() -> bool:
     global _IS_WSL
     if _IS_WSL is None:
         try:
-            res = subprocess.run(["bash", "-c", "uname -s"], capture_output=True, text=True, timeout=2)
+            res = subprocess.run(["bash", "-c", "uname -s"], capture_output=True, text=True, timeout=10)
             _IS_WSL = "Linux" in res.stdout
         except Exception:
             _IS_WSL = False

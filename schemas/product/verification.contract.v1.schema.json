@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://control-plane.local/schemas/product/verification.contract.v1.schema.json",
-  "title": "Verification Contract (verification/contract.yaml) — L1-401",
+  "title": "Verification Contract (verification/contract.yaml) \u2014 L1-401",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,16 +14,46 @@
     "evaluation_suite"
   ],
   "properties": {
-    "contract_version": { "const": 1 },
+    "contract_version": {
+      "const": 1
+    },
     "mechanisms": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["automated", "manual_uat", "smoke_tests", "performance"],
+      "required": [
+        "automated",
+        "manual_uat",
+        "smoke_tests",
+        "performance"
+      ],
       "properties": {
-        "automated": { "enum": ["required", "optional", "not-applicable"] },
-        "manual_uat": { "enum": ["required", "not-applicable"] },
-        "smoke_tests": { "enum": ["required", "optional", "not-applicable"] },
-        "performance": { "enum": ["required", "optional", "not-applicable"] }
+        "automated": {
+          "enum": [
+            "required",
+            "optional",
+            "not-applicable"
+          ]
+        },
+        "manual_uat": {
+          "enum": [
+            "required",
+            "not-applicable"
+          ]
+        },
+        "smoke_tests": {
+          "enum": [
+            "required",
+            "optional",
+            "not-applicable"
+          ]
+        },
+        "performance": {
+          "enum": [
+            "required",
+            "optional",
+            "not-applicable"
+          ]
+        }
       }
     },
     "coverage_map": {
@@ -31,13 +61,28 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["requirement_id", "mechanism", "evidence_path"],
+        "required": [
+          "requirement_id",
+          "mechanism",
+          "evidence_path"
+        ],
         "properties": {
-          "requirement_id": { "type": "string", "minLength": 1 },
-          "mechanism": {
-            "enum": ["automated", "manual_uat", "smoke_tests", "performance"]
+          "requirement_id": {
+            "type": "string",
+            "minLength": 1
           },
-          "evidence_path": { "type": "string", "minLength": 1 }
+          "mechanism": {
+            "enum": [
+              "automated",
+              "manual_uat",
+              "smoke_tests",
+              "performance"
+            ]
+          },
+          "evidence_path": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -54,55 +99,131 @@
         "last_result"
       ],
       "properties": {
-        "id": { "type": "string", "pattern": "^SDC-\\d{3}$" },
-        "path": { "type": "string", "minLength": 1 },
-        "description": { "type": "string", "minLength": 1 },
-        "must_fail": { "const": true },
-        "cadence": { "type": "string", "minLength": 1 },
+        "id": {
+          "type": "string",
+          "pattern": "^SDC-\\d{3}$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "must_fail": {
+          "const": true
+        },
+        "cadence": {
+          "type": "string",
+          "minLength": 1
+        },
         "last_run": {
           "$ref": "https://control-plane.local/schemas/registry/common/defs.v1.schema.json#/$defs/isoDateOrNull"
         },
         "last_result": {
-          "enum": ["failed-as-expected", "passed-unexpectedly", "not-run"]
+          "enum": [
+            "failed-as-expected",
+            "passed-unexpectedly",
+            "not-run"
+          ]
         }
       }
     },
     "auto_pass": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["permitted", "scope"],
+      "required": [
+        "permitted",
+        "scope"
+      ],
       "properties": {
-        "permitted": { "type": "boolean" },
-        "scope": { "type": ["string", "null"] }
+        "permitted": {
+          "type": "boolean"
+        },
+        "scope": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "if": {
-        "properties": { "permitted": { "const": true } },
-        "required": ["permitted"]
+        "properties": {
+          "permitted": {
+            "const": true
+          }
+        },
+        "required": [
+          "permitted"
+        ]
       },
       "then": {
-        "properties": { "scope": { "type": "string" } },
-        "required": ["scope"]
+        "properties": {
+          "scope": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope"
+        ]
       }
     },
     "performance_profile": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": false,
-      "required": ["load_profile_path", "pass_criteria"],
+      "required": [
+        "load_profile_path",
+        "pass_criteria"
+      ],
       "properties": {
-        "load_profile_path": { "type": "string", "minLength": 1 },
+        "load_profile_path": {
+          "type": "string",
+          "minLength": 1
+        },
         "pass_criteria": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "minItems": 1
         }
       }
     },
     "evaluation_suite": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": false,
-      "required": ["path"],
+      "required": [
+        "path"
+      ],
       "properties": {
-        "path": { "type": "string", "minLength": 1 }
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "seeded_defect": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "must_fail": {
+          "type": "boolean"
+        }
       }
     }
   }

@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""tools/provision/diff-team-membership — Invariant #7, §53.1: Compare GitHub Team vs product assignments (CP-0204).
+
+Verifies that GitHub Team membership matches the declared assignments in product.yaml.
+Any diff fails CI when --exit-nonzero-on-diff is supplied.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from datetime import date
+from pathlib import Path
+
+import yaml
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="diff-team-membership",
+        description="Diff GitHub Team members against declared product.yaml assignments (CP-0204, §53.1).",
+    )
+    parser.add_argument("--product", required=True, help="the product id (e.g. pilot-one)")
+    parser.add_argument(
+        "--exit-nonzero-on-diff",
+        action="store_true",
+        default=False,
+        help="exit with code 1 if any difference between expected and actual members is found",
+    )
+    parser.add_argument(
+        "--org",
+        default=None,
+        help="GitHub organization name (defaults to ORG env var or lumiverse-org)",
+    )
+    parser.add_argument(
+        "--declared-dir",
+        default=None,
+        type=Path,
+        help="path to declared root directory (defaults to repo root / declared)",
+    )
+    parser.add_argument(
+        "--actual-members",
+        default=None,
+        help="comma-separated list of actual logins (for offline testing)",
+    )
+    parser.add_argument(
+        "--expected-members",
+        default=None,
+        help="comma-separated list of expected logins (for offline testing)",
+    )
+    return parser
+
+
+def _get_expected_members(product: str, declared_root: Path) -> set[str]:
+    prod_file = declared_root / "products" / f"{product}.yaml"
+    if not prod_file.is_file():
+        raise FileNotFoundError(f"declared product file not found: {prod_file}")
+
+    doc = yaml.safe_load(prod_file.read_text(encoding="utf-8")) or {}
+    expected: set[str] = set()
+
+    raw_assignments = doc.get("assignments") or {}
+    if isinstance(raw_assignments, dict):
+        for holder in raw_assignments.values():
+            if isinstance(holder, str) and holder.strip():
+                expected.add(holder.strip())
+    elif isinstance(raw_assignments, list):
+        for item in raw_assignments:
+            if isinstance(item, dict):
+                person = item.get("person") or item.get("login")
+                if person and isinstance(person, str):
+                    expected.add(person.strip())
+
+    # Include unexpired temporary_assignments
+    today = date.today().isoformat()
+    for item in doc.get("temporary_assignments") or []:
+        if isinstance(item, dict):
+            end_date = item.get("end_date")
+            if end_date is None or str(end_date) >= today:
+                person = item.get("person")
+                if person and isinstance(person, str):
+                    expected.add(person.strip())
+
+    return expected
+
+
+def _get_actual_members(product: str, org: str) -> set[str]:
+    # Query team membership via GitHub API
+    cmd = ["gh", "api", f"orgs/{org}/teams/{product}/members", "--jq", ".[].login"]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"failed to fetch members for team '{product}' in org '{org}': {proc.stderr.strip() or 'not found'}"
+        )
+    return {line.strip() for line in proc.stdout.splitlines() if line.strip()}
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    product = args.product.strip()
+    org = args.org.strip() if args.org else os.environ.get("ORG", "lumiverse-org")
+    declared_root = args.declared_dir or (REPO_ROOT / "declared")
+
+    try:
+        if args.expected_members is not None:
+            expected = {m.strip() for m in args.expected_members.split(",") if m.strip()}
+        else:
+            expected = _get_expected_members(product, declared_root)
+    except Exception as exc:
+        print(f"DIFF-TEAM-MEMBERSHIP FAIL: error loading expected members: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        if args.actual_members is not None:
+            actual = {m.strip() for m in args.actual_members.split(",") if m.strip()}
+        else:
+            actual = _get_actual_members(product, org)
+    except Exception as exc:
+        print(f"DIFF-TEAM-MEMBERSHIP FAIL: error querying actual members: {exc}", file=sys.stderr)
+        return 1
+
+    missing = expected - actual
+    unexpected = actual - expected
+
+    if not missing and not unexpected:
+        print(
+            f"DIFF-TEAM-MEMBERSHIP PASS: GitHub Team '{product}' membership matches declared assignments "
+            f"({len(actual)} member(s): {', '.join(sorted(actual)) or 'none'})."
+        )
+        return 0
+
+    print(
+        f"DIFF-TEAM-MEMBERSHIP DIFF: GitHub Team '{product}' membership mismatch with declared assignments:\n"
+        f"  Expected ({len(expected)}): {', '.join(sorted(expected)) or 'none'}\n"
+        f"  Actual   ({len(actual)}): {', '.join(sorted(actual)) or 'none'}\n"
+        f"  Missing  ({len(missing)}): {', '.join(sorted(missing)) or 'none'}\n"
+        f"  Unexpected ({len(unexpected)}): {', '.join(sorted(unexpected)) or 'none'}",
+        file=sys.stderr,
+    )
+    if args.exit_nonzero_on_diff:
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

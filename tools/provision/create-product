@@ -54,6 +54,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Optional flags and overrides
     parser.add_argument(
+        "--allow-step-failure",
+        default=None,
+        help="allow exactly this step_id to fail without halting execution (passed through to provision cli)",
+    )
+    parser.add_argument(
         "--org",
         default=None,
         help="GitHub organization name (required explicitly on CLI for --apply; defaults to ORG env var only for dry-run)",
@@ -144,6 +149,8 @@ def main(argv: list[str] | None = None) -> int:
         "--executor",
         args.executor,
     ]
+    if args.allow_step_failure:
+        cli_args.extend(["--allow-step-failure", args.allow_step_failure])
 
     if args.apply:
         if not args.org or not args.org.strip():

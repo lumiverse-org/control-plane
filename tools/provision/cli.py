@@ -54,6 +54,11 @@ def _add_common_args(sub: argparse.ArgumentParser) -> None:
         action="store_true",
         help="perform real writes instead of a dry run (requires --live)",
     )
+    sub.add_argument(
+        "--allow-step-failure",
+        default=None,
+        help="allow exactly this step_id to fail without halting execution (records failure as FAILED-BUT-ALLOWED)",
+    )
     sub.add_argument("--dry-run", action="store_true", help="explicit no-op: this is already the default")
     sub.add_argument("--summary", action="store_true", help="print the PLAN summary line")
     sub.add_argument("--steps", action="store_true", help="print each planned step in the plan")
@@ -176,6 +181,7 @@ def _run_operation(
             )
 
     succeeded_steps: list[tuple[Any, dict[str, Any]]] = []
+    allowed_failed_steps: list[tuple[Any, Exception]] = []
     failed_step: tuple[Any, Exception] | None = None
 
     if applied and plan.steps:
@@ -189,6 +195,9 @@ def _run_operation(
 
         product = getattr(args, "product", "")
         executor_identity = getattr(args, "executor", None)
+        allow_step_failure = getattr(args, "allow_step_failure", None)
+        if allow_step_failure is not None:
+            allow_step_failure = allow_step_failure.strip()
 
         for step in plan.steps:
             try:
@@ -201,6 +210,13 @@ def _run_operation(
                 )
                 succeeded_steps.append((step, res))
             except Exception as exc:
+                if allow_step_failure and step.id == allow_step_failure:
+                    allowed_failed_steps.append((step, exc))
+                    print(
+                        f"WARNING: step {step.id} failed but allowed via --allow-step-failure: {exc}",
+                        file=sys.stderr,
+                    )
+                    continue
                 failed_step = (step, exc)
                 break
 
@@ -213,6 +229,10 @@ def _run_operation(
             print(f"Steps succeeded before failure ({len(succeeded_steps)}/{len(plan.steps)}):", file=sys.stderr)
             for s, _ in succeeded_steps:
                 print(f"  - [{s.kind.value}] {s.id}: OK", file=sys.stderr)
+        if allowed_failed_steps:
+            print(f"Steps allowed to fail ({len(allowed_failed_steps)}):", file=sys.stderr)
+            for s, exc_a in allowed_failed_steps:
+                print(f"  - [{s.kind.value}] {s.id}: FAILED-BUT-ALLOWED ({exc_a})", file=sys.stderr)
         summary = (
             plan.summary_line(operation, applied=True, writes=actual_writes)
             if hasattr(plan, "summary_line")
@@ -221,15 +241,25 @@ def _run_operation(
         print(f"{summary} (EXECUTION FAILED)", file=sys.stderr)
         return 1
 
-    if hasattr(plan, "summary_line"):
-        print(plan.summary_line(operation, applied=applied, writes=actual_writes))
-    else:
-        writes_str = actual_writes if applied else 0
-        print(f"PLAN {operation} steps={len(plan.steps)} writes={writes_str} manual={plan.count(StepKind.MANUAL)}")
+    summary = (
+        plan.summary_line(operation, applied=applied, writes=actual_writes)
+        if hasattr(plan, "summary_line")
+        else f"PLAN {operation} steps={len(plan.steps)} writes={actual_writes if applied else 0} manual={plan.count(StepKind.MANUAL)}"
+    )
+    if allowed_failed_steps:
+        allowed_desc = ", ".join(s.id for s, _ in allowed_failed_steps)
+        summary = f"{summary} [FAILED-BUT-ALLOWED: {allowed_desc}]"
+    print(summary)
+
+    if allowed_failed_steps:
+        print(f"Allowed step failures ({len(allowed_failed_steps)}):")
+        for s, exc_a in allowed_failed_steps:
+            print(f"  - [{s.kind.value}] {s.id}: FAILED-BUT-ALLOWED ({exc_a})")
 
     if getattr(args, "steps", False):
         for idx, step in enumerate(plan.steps, start=1):
-            print(f"  {idx:2d}. [{step.kind.value}] {step.id}: {step.description}")
+            tag = " (FAILED-BUT-ALLOWED)" if any(s.id == step.id for s, _ in allowed_failed_steps) else ""
+            print(f"  {idx:2d}. [{step.kind.value}] {step.id}: {step.description}{tag}")
         manual_steps = getattr(plan, "manual_steps", ())
         if manual_steps:
             for idx, step in enumerate(manual_steps, start=len(plan.steps) + 1):

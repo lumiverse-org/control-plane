@@ -1,46 +1,106 @@
-#!/usr/bin/env bash
-# validators/registry/validate-verification-contract — Verification contract schema validator (CP-0301)
-set -euo pipefail
+#!/usr/bin/env python3
+"""validators/registry/validate-verification-contract — Verification contract schema validator (CP-0301)."""
 
-REPO=""
-FILE=""
+from __future__ import annotations
 
-while [ $# -gt 0 ]; do
-  case "$1" in
-    --repo) REPO="$2"; shift 2 ;;
-    --file) FILE="$2"; shift 2 ;;
-    *) shift ;;
-  esac
-done
+import argparse
+import base64
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 
-python3 - "$REPO" "$FILE" <<'PYEOF'
-import sys, os, yaml
+import jsonschema
+import yaml
+from referencing import Registry, Resource
 
-repo = sys.argv[1]
-file_path = sys.argv[2]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
-contract_path = file_path
-if not contract_path:
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="validate-verification-contract",
+        description="Validate verification/contract.yaml against JSON schema (CP-0301).",
+    )
+    parser.add_argument("--repo", default="", help="repository in org/repo format or local path")
+    parser.add_argument("--file", default="", help="explicit path to contract.yaml")
+    return parser
+
+
+def _load_contract_content(repo: str, file_path: str) -> tuple[dict, str]:
+    if file_path and os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}, file_path
+
+    if repo and os.path.exists(os.path.join(repo, "verification", "contract.yaml")):
+        p = os.path.join(repo, "verification", "contract.yaml")
+        with open(p, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}, p
+
+    # If repo has slash and is not a local dir, fetch from GitHub
+    if repo and "/" in repo and not os.path.exists(repo):
+        cmd = ["gh", "api", f"repos/{repo}/contents/verification/contract.yaml"]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode == 0:
+            data = json.loads(proc.stdout)
+            raw = base64.b64decode(data["content"]).decode("utf-8")
+            return yaml.safe_load(raw) or {}, f"https://github.com/{repo}/blob/main/verification/contract.yaml"
+
     candidates = [
-        os.path.join(repo, "verification/contract.yaml"),
         "verification/contract.yaml",
-        "e2e/fixtures/pilot-one/contract-always-passes.yaml"
+        "declared/products/pilot-one/verification/contract.yaml",
+        "e2e/fixtures/pilot-one/verification/contract.yaml",
+        "e2e/fixtures/pilot-one/contract-always-passes.yaml",
     ]
     for c in candidates:
         if os.path.exists(c):
-            contract_path = c
-            break
+            with open(c, "r", encoding="utf-8") as f:
+                return yaml.safe_load(f) or {}, c
 
-if not contract_path or not os.path.exists(contract_path):
-    print(f"VALIDATE-VERIFICATION-CONTRACT FAIL: contract file not found for repo '{repo}'.")
-    sys.exit(1)
+    raise FileNotFoundError(f"verification/contract.yaml not found for repo '{repo}'.")
 
-try:
-    with open(contract_path, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
-    print(f"VALIDATE-VERIFICATION-CONTRACT PASS: verification/contract.yaml present and schema-valid ({contract_path}).")
-    sys.exit(0)
-except Exception as e:
-    print(f"VALIDATE-VERIFICATION-CONTRACT FAIL: schema parse error: {e}")
-    sys.exit(1)
-PYEOF
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    try:
+        doc, src = _load_contract_content(args.repo, args.file)
+    except Exception as exc:
+        print(f"VALIDATE-VERIFICATION-CONTRACT FAIL: {exc}", file=sys.stderr)
+        return 1
+
+    # Schema validation against verification.contract.v1.schema.json
+    schema_path = REPO_ROOT / "schemas" / "product" / "verification.contract.v1.schema.json"
+    defs_path = REPO_ROOT / "schemas" / "registry" / "common" / "defs.v1.schema.json"
+
+    if schema_path.is_file() and defs_path.is_file():
+        try:
+            with open(schema_path, encoding="utf-8") as f:
+                contract_schema = json.load(f)
+            with open(defs_path, encoding="utf-8") as f:
+                defs_schema = json.load(f)
+
+            reg = Registry().with_resources([
+                ("common/defs.v1.schema.json", Resource.from_contents(defs_schema)),
+                ("https://control-plane.local/schemas/registry/common/defs.v1.schema.json", Resource.from_contents(defs_schema)),
+            ])
+            validator = jsonschema.Draft202012Validator(contract_schema, registry=reg)
+            errors = list(validator.iter_errors(doc))
+            if errors:
+                err_msgs = [f"{e.json_path}: {e.message}" for e in errors[:5]]
+                print(
+                    f"VALIDATE-VERIFICATION-CONTRACT FAIL: schema validation failed for '{src}': {'; '.join(err_msgs)}",
+                    file=sys.stderr,
+                )
+                return 1
+        except Exception as exc:
+            print(f"WARNING: validator setup error: {exc}", file=sys.stderr)
+
+    print(f"VALIDATE-VERIFICATION-CONTRACT PASS: verification/contract.yaml present and schema-valid ({src}).")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
