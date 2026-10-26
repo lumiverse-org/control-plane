@@ -56,9 +56,10 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
         first_commit = commits[0]
-        author_login = first_commit.get("author", {}).get("login", "")
-        committer_login = first_commit.get("committer", {}).get("login", "")
-        commit_author_name = first_commit.get("commit", {}).get("author", {}).get("name", "")
+        commit_obj = first_commit.get("commit") or {}
+        author_login = (first_commit.get("author") or {}).get("login", "")
+        committer_login = (first_commit.get("committer") or {}).get("login", "")
+        commit_author_name = (commit_obj.get("author") or {}).get("name", "")
 
         actual_author = author_login or committer_login or commit_author_name
         if actual_author == expect_author or expect_author in (author_login, committer_login, commit_author_name):
