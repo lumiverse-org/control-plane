@@ -1,3 +1,7 @@
-items: []
+items:
+- id: WI-PILOT-ONE-001
+  horizon: H1
+  assignee: founder-1
+  product: pilot-one
 open_gate_items: []
 migrations: []

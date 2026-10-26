@@ -28,7 +28,7 @@ cp_assert CP-0103 "required repository files present" \
 for wf in ci build deploy-staging deploy-production migrate restore-test restore-production; do
   cp_assert "CP-0104-${wf}" "${wf}.yml generated and tag-pinned" \
     bash -c "gh api repos/${E2E_REPO}/contents/.github/workflows/${wf}.yml --jq .content | base64 -d \
-             | grep -qE 'uses: org/control-plane/.github/workflows/.*@workflows/v[0-9]+'"
+             | grep -qE 'uses: (lumiverse-org|org)/control-plane/.github/workflows/.*@workflows/v[0-9]+'"
 done
 
 # CP-0105 Third-party actions pinned to full commit SHA — no tags, no branches (invariant #85).

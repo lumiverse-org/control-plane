@@ -154,6 +154,36 @@ class FakeGitHubClient:
 # ==============================================================================
 
 
+def _resolve_repo_name(product: str, fixture_dir: Path | None = None) -> str:
+    """Resolve primary repository name for a product.
+
+    If product specifies a primary repository in its contract fixture
+    (e.g. e2e/fixtures/<product>/product.yaml), use that repository name.
+    Otherwise default to product id.
+    """
+    candidates = [
+        Path(__file__).resolve().parent.parent.parent / "e2e" / "fixtures" / product / "product.yaml",
+    ]
+    if fixture_dir:
+        candidates.append(fixture_dir / "declared" / "products" / f"{product}.yaml")
+        candidates.append(fixture_dir / "e2e" / "fixtures" / product / "product.yaml")
+    for cand in candidates:
+        if cand.is_file():
+            try:
+                data = yaml.safe_load(cand.read_text(encoding="utf-8")) or {}
+                repos = (data.get("code") or {}).get("repositories") or []
+                for r in repos:
+                    if r.get("role") == "primary" or r.get("deploys"):
+                        r_name = r.get("name", "")
+                        if "/" in r_name:
+                            return r_name.split("/")[-1]
+                        if r_name:
+                            return r_name
+            except Exception:
+                pass
+    return product
+
+
 def execute_repo_from_template(
     product: str,
     fixture_dir: Path,
@@ -161,7 +191,8 @@ def execute_repo_from_template(
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Step 1: repo_from_template (GitHub API write via client)."""
-    return client.create_repo_from_template(name=product, template=TEMPLATE_REPO, private=True)
+    repo_name = _resolve_repo_name(product, fixture_dir)
+    return client.create_repo_from_template(name=repo_name, template=TEMPLATE_REPO, private=True)
 
 
 def execute_product_yaml(
@@ -180,6 +211,17 @@ def execute_product_yaml(
     products_dir.mkdir(parents=True, exist_ok=True)
     target = products_dir / f"{product}.yaml"
 
+    repo_name = _resolve_repo_name(product, fixture_dir)
+    fixture_contract = Path(__file__).resolve().parent.parent.parent / "e2e" / "fixtures" / product / "product.yaml"
+    if fixture_contract.is_file():
+        content = yaml.safe_load(fixture_contract.read_text(encoding="utf-8")) or {}
+        content["contract_version"] = version
+        content["product"] = str(product)
+        content["lifecycle"] = kwargs.get("lifecycle", content.get("lifecycle", "draft"))
+        with target.open("w", encoding="utf-8") as fh:
+            yaml.safe_dump(content, fh, sort_keys=False)
+        return {"path": str(target), "contract_version": version, "status": "created", "content": content}
+
     primary_owner = kwargs.get("primary_owner", "lead-1")
     cross_reviewer = kwargs.get("cross_reviewer", "dev-1")
     backup_owner = kwargs.get("backup_owner", "founder-1")
@@ -195,7 +237,7 @@ def execute_product_yaml(
         "conformance_profile": kwargs.get("conformance_profile", "service"),
         "identity": {
             "product_id": str(product),
-            "repository": str(product),
+            "repository": repo_name,
             "team": kwargs.get("team", str(product)),
         },
         "classification": {
@@ -297,8 +339,9 @@ def execute_team(
         members = _product_team_members(prod_data, current_logins)
 
     if not members:
-        # Default fallback for testing if no assignments defined yet
-        members = [kwargs.get("primary_owner", "founder-1")]
+        # Default fallback for testing mock clients if no assignments defined yet
+        if not isinstance(client, RealGitHubClient):
+            members = [kwargs.get("primary_owner", "founder-1")]
 
     return client.create_team(name=product, members=members)
 
@@ -325,8 +368,9 @@ def execute_codeowners(
         people_data = yaml.safe_load(people_path.read_text(encoding="utf-8")) or {}
         people_list = people_data.get("people", [])
 
+    repo_name = _resolve_repo_name(product, fixture_dir)
     codeowners_content = generate_from_registry(prod_data, people_list)
-    return client.set_codeowners(repo=product, content=codeowners_content)
+    return client.set_codeowners(repo=repo_name, content=codeowners_content)
 
 
 def execute_branch_protection(
@@ -361,7 +405,8 @@ def execute_branch_protection(
             "allow_deletions": False,
         }
 
-    return client.apply_branch_protection(repo=product, branch="main", settings=settings)
+    repo_name = _resolve_repo_name(product, fixture_dir)
+    return client.apply_branch_protection(repo=repo_name, branch="main", settings=settings)
 
 
 def execute_environments(
@@ -374,6 +419,7 @@ def execute_environments(
 
     Creates development, staging, and production environments.
     """
+    repo_name = _resolve_repo_name(product, fixture_dir)
     results: list[dict[str, Any]] = []
     env_names = ("development", "staging", "production")
     for env_name in env_names:
@@ -384,7 +430,7 @@ def execute_environments(
                 "custom_branch_policies": True,
                 "description": "Default branch and release tags only (§33.4)",
             }
-        res = client.create_environment(repo=product, name=env_name, deployment_policy=policy)
+        res = client.create_environment(repo=repo_name, name=env_name, deployment_policy=policy)
         results.append(res)
     return {"environments": results}
 
@@ -397,18 +443,15 @@ def execute_ci_workflows_pinned_tag(
 ) -> dict[str, Any]:
     """Step 7: ci_workflows_pinned_tag (GitHub API write via client).
 
-    Renders CI workflow template with pinned workflows tag and uploads via client.
+    Renders CI workflow templates with pinned workflows tag and uploads via client.
+    Wires all seven required Section 33.2 workflows (ci, build, deploy-staging,
+    deploy-production, migrate, restore-test, restore-production).
     """
-    template_ci = (
+    templates_dir = (
         Path(__file__).resolve().parent.parent.parent
         / "templates"
         / "workflows"
-        / "ci.yml"
     )
-    if template_ci.is_file():
-        raw = template_ci.read_text(encoding="utf-8")
-    else:
-        raw = "name: ci\n# template placeholder\n"
 
     platform_path = fixture_dir / "declared" / "platform.yaml"
     tag = "workflows/v3"
@@ -419,18 +462,116 @@ def execute_ci_workflows_pinned_tag(
             or tag
         )
 
-    rendered = raw.replace("{{PRODUCT_NAME}}", product)
-    rendered = rendered.replace("{{CONTROL_PLANE_REPO}}", "lumiverse-org/control-plane")
-    rendered = rendered.replace("{{WORKFLOWS_TAG}}", tag)
-    rendered = rendered.replace("{{DEFAULT_BRANCH}}", "main")
-    rendered = rendered.replace("{{CONFORMANCE_PROFILE}}", "standard")
+    repo_name = _resolve_repo_name(product, fixture_dir)
+    target_repo = f"lumiverse-org/{repo_name}"
+    control_plane_repo = "lumiverse-org/control-plane"
+    checkout_pin = "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2"
 
-    return client.put_file(
-        repo=product,
-        path=".github/workflows/ci.yml",
-        content=rendered,
-        message=f"Wire CI workflow pinned to {tag} (§19.1, §33.2)",
+    workflow_files: dict[str, str] = {}
+
+    # 1. ci.yml
+    template_ci = templates_dir / "ci.yml"
+    raw_ci = template_ci.read_text(encoding="utf-8") if template_ci.is_file() else "name: ci\n# template placeholder\n"
+    workflow_files[".github/workflows/ci.yml"] = (
+        raw_ci.replace("{{PRODUCT_NAME}}", product)
+        .replace("{{CONTROL_PLANE_REPO}}", control_plane_repo)
+        .replace("{{WORKFLOWS_TAG}}", tag)
+        .replace("{{DEFAULT_BRANCH}}", "main")
+        .replace("{{CONFORMANCE_PROFILE}}", "standard")
     )
+
+    # 2. build.yml
+    template_build = templates_dir / "build.yml"
+    if template_build.is_file():
+        raw_build = template_build.read_text(encoding="utf-8")
+        workflow_files[".github/workflows/build.yml"] = (
+            raw_build.replace("{{PRODUCT_NAME}}", product)
+            .replace("{{CONTROL_PLANE_REPO}}", control_plane_repo)
+            .replace("{{WORKFLOWS_TAG}}", tag)
+            .replace("{{DEFAULT_BRANCH}}", "main")
+        )
+
+    # 3. deploy-staging.yml
+    template_staging = templates_dir / "deploy-staging.template.yml"
+    if template_staging.is_file():
+        raw_staging = template_staging.read_text(encoding="utf-8")
+        staging = (
+            raw_staging.replace("{{PRODUCT_SLUG}}", product)
+            .replace("{{TARGET_REPO}}", target_repo)
+            .replace("{{RUNNER_LABEL}}", "ubuntu-latest")
+            .replace("{{SELF_HOSTED}}", "false")
+        )
+        staging = staging.replace(
+            "    steps:\n      # >>> RUNNER-TIER-ASSERT v1",
+            f"    steps:\n      - uses: {checkout_pin}\n      # >>> RUNNER-TIER-ASSERT v1",
+        )
+        workflow_files[".github/workflows/deploy-staging.yml"] = staging
+
+    # 4. deploy-production.yml
+    template_prod = templates_dir / "deploy-production.template.yml"
+    if template_prod.is_file():
+        raw_prod = template_prod.read_text(encoding="utf-8")
+        prod = (
+            raw_prod.replace("{{PRODUCT_SLUG}}", product)
+            .replace("{{TARGET_REPO}}", target_repo)
+            .replace("{{RUNNER_LABEL}}", "ubuntu-latest")
+            .replace("{{SELF_HOSTED}}", "false")
+        )
+        prod = prod.replace(
+            "    steps:\n      # >>> RUNNER-TIER-ASSERT v1",
+            f"    steps:\n      - uses: {checkout_pin}\n      # >>> RUNNER-TIER-ASSERT v1",
+        )
+        workflow_files[".github/workflows/deploy-production.yml"] = prod
+
+    # 5. migrate.yml
+    template_migrate = templates_dir / "migrate.yml"
+    if template_migrate.is_file():
+        raw_migrate = template_migrate.read_text(encoding="utf-8")
+        workflow_files[".github/workflows/migrate.yml"] = (
+            raw_migrate.replace("{{PRODUCT_SLUG}}", product)
+            .replace("{{TARGET_REPO}}", target_repo)
+            .replace("{{RUNNER_LABEL}}", "ubuntu-latest")
+            .replace("{{SELF_HOSTED}}", "false")
+        )
+
+    # 6. restore-test.yml
+    template_rtest = templates_dir / "restore-test.template.yml"
+    if template_rtest.is_file():
+        raw_rtest = template_rtest.read_text(encoding="utf-8")
+        workflow_files[".github/workflows/restore-test.yml"] = (
+            raw_rtest.replace("{{PRODUCT_SLUG}}", product)
+            .replace("{{TARGET_REPO}}", target_repo)
+            .replace("{{RUNNER_LABEL}}", "ubuntu-latest")
+            .replace("{{SELF_HOSTED}}", "false")
+        )
+
+    # 7. restore-production.yml
+    template_rprod = templates_dir / "restore-production.template.yml"
+    if template_rprod.is_file():
+        raw_rprod = template_rprod.read_text(encoding="utf-8")
+        workflow_files[".github/workflows/restore-production.yml"] = (
+            raw_rprod.replace("{{PRODUCT_SLUG}}", product)
+            .replace("{{TARGET_REPO}}", target_repo)
+            .replace("{{RUNNER_LABEL}}", "ubuntu-latest")
+            .replace("{{SELF_HOSTED}}", "false")
+        )
+
+    last_res = {}
+    for wf_path, wf_content in workflow_files.items():
+        last_res = client.put_file(
+            repo=repo_name,
+            path=wf_path,
+            content=wf_content,
+            message=f"Wire workflow {Path(wf_path).name} pinned to {tag} (§19.1, §33.2)",
+        )
+
+    return {
+        "status": "written",
+        "repo": repo_name,
+        "path": ".github/workflows/ci.yml",
+        "files": list(workflow_files.keys()),
+        "workflows_tag": tag,
+    }
 
 
 def execute_verification_skeleton(
@@ -507,8 +648,9 @@ def execute_required_endpoints(
         "def metrics() -> str:\n"
         "    return '# HELP up 1\\n# TYPE up gauge\\nup 1\\n'\n"
     )
+    repo_name = _resolve_repo_name(product, fixture_dir)
     return client.put_file(
-        repo=product,
+        repo=repo_name,
         path="app/endpoints.py",
         content=endpoints_code,
         message="Expose /health, /version, and /metrics endpoints (§19.1)",

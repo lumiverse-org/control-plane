@@ -1,1 +1,5 @@
-products: {}
+products:
+  pilot-one:
+    scorecard_minimum: 80
+    grafana_dashboard: true
+    devlake_project: true
