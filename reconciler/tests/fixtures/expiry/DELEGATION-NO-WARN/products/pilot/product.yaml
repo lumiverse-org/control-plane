@@ -1,0 +1,15 @@
+identity:
+  id: pilot
+assignments:
+  - person: dev-14
+    type: primary_owner
+    end_date: "2026-09-10"
+  - person: dev-0
+    type: primary_owner
+    end_date: "2026-08-27"
+  - person: dev-15
+    type: primary_owner
+    end_date: "2026-09-11"
+  - person: dev-past
+    type: primary_owner
+    end_date: "2026-08-26"
