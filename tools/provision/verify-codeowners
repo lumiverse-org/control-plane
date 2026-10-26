@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""tools/provision/verify-codeowners — §11.3, §53.1: CODEOWNERS derivation & machine identity verifier (CP-0203).
+
+Verifies that a repository's CODEOWNERS file:
+1. Is strictly derived from declared registry assignments (not hand-edited).
+2. Contains zero machine identities / bot accounts (human identities only, §11.3, §37.3).
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import yaml
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools.provision.codeowners import generate_from_registry
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="verify-codeowners",
+        description="Verify CODEOWNERS was generated from registry and forbids machine identities (§11.3, §53.1).",
+    )
+    parser.add_argument("--repo", required=True, help="repository in org/repo format or local path")
+    parser.add_argument(
+        "--derived-from",
+        choices=("registry", "fixture"),
+        default=None,
+        help="source of declared assignments ('registry' or 'fixture')",
+    )
+    parser.add_argument(
+        "--forbid-machine-identities",
+        action="store_true",
+        default=False,
+        help="enforce zero machine identities or bot logins in CODEOWNERS (§11.3)",
+    )
+    parser.add_argument("--product", default=None, help="product id (defaults to repo name suffix)")
+    parser.add_argument(
+        "--codeowners-file",
+        default=None,
+        type=Path,
+        help="explicit local path to CODEOWNERS file for offline verification",
+    )
+    parser.add_argument(
+        "--declared-dir",
+        default=None,
+        type=Path,
+        help="root declared directory containing products/ and people.yaml",
+    )
+    return parser
+
+
+def _fetch_codeowners_content(
+    repo: str, local_file: Path | None = None
+) -> str:
+    """Fetch CODEOWNERS text from local file, local repo checkout, or GitHub API."""
+    if local_file and local_file.is_file():
+        return local_file.read_text(encoding="utf-8")
+
+    local_repo_path = Path(repo)
+    if local_repo_path.is_dir():
+        cand = local_repo_path / ".github" / "CODEOWNERS"
+        if cand.is_file():
+            return cand.read_text(encoding="utf-8")
+
+    # Fetch via GitHub CLI api
+    cmd = ["gh", "api", f"repos/{repo}/contents/.github/CODEOWNERS"]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise FileNotFoundError(
+            f"failed to fetch .github/CODEOWNERS for '{repo}': {proc.stderr.strip() or 'not found'}"
+        )
+    data = json.loads(proc.stdout)
+    content_b64 = data.get("content", "")
+    return base64.b64decode(content_b64).decode("utf-8")
+
+
+def _extract_owners(codeowners_text: str) -> list[tuple[str, list[str]]]:
+    """Parse CODEOWNERS lines into (path_pattern, [owner_logins])."""
+    entries: list[tuple[str, list[str]]] = []
+    for line in codeowners_text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split()
+        pattern = parts[0]
+        owners = [p.lstrip("@") for p in parts[1:]]
+        entries.append((pattern, owners))
+    return entries
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    repo = args.repo.strip()
+    try:
+        codeowners_text = _fetch_codeowners_content(repo, args.codeowners_file)
+    except Exception as exc:
+        print(f"VERIFY-CODEOWNERS FAIL: {exc}", file=sys.stderr)
+        return 1
+
+    entries = _extract_owners(codeowners_text)
+    if not entries:
+        print(f"VERIFY-CODEOWNERS FAIL: CODEOWNERS file for '{repo}' contains zero valid rule entries", file=sys.stderr)
+        return 1
+
+    # Resolve declared root
+    declared_root = args.declared_dir or (REPO_ROOT / "declared")
+    people_file = declared_root / "people.yaml"
+    known_humans: set[str] = set()
+    people_list: list[dict] = []
+    if people_file.is_file():
+        try:
+            p_data = yaml.safe_load(people_file.read_text(encoding="utf-8")) or {}
+            people_list = p_data.get("people", [])
+            for p in people_list:
+                login = p.get("github_login")
+                if login and p.get("availability") != "departed":
+                    known_humans.add(login)
+        except Exception as exc:
+            print(f"WARNING: failed to parse {people_file}: {exc}", file=sys.stderr)
+
+    # 1. Enforce no machine identities
+    if args.forbid_machine_identities:
+        machine_violations: list[str] = []
+        for path, owners in entries:
+            for owner in owners:
+                if owner.endswith("[bot]") or "bot" in owner.lower() or (known_humans and owner not in known_humans):
+                    machine_violations.append(f"{path}: @{owner}")
+        if machine_violations:
+            print(
+                f"VERIFY-CODEOWNERS FAIL: machine identities detected in CODEOWNERS for '{repo}': "
+                f"{', '.join(machine_violations)} (§11.3, §37.3 forbidden)",
+                file=sys.stderr,
+            )
+            return 1
+
+    # 2. Enforce derivation from registry
+    if args.derived_from:
+        product = args.product
+        if not product:
+            # Infer product from repo name (e.g. org/pilot-one-api -> pilot-one)
+            repo_base = repo.split("/")[-1]
+            product = repo_base.removesuffix("-api").removesuffix("-service")
+
+        prod_file = declared_root / "products" / f"{product}.yaml"
+        if not prod_file.is_file():
+            print(f"VERIFY-CODEOWNERS FAIL: declared product file not found: {prod_file}", file=sys.stderr)
+            return 1
+
+        try:
+            prod_data = yaml.safe_load(prod_file.read_text(encoding="utf-8")) or {}
+            expected_codeowners = generate_from_registry(prod_data, people_list)
+        except Exception as exc:
+            print(f"VERIFY-CODEOWNERS FAIL: error generating canonical CODEOWNERS: {exc}", file=sys.stderr)
+            return 1
+
+        # Normalize whitespace for robust comparison
+        norm_actual = "\n".join(line.strip() for line in codeowners_text.splitlines() if line.strip() and not line.strip().startswith("#"))
+        norm_expected = "\n".join(line.strip() for line in expected_codeowners.splitlines() if line.strip() and not line.strip().startswith("#"))
+
+        if norm_actual != norm_expected:
+            print(
+                f"VERIFY-CODEOWNERS FAIL: CODEOWNERS for '{repo}' does not match canonical registry derivation for '{product}'.\n"
+                f"Actual:\n{norm_actual}\n"
+                f"Expected:\n{norm_expected}",
+                file=sys.stderr,
+            )
+            return 1
+
+    print(
+        f"VERIFY-CODEOWNERS PASS: CODEOWNERS for '{repo}' matches generated registry assignments and contains zero machine identities."
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

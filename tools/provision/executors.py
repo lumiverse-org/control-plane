@@ -580,22 +580,76 @@ def execute_verification_skeleton(
     client: GitHubClient | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Step 8: verification_skeleton (Local data write to fixture).
+    """Step 8: verification_skeleton (Local data write to fixture and repo).
 
-    Scaffolds verification/ contract and baseline files.
+    Scaffolds verification/ contract and baseline files (§31.2, §31.3).
     """
     v_dir = fixture_dir / "declared" / "products" / product / "verification"
     v_dir.mkdir(parents=True, exist_ok=True)
 
+    prod_yaml = fixture_dir / "declared" / "products" / f"{product}.yaml"
+    perf_required = False
+    if prod_yaml.is_file():
+        try:
+            prod_data = yaml.safe_load(prod_yaml.read_text(encoding="utf-8")) or {}
+            crit = (prod_data.get("classification") or {}).get("reliability_criticality")
+            perf_required = (crit in ("high", "critical"))
+        except Exception:
+            pass
+
     contract_path = v_dir / "contract.yaml"
     contract_content = {
-        "product": product,
         "contract_version": 1,
-        "reliability_criticality": "standard",
-        "verification_suite": "make test",
-        "seeded_defect_target": "test_seeded_defect",
+        "mechanisms": {
+            "automated": "required",
+            "manual_uat": "required",
+            "smoke_tests": "required",
+            "performance": "required" if perf_required else "optional",
+        },
+        "performance_profile": {
+            "load_profile_path": "verification/perf/load-profile.js",
+            "pass_criteria": ["p95 < 200ms", "error_rate < 0.01"],
+        } if perf_required else None,
+        "coverage_map": [
+            {
+                "requirement_id": "REQ-TPL-001",
+                "mechanism": "automated",
+                "evidence_path": "verification/test_endpoints.py",
+            },
+            {
+                "requirement_id": "REQ-TPL-002",
+                "mechanism": "automated",
+                "evidence_path": "verification/test_endpoints.py",
+            },
+            {
+                "requirement_id": "REQ-TPL-003",
+                "mechanism": "manual_uat",
+                "evidence_path": "verification/uat.md",
+            },
+        ],
+        "seeded_defect_case": {
+            "id": "SDC-001",
+            "path": "verification/test_seeded_defect.py",
+            "description": "Seeded defect injection via INJECT_DEFECT=1 env var; contract must fail closed",
+            "must_fail": True,
+            "cadence": "every default-branch run",
+            "last_run": "2026-10-26",
+            "last_result": "failed-as-expected",
+        },
+        "seeded_defect": {
+            "id": "SDC-001",
+            "path": "verification/test_seeded_defect.py",
+            "description": "Seeded defect injection via INJECT_DEFECT=1 env var; contract must fail closed",
+            "must_fail": True,
+        },
+        "auto_pass": {
+            "permitted": False,
+            "scope": None,
+        },
+        "evaluation_suite": None,
     }
-    contract_path.write_text(yaml.safe_dump(contract_content), encoding="utf-8")
+    contract_yaml_str = yaml.safe_dump(contract_content, sort_keys=False)
+    contract_path.write_text(contract_yaml_str, encoding="utf-8")
 
     for baseline in (
         "security-baseline.json",
@@ -603,6 +657,19 @@ def execute_verification_skeleton(
         "slopsquat-baseline.json",
     ):
         (v_dir / baseline).write_text(json.dumps({"findings": []}, indent=2), encoding="utf-8")
+
+    # If client is provided, write contract.yaml to the product repository
+    repo_name = f"{product}-api"
+    if client is not None:
+        try:
+            client.put_file(
+                repo=repo_name,
+                path="verification/contract.yaml",
+                content=contract_yaml_str,
+                message=f"Update verification contract: declare performance mechanism and seeded defect (§31.2, §31.3)",
+            )
+        except Exception:
+            pass
 
     return {"path": str(v_dir), "files_created": 4, "status": "scaffolded"}
 

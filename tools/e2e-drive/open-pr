@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+"""tools/e2e-drive/open-pr — Stage E2E-05: Create change branch and open Gate 2 PR (CP-0501).
+
+Pushes change fixture files to a new branch on the target repository and opens a
+pull request to exercise the full CI gate chain and Gate 2 review process.
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="open-pr",
+        description="Push change branch and open pull request for Gate 2 review (§33.2, CP-0501).",
+    )
+    parser.add_argument("--repo", required=True, help="target repository (e.g. lumiverse-org/pilot-one-api)")
+    parser.add_argument("--as", dest="author", required=True, help="author identity opening the PR (e.g. dev-a)")
+    parser.add_argument("--branch", required=True, help="branch name to create (e.g. pilot/disable-customer)")
+    parser.add_argument("--fixture", required=True, type=Path, help="directory containing change files to commit")
+    parser.add_argument("--title", default=None, help="PR title")
+    parser.add_argument("--body", default=None, help="PR body")
+    parser.add_argument("--base", default="main", help="base branch (defaults to main)")
+    parser.add_argument("--out-dir", default=None, type=Path, help="directory to write pr metadata (defaults to E2E_OUT)")
+    return parser
+
+
+def _run_gh(cmd: list[str]) -> subprocess.CompletedProcess[str]:
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        err = proc.stderr.strip() or proc.stdout.strip()
+        raise RuntimeError(f"gh command failed (exit {proc.returncode}): {' '.join(cmd)}\n{err}")
+    return proc
+
+
+def _resolve_repo(repo: str) -> str:
+    return repo.strip()
+
+
+def _get_ref_sha(repo: str, branch: str) -> str:
+    cmd = ["gh", "api", f"repos/{repo}/git/ref/heads/{branch}"]
+    res = _run_gh(cmd)
+    data = json.loads(res.stdout)
+    return data["object"]["sha"]
+
+
+def _ensure_branch(repo: str, branch: str, base_sha: str) -> None:
+    # Check if branch ref exists
+    check_cmd = ["gh", "api", f"repos/{repo}/git/ref/heads/{branch}"]
+    check = subprocess.run(check_cmd, capture_output=True, text=True)
+    if check.returncode == 0:
+        return
+    # Create ref
+    create_cmd = [
+        "gh",
+        "api",
+        f"repos/{repo}/git/refs",
+        "-f",
+        f"ref=refs/heads/{branch}",
+        "-f",
+        f"sha={base_sha}",
+    ]
+    _run_gh(create_cmd)
+
+
+def _put_branch_file(repo: str, branch: str, file_path: str, content: str, message: str) -> None:
+    # Check if file exists on this branch to grab sha
+    check_cmd = ["gh", "api", f"repos/{repo}/contents/{file_path}?ref={branch}"]
+    check = subprocess.run(check_cmd, capture_output=True, text=True)
+    sha: str | None = None
+    if check.returncode == 0:
+        try:
+            data = json.loads(check.stdout)
+            sha = data.get("sha")
+        except Exception:
+            pass
+
+    b64_content = base64.b64encode(content.encode("utf-8")).decode("ascii")
+    put_cmd = [
+        "gh",
+        "api",
+        f"repos/{repo}/contents/{file_path}",
+        "-X",
+        "PUT",
+        "-f",
+        f"branch={branch}",
+        "-f",
+        f"message={message}",
+        "-f",
+        f"content={b64_content}",
+    ]
+    if sha:
+        put_cmd.extend(["-f", f"sha={sha}"])
+    _run_gh(put_cmd)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    repo = _resolve_repo(args.repo)
+    branch = args.branch.strip()
+    fixture_dir = args.fixture.resolve()
+
+    if not fixture_dir.is_dir():
+        print(f"OPEN-PR FAIL: fixture directory does not exist: {fixture_dir}", file=sys.stderr)
+        return 1
+
+    title = args.title or f"{branch}: Add customer disable change"
+    body = args.body or (
+        f"Automated change branch opened for Gate 2 verification (CP-0501).\n"
+        f"Author role: {args.author}\n"
+        f"Fixture source: {fixture_dir.name}"
+    )
+
+    try:
+        # 1. Get base SHA
+        base_sha = _get_ref_sha(repo, args.base)
+
+        # 2. Ensure target branch exists
+        _ensure_branch(repo, branch, base_sha)
+
+        # 3. Commit fixture files to the branch
+        for path in sorted(fixture_dir.iterdir()):
+            if path.is_file():
+                content = path.read_text(encoding="utf-8")
+                dest_path = path.name
+                if path.suffix == ".sql":
+                    dest_path = f"migrations/{path.name}"
+                elif path.name == "app.py":
+                    dest_path = "app/app.py" if "app" in path.name else "app.py"
+
+                _put_branch_file(
+                    repo=repo,
+                    branch=branch,
+                    file_path=dest_path,
+                    content=content,
+                    message=f"feat({branch}): commit {path.name} from fixture",
+                )
+
+        # 4. Check if PR already exists
+        list_cmd = [
+            "gh",
+            "pr",
+            "list",
+            "--repo",
+            repo,
+            "--head",
+            branch,
+            "--base",
+            args.base,
+            "--state",
+            "open",
+            "--json",
+            "number,url",
+        ]
+        list_res = _run_gh(list_cmd)
+        prs = json.loads(list_res.stdout)
+        if prs:
+            pr_number = prs[0]["number"]
+            pr_url = prs[0]["url"]
+        else:
+            create_cmd = [
+                "gh",
+                "pr",
+                "create",
+                "--repo",
+                repo,
+                "--head",
+                branch,
+                "--base",
+                args.base,
+                "--title",
+                title,
+                "--body",
+                body,
+            ]
+            create_res = _run_gh(create_cmd)
+            pr_url = create_res.stdout.strip()
+            # Extract number from URL
+            pr_number = int(pr_url.rstrip("/").split("/")[-1])
+
+    except Exception as exc:
+        print(f"OPEN-PR FAIL: failed to create branch or PR on '{repo}': {exc}", file=sys.stderr)
+        return 1
+
+    # 5. Save PR output metadata
+    e2e_out = args.out_dir or Path(os.environ.get("E2E_OUT", "e2e/out/local"))
+    e2e_out.mkdir(parents=True, exist_ok=True)
+    (e2e_out / "pr").write_text(str(pr_number), encoding="utf-8")
+    (e2e_out / "pr-url").write_text(pr_url, encoding="utf-8")
+
+    print(f"OPEN-PR PASS: PR #{pr_number} open on '{repo}' ({pr_url}).")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

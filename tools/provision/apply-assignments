@@ -1,42 +1,99 @@
-#!/usr/bin/env bash
-# tools/provision/apply-assignments — Merge role assignments into product registry (CP-0201)
-set -euo pipefail
+#!/usr/bin/env python3
+"""tools/provision/apply-assignments — Merge role assignments into product registry (CP-0201).
 
-PRODUCT=""
-SETS=()
+Updates the declared product contract with assigned owners and roles.
+Writes to declared/products/{product}.yaml and ${E2E_OUT}/assignments/{product}.yaml.
+"""
 
-while [ $# -gt 0 ]; do
-  case "$1" in
-    --product) PRODUCT="$2"; shift 2 ;;
-    --set) SETS+=("$2"); shift 2 ;;
-    *) shift ;;
-  esac
-done
+from __future__ import annotations
 
-python3 - "$PRODUCT" "${SETS[@]}" <<'PYEOF'
-import sys, os, yaml
+import argparse
+import os
+import sys
+from pathlib import Path
 
-product = sys.argv[1]
-assignments_list = sys.argv[2:]
+import yaml
 
-if not product:
-    print("APPLY-ASSIGNMENTS FAIL: --product required")
-    sys.exit(2)
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
-new_assignments = {}
-for item in assignments_list:
-    if "=" in item:
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="apply-assignments",
+        description="Merge role assignments into the product registry (§10, CP-0201).",
+    )
+    parser.add_argument("--product", required=True, help="the product id (e.g. pilot-one)")
+    parser.add_argument(
+        "--set",
+        dest="assignments",
+        action="append",
+        default=[],
+        help="role=person assignment pairs (e.g. --set primary_owner=dev-a)",
+    )
+    parser.add_argument(
+        "--target-dir",
+        default=None,
+        help="root declared directory (defaults to repo root / declared)",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    product = args.product.strip()
+    if not product:
+        print("APPLY-ASSIGNMENTS FAIL: --product cannot be empty", file=sys.stderr)
+        return 1
+
+    new_assignments: dict[str, str] = {}
+    for item in args.assignments:
+        if "=" not in item:
+            print(f"APPLY-ASSIGNMENTS FAIL: malformed assignment {item!r} (expected role=person)", file=sys.stderr)
+            return 1
         role, person = item.split("=", 1)
-        new_assignments[role.strip()] = person.strip()
+        role = role.strip()
+        person = person.strip()
+        new_assignments[role] = person
+        # Canonical role alias mapping
+        if role == "primary_responder":
+            new_assignments["incident_responder_primary"] = person
+        elif role == "backup_responder":
+            new_assignments["incident_responder_backup"] = person
+        elif role == "verification":
+            new_assignments["verification_responsibility"] = person
 
-# Target locations to update
-out_dir = f"{os.environ.get('E2E_OUT', '.')}/assignments"
-os.makedirs(out_dir, exist_ok=True)
-out_file = os.path.join(out_dir, f"{product}.yaml")
+    # Update declared/products/{product}.yaml if present
+    declared_root = Path(args.target_dir).resolve() if args.target_dir else (REPO_ROOT / "declared")
+    prod_file = declared_root / "products" / f"{product}.yaml"
+    merged_declared = False
 
-with open(out_file, "w", encoding="utf-8") as f:
-    yaml.safe_dump({"product": product, "assignments": new_assignments}, f)
+    if prod_file.is_file():
+        try:
+            doc = yaml.safe_load(prod_file.read_text(encoding="utf-8")) or {}
+            doc["assignments"] = new_assignments
+            prod_file.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
+            merged_declared = True
+        except Exception as exc:
+            print(f"APPLY-ASSIGNMENTS FAIL: failed to update {prod_file}: {exc}", file=sys.stderr)
+            return 1
 
-print(f"APPLY-ASSIGNMENTS PASS: successfully merged {len(new_assignments)} assignment(s) for '{product}' ({out_file}).")
-sys.exit(0)
-PYEOF
+    # Also emit artifact to E2E_OUT if defined
+    e2e_out = os.environ.get("E2E_OUT")
+    if e2e_out:
+        out_dir = Path(e2e_out) / "assignments"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_file = out_dir / f"{product}.yaml"
+        out_file.write_text(
+            yaml.safe_dump({"product": product, "assignments": new_assignments}, sort_keys=False),
+            encoding="utf-8",
+        )
+
+    dest_str = f"{prod_file}" if merged_declared else f"assignments for '{product}'"
+    print(f"APPLY-ASSIGNMENTS PASS: successfully merged {len(new_assignments)} assignment(s) for '{product}' ({dest_str}).")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
