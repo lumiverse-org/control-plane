@@ -1,0 +1,42 @@
+# T1 — the Lane 2 suite. protocol/00-test-strategy.md section 5 (T1).
+# Runs on every push to lane/2/* and on every PR into integration.
+# Carries no if: and no path filter (Section 33.2, lines 2854-2869; rule S7).
+name: lane-suite-2
+on:
+  push:
+    branches:
+      - 'lane/2/**'
+  pull_request:
+    branches:
+      - integration
+permissions:
+  contents: read
+jobs:
+  lane-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Lane 2 suite (T1)
+        run: |
+          set -euo pipefail
+          if [ -f Makefile ] && grep -q '^lane:' Makefile; then
+            make lane LANE=2 | tee lane-suite.stdout
+          else
+            # D-L2-06 bootstrap: L0's Makefile is not on the branch yet.
+            { bash tools/evidence/lane-verify.sh   --all
+              bash tools/evidence/lane-negative.sh --all
+              bash tools/evidence/tests/lib/audit.sh ; } | tee lane-suite.stdout
+          fi
+      - name: Refuse a vacuous or non-discriminating run
+        run: |
+          set -euo pipefail
+          grep -q 'GATE-RESULT' lane-suite.stdout || { echo "NO GATE-RESULT LINE - VACUOUS"; exit 1; }
+          grep -E 'GATE-RESULT' lane-suite.stdout | while read -r l; do
+            a=$(echo "$l" | sed -E 's/.*assertions=([0-9]+).*/\1/')
+            nr=$(echo "$l" | sed -E 's/.*negatives_run=([0-9]+).*/\1/')
+            nc=$(echo "$l" | sed -E 's/.*negatives_that_failed_correctly=([0-9]+).*/\1/')
+            if [ "$a" = "0" ] && [ "$nr" = "0" ]; then echo "VACUOUS: $l"; exit 1; fi
+            if [ "$nr" != "$nc" ]; then echo "NON-DISCRIMINATING: $l"; exit 1; fi
+          done

@@ -1,0 +1,21 @@
+# X3 driver — Lane 2 test tier 3. Manual only; never a required status context.
+# Spec: D87 (10180), D91 (10184), Section 27.2 (2572), Section 37.3 (3261-3268).
+# Blocked on D-L2-11: the harness fails closed with SANDBOX_ORG_UNRESOLVED.
+name: fixture-dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      gate:
+        description: "Gate id to exercise at X3, e.g. GATE-L2-010"
+        required: true
+permissions:
+  contents: read
+jobs:
+  x3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run the X3 case for the named gate (fail-closed while D-L2-11 is open)
+        run: |
+          set -euo pipefail
+          bash tools/evidence/tests/x3/run.sh --gate "${{ inputs.gate }}"

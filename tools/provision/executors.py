@@ -31,12 +31,17 @@ from tools.provision.codeowners import generate_from_registry
 from tools.provision.create_product import (
     CREATE_PRODUCT_STEPS,
     _current_product_contract_version,
+    apply_resolved_product_identity,
 )
 from tools.provision.environments import plan_environments
 from tools.provision.github_client import GitHubClientError, RealGitHubClient
 from tools.provision.protection import plan_protection
 from tools.provision.repo import REQUIRED_COMMANDS, TEMPLATE_REPO
 from tools.provision.teams import _product_team_members
+
+# Single existing organisation fallback for callers that do not pass org.
+# Do not introduce a second hardcoded organisation beside this one.
+_FALLBACK_ORG = "lumiverse-org"
 
 # In-memory registry of acting executor provenance per product
 EXECUTOR_PROVENANCE: dict[str, str] = {}
@@ -89,6 +94,18 @@ class GitHubClient(Protocol):
         """Create or update a file in the repository."""
         ...
 
+    def get_file(self, repo: str, path: str) -> str | None:
+        """Return file text, or None when the path does not exist."""
+        ...
+
+    def create_issue(self, repo: str, title: str, body: str) -> dict[str, Any]:
+        """Create a GitHub issue. Does not invite users."""
+        ...
+
+    def remove_org_member(self, login: str) -> dict[str, Any]:
+        """Remove an existing organisation member. Does not invite users."""
+        ...
+
 
 class FakeGitHubClient:
     """Mock implementation of GitHubClient for unit tests and fixture runs.
@@ -96,13 +113,16 @@ class FakeGitHubClient:
     Performs zero network calls; records all calls and payload state in memory.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, org: str | None = None) -> None:
         self.calls: list[tuple[str, dict[str, Any]]] = []
         self.repos: dict[str, dict[str, Any]] = {}
         self.teams: dict[str, list[str]] = {}
         self.files: dict[tuple[str, str], str] = {}
         self.protections: dict[tuple[str, str], dict[str, Any]] = {}
         self.environments: dict[tuple[str, str], dict[str, Any] | None] = {}
+        self.issues: list[dict[str, Any]] = []
+        self.removed_members: list[str] = []
+        self.org = org.strip() if isinstance(org, str) and org.strip() else None
 
     def create_repo_from_template(
         self, name: str, template: str = TEMPLATE_REPO, private: bool = True
@@ -110,7 +130,8 @@ class FakeGitHubClient:
         call = {"name": name, "template": template, "private": private}
         self.calls.append(("create_repo_from_template", call))
         self.repos[name] = call
-        return {"id": 1001, "name": name, "full_name": f"lumiverse-org/{name}"}
+        owner = self.org or _FALLBACK_ORG
+        return {"id": 1001, "name": name, "full_name": f"{owner}/{name}"}
 
     def create_team(self, name: str, members: list[str]) -> dict[str, Any]:
         call = {"name": name, "members": list(members)}
@@ -148,10 +169,40 @@ class FakeGitHubClient:
         self.files[(repo, path)] = content
         return {"path": path, "status": "written"}
 
+    def create_issue(self, repo: str, title: str, body: str) -> dict[str, Any]:
+        call = {"repo": repo, "title": title, "body": body}
+        self.calls.append(("create_issue", call))
+        self.issues.append(call)
+        return {"number": len(self.issues), "title": title, "url": None}
+
+    def remove_org_member(self, login: str) -> dict[str, Any]:
+        call = {"login": login}
+        self.calls.append(("remove_org_member", call))
+        self.removed_members.append(login)
+        return {"login": login, "status": "removed"}
+
+    def get_file(self, repo: str, path: str) -> str | None:
+        call = {"repo": repo, "path": path}
+        self.calls.append(("get_file", call))
+        return self.files.get((repo, path))
+
 
 # ==============================================================================
 # Individual Step Executors (13 Steps per §19.1)
 # ==============================================================================
+
+
+def _short_repo_name(value: object) -> str | None:
+    """Bare repository name. The template's own name is not a product repo."""
+    if not isinstance(value, str):
+        return None
+    name = value.strip()
+    if not name:
+        return None
+    short = name.rsplit("/", 1)[-1]
+    if not short or short == TEMPLATE_REPO:
+        return None
+    return short
 
 
 def _resolve_repo_name(product: str, fixture_dir: Path | None = None) -> str:
@@ -159,7 +210,9 @@ def _resolve_repo_name(product: str, fixture_dir: Path | None = None) -> str:
 
     If product specifies a primary repository in its contract fixture
     (e.g. e2e/fixtures/<product>/product.yaml), use that repository name.
-    Otherwise default to product id.
+    A copied template identity (`repository: product-template`) is ignored.
+    Otherwise use identity.repository when it names a real repo, else the
+    product id.
     """
     candidates = [
         Path(__file__).resolve().parent.parent.parent / "e2e" / "fixtures" / product / "product.yaml",
@@ -168,20 +221,98 @@ def _resolve_repo_name(product: str, fixture_dir: Path | None = None) -> str:
         candidates.append(fixture_dir / "declared" / "products" / f"{product}.yaml")
         candidates.append(fixture_dir / "e2e" / "fixtures" / product / "product.yaml")
     for cand in candidates:
-        if cand.is_file():
-            try:
-                data = yaml.safe_load(cand.read_text(encoding="utf-8")) or {}
-                repos = (data.get("code") or {}).get("repositories") or []
-                for r in repos:
-                    if r.get("role") == "primary" or r.get("deploys"):
-                        r_name = r.get("name", "")
-                        if "/" in r_name:
-                            return r_name.split("/")[-1]
-                        if r_name:
-                            return r_name
-            except Exception:
-                pass
+        if not cand.is_file():
+            continue
+        try:
+            data = yaml.safe_load(cand.read_text(encoding="utf-8")) or {}
+        except Exception:
+            continue
+        if not isinstance(data, dict):
+            continue
+        repos = (data.get("code") or {}).get("repositories") or []
+        if isinstance(repos, list):
+            for r in repos:
+                if not isinstance(r, dict):
+                    continue
+                if r.get("role") == "primary" or r.get("deploys"):
+                    resolved = _short_repo_name(r.get("name", ""))
+                    if resolved:
+                        return resolved
+        identity = data.get("identity")
+        if isinstance(identity, dict):
+            resolved = _short_repo_name(identity.get("repository"))
+            if resolved:
+                return resolved
     return product
+
+
+def _organisation(client: Any, kwargs: dict[str, Any]) -> str:
+    """Organisation already supplied by the caller or the client.
+
+    `_FALLBACK_ORG` is the one existing fallback. Callers that already pass
+    org must not grow a second hardcoded organisation.
+    """
+    for candidate in (kwargs.get("org"), getattr(client, "org", None)):
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate.strip()
+    return _FALLBACK_ORG
+
+
+def _publish_repo_product_yaml(
+    client: GitHubClient,
+    repo_name: str,
+    local_document: dict[str, Any],
+) -> dict[str, Any]:
+    """Write product.yaml into the product repository.
+
+    When `gh repo create --template` already copied product.yaml, rewrite that
+    document's identity and keep the rest of the template. A failed read or
+    write fails the step.
+    """
+    document = local_document
+    getter = getattr(client, "get_file", None)
+    if callable(getter):
+        existing = getter(repo_name, "product.yaml")
+        if isinstance(existing, str) and existing.strip():
+            loaded = yaml.safe_load(existing)
+            if not isinstance(loaded, dict):
+                raise ValueError(f"product.yaml in {repo_name} is not a mapping")
+            document = loaded
+    apply_resolved_product_identity(document, repo_name)
+    rendered = yaml.safe_dump(document, sort_keys=False)
+    return client.put_file(
+        repo=repo_name,
+        path="product.yaml",
+        content=rendered,
+        message=f"Set identity.product_id and identity.repository to {repo_name}",
+    )
+
+
+def _write_product_yaml(
+    target: Path,
+    content: dict[str, Any],
+    repo_name: str,
+    version: int,
+    client: GitHubClient | None,
+) -> dict[str, Any]:
+    """Persist product.yaml locally and, when a client is present, in the repo."""
+    apply_resolved_product_identity(content, repo_name)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("w", encoding="utf-8") as fh:
+        yaml.safe_dump(content, fh, sort_keys=False)
+    repo_write = None
+    if client is not None:
+        repo_write = _publish_repo_product_yaml(client, repo_name, content)
+    result: dict[str, Any] = {
+        "path": str(target),
+        "contract_version": version,
+        "status": "created",
+        "content": content,
+        "repository": repo_name,
+    }
+    if repo_write is not None:
+        result["repo_write"] = repo_write
+    return result
 
 
 def execute_repo_from_template(
@@ -201,10 +332,13 @@ def execute_product_yaml(
     client: GitHubClient | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Step 2: product_yaml (Local data write to fixture).
+    """Step 2: product_yaml.
 
-    Writes declared/products/<product>.yaml at current contract_version,
-    conforming fully to contracts/registry/product.contract.v<N>.json.
+    Writes declared/products/<product>.yaml at current contract_version.
+    identity.product_id and identity.repository are the resolved repository
+    name, including when the document was copied from the template. When a
+    client is present, the same identity is written into the new repo.
+    A failed repo write fails the step.
     """
     version = _current_product_contract_version()
     products_dir = fixture_dir / "declared" / "products"
@@ -215,12 +349,12 @@ def execute_product_yaml(
     fixture_contract = Path(__file__).resolve().parent.parent.parent / "e2e" / "fixtures" / product / "product.yaml"
     if fixture_contract.is_file():
         content = yaml.safe_load(fixture_contract.read_text(encoding="utf-8")) or {}
+        if not isinstance(content, dict):
+            raise ValueError(f"product contract {fixture_contract} must be a mapping")
         content["contract_version"] = version
         content["product"] = str(product)
         content["lifecycle"] = kwargs.get("lifecycle", content.get("lifecycle", "draft"))
-        with target.open("w", encoding="utf-8") as fh:
-            yaml.safe_dump(content, fh, sort_keys=False)
-        return {"path": str(target), "contract_version": version, "status": "created", "content": content}
+        return _write_product_yaml(target, content, repo_name, version, client)
 
     primary_owner = kwargs.get("primary_owner", "lead-1")
     cross_reviewer = kwargs.get("cross_reviewer", "dev-1")
@@ -236,7 +370,7 @@ def execute_product_yaml(
         "platform_compatibility": kwargs.get("platform_compatibility", "supported"),
         "conformance_profile": kwargs.get("conformance_profile", "service"),
         "identity": {
-            "product_id": str(product),
+            "product_id": repo_name,
             "repository": repo_name,
             "team": kwargs.get("team", str(product)),
         },
@@ -307,10 +441,7 @@ def execute_product_yaml(
         "restore_tested": restore_tested_date,
         "workflow_tag": kwargs.get("workflow_tag", "workflows/v3"),
     }
-    with target.open("w", encoding="utf-8") as fh:
-        yaml.safe_dump(content, fh, sort_keys=False)
-
-    return {"path": str(target), "contract_version": version, "status": "created", "content": content}
+    return _write_product_yaml(target, content, repo_name, version, client)
 
 
 def execute_team(
@@ -463,8 +594,9 @@ def execute_ci_workflows_pinned_tag(
         )
 
     repo_name = _resolve_repo_name(product, fixture_dir)
-    target_repo = f"lumiverse-org/{repo_name}"
-    control_plane_repo = "lumiverse-org/control-plane"
+    org = _organisation(client, kwargs)
+    target_repo = f"{org}/{repo_name}"
+    control_plane_repo = f"{org}/control-plane"
     checkout_pin = "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2"
 
     workflow_files: dict[str, str] = {}
@@ -683,24 +815,22 @@ def execute_verification_skeleton(
     )
     (smoke_dir / "test_smoke.py").write_text(smoke_content, encoding="utf-8")
 
-    # If client is provided, write contract.yaml and smoke suite to the product repository
-    repo_name = f"{product}-api"
+    # Write contract.yaml and the smoke suite into the resolved product repository.
+    # A failed put fails the step; do not keep going after a rejected write.
+    repo_name = _resolve_repo_name(product, fixture_dir)
     if client is not None:
-        try:
-            client.put_file(
-                repo=repo_name,
-                path="verification/contract.yaml",
-                content=contract_yaml_str,
-                message=f"Update verification contract: declare performance mechanism and seeded defect (§31.2, §31.3)",
-            )
-            client.put_file(
-                repo=repo_name,
-                path="verification/smoke/test_smoke.py",
-                content=smoke_content,
-                message="Scaffold smoke test suite (§33.4, CP-0705)",
-            )
-        except Exception:
-            pass
+        client.put_file(
+            repo=repo_name,
+            path="verification/contract.yaml",
+            content=contract_yaml_str,
+            message="Update verification contract: declare performance mechanism and seeded defect (§31.2, §31.3)",
+        )
+        client.put_file(
+            repo=repo_name,
+            path="verification/smoke/test_smoke.py",
+            content=smoke_content,
+            message="Scaffold smoke test suite (§33.4, CP-0705)",
+        )
 
     return {"path": str(v_dir), "files_created": 5, "status": "scaffolded"}
 

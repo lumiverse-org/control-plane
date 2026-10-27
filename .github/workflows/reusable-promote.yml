@@ -1,5 +1,9 @@
 # Reusable promotion workflow — L2-01, D-L2-08 (integration→staging)
-# Manual dispatch or weekly scheduled cut (bendrohit-eng only)
+# Manual callers only. The weekly cut does not call this file: a schedule
+# run has no bendrohit-eng actor, and this job's actor gate would fail it.
+# D-L2-08 moves HEAD of integration to staging. Any other branch pair,
+# including production, fails closed. A missing token or an unresolved
+# product repository fails closed before any ref is moved.
 name: reusable-promote
 
 on:
@@ -22,20 +26,106 @@ jobs:
   promote:
     name: Promote ${{ inputs.product_id }} (${{ inputs.from_env }} → ${{ inputs.to_env }})
     runs-on: ubuntu-latest
-    environment: ${{ inputs.to_env }}
+    environment: staging
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Actor gate (promotion requires bendrohit-eng)
         run: bash scripts/actor-gate.sh
         env:
           PR_ACTOR: ${{ github.actor }}
-      - name: Promotion check
-        run: |
-          echo "Promoting ${PRODUCT_ID} from ${FROM_ENV} to ${TO_ENV}"
-          echo "Triggered by: ${ACTOR}"
-          echo "TODO: implement promotion steps per D-L2-08 (FD-084)"
+      - name: Move integration HEAD to staging
         env:
           PRODUCT_ID: ${{ inputs.product_id }}
           FROM_ENV: ${{ inputs.from_env }}
           TO_ENV: ${{ inputs.to_env }}
-          ACTOR: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "ERROR: GH_TOKEN missing — refusing to move a branch"
+            exit 1
+          fi
+          if [ -z "${PRODUCT_ID:-}" ] || [ -z "${FROM_ENV:-}" ] || [ -z "${TO_ENV:-}" ]; then
+            echo "ERROR: product_id, from_env, and to_env are required"
+            exit 1
+          fi
+          if [ "$FROM_ENV" != "integration" ] || [ "$TO_ENV" != "staging" ]; then
+            echo "ERROR: D-L2-08 promotes integration to staging only (got ${FROM_ENV} -> ${TO_ENV})"
+            exit 1
+          fi
+          command -v gh >/dev/null 2>&1 || { echo "ERROR: gh is not installed"; exit 1; }
+          python3 -c 'import yaml' 2>/dev/null || python3 -m pip install --quiet pyyaml
+          python3 - <<'PY'
+          import os, sys
+          from pathlib import Path
+          import yaml
+          estate_path = Path("contracts/estate.yaml")
+          if not estate_path.is_file():
+              print("ERROR: contracts/estate.yaml missing", file=sys.stderr)
+              sys.exit(1)
+          estate = yaml.safe_load(estate_path.read_text(encoding="utf-8")) or {}
+          org = str(estate.get("org") or "").strip()
+          if not org:
+              print("ERROR: estate org missing", file=sys.stderr)
+              sys.exit(1)
+          wanted = os.environ.get("PRODUCT_ID", "").strip()
+          if not wanted:
+              print("ERROR: product_id missing", file=sys.stderr)
+              sys.exit(1)
+          declared = Path("declared/products")
+          repo_name = None
+          if declared.is_dir():
+              for path in sorted(declared.glob("*.yaml")):
+                  doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+                  if not isinstance(doc, dict):
+                      continue
+                  identity = doc.get("identity") if isinstance(doc.get("identity"), dict) else {}
+                  ident = str(identity.get("id") or "").strip()
+                  if wanted not in {path.stem, ident}:
+                      continue
+                  repos = ((doc.get("code") or {}).get("repositories") or [])
+                  chosen = None
+                  if isinstance(repos, list):
+                      for repo in repos:
+                          if isinstance(repo, dict) and (repo.get("role") == "primary" or repo.get("deploys")):
+                              chosen = str(repo.get("name") or "").strip()
+                              if chosen:
+                                  break
+                  if not chosen:
+                      chosen = str(identity.get("repository") or "").strip()
+                  short = chosen.rsplit("/", 1)[-1] if chosen else ""
+                  if short and short != "product-template":
+                      repo_name = f"{org}/{short}"
+                      break
+          if not repo_name:
+              print(f"ERROR: PRODUCT_REPO_UNRESOLVED {wanted}", file=sys.stderr)
+              sys.exit(1)
+          Path("/tmp/promote-repo.txt").write_text(repo_name + "\n", encoding="utf-8")
+          PY
+          repo="$(tr -d '\r\n' < /tmp/promote-repo.txt)"
+          [ -n "$repo" ] || { echo "ERROR: empty repository"; exit 1; }
+          sha="$(gh api "repos/${repo}/git/ref/heads/integration" --jq .object.sha)" || {
+            echo "ERROR: cannot read ${repo} refs/heads/integration"
+            exit 1
+          }
+          [ -n "$sha" ] || { echo "ERROR: empty integration SHA for ${repo}"; exit 1; }
+          if current="$(gh api "repos/${repo}/git/ref/heads/staging" --jq .object.sha 2>/dev/null)"; then
+            if [ "$current" = "$sha" ]; then
+              echo "PROMOTION_OK ${repo} integration already at staging ${sha}"
+              exit 0
+            fi
+            status="$(gh api "repos/${repo}/compare/${current}...${sha}" --jq .status)" || {
+              echo "ERROR: cannot compare ${repo} staging to integration"
+              exit 1
+            }
+            if [ "$status" != "ahead" ]; then
+              echo "ERROR: staging is not a fast-forward of integration on ${repo} (status=${status}); refusing force update"
+              exit 1
+            fi
+            gh api -X PATCH "repos/${repo}/git/refs/heads/staging" -f sha="$sha" -F force=false >/dev/null
+          else
+            gh api -X POST "repos/${repo}/git/refs" -f ref="refs/heads/staging" -f sha="$sha" >/dev/null
+          fi
+          echo "PROMOTION_OK ${repo} integration -> staging ${sha}"

@@ -15,14 +15,36 @@ from __future__ import annotations
 
 import base64
 import json
+import os
+import re
 import subprocess
 from typing import Any
 
 from tools.provision.repo import TEMPLATE_REPO
 
+# A single GitHub login: alphanumeric, hyphens allowed only between
+# alphanumerics, 1-39 characters. Apply refuses anything else.
+_LOGIN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$")
+
 
 class GitHubClientError(RuntimeError):
     """Raised when a GitHub CLI command fails (non-zero exit)."""
+
+
+def _require_github_token() -> None:
+    """Fail closed unless a GitHub token is present in the environment.
+
+    `gh` can also be authenticated by a keyring login. This check does not
+    consult that store: a missing GH_TOKEN and GITHUB_TOKEN refuses the
+    write before any `gh` process is started. The token is never placed
+    on the command line.
+    """
+    gh_token = os.environ.get("GH_TOKEN", "").strip()
+    github_token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if not gh_token and not github_token:
+        raise GitHubClientError(
+            "refusing GitHub write: GH_TOKEN and GITHUB_TOKEN are unset (fail closed)"
+        )
 
 
 class RealGitHubClient:
@@ -184,6 +206,47 @@ class RealGitHubClient:
             "response": resp_data,
         }
 
+    def get_file(self, repo: str, path: str) -> str | None:
+        """Return file text, or None when the path does not exist.
+
+        A non-404 GET failure raises GitHubClientError. Callers that rewrite
+        a copied product.yaml must not treat an unreadable file as success.
+        """
+        full_repo = self._full_repo(repo)
+        get_cmd = ["gh", "api", f"repos/{full_repo}/contents/{path}"]
+        get_proc = subprocess.run(get_cmd, capture_output=True, text=True)
+        if get_proc.returncode != 0:
+            err_msg = get_proc.stderr or get_proc.stdout
+            lowered = err_msg.lower()
+            if "not found" in lowered or "404" in lowered:
+                return None
+            raise GitHubClientError(
+                f"gh api contents GET failed for {full_repo}:{path}: {err_msg.strip()}"
+            )
+        try:
+            data = json.loads(get_proc.stdout)
+        except Exception as exc:
+            raise GitHubClientError(
+                f"Failed to parse contents response for {full_repo}:{path}: {exc}"
+            ) from exc
+        if not isinstance(data, dict):
+            raise GitHubClientError(
+                f"contents response for {full_repo}:{path} is not a JSON object"
+            )
+        encoded = data.get("content")
+        if not isinstance(encoded, str) or not encoded.strip():
+            raise GitHubClientError(
+                f"contents response for {full_repo}:{path} did not include file content"
+            )
+        if data.get("encoding", "base64") == "base64":
+            try:
+                return base64.b64decode(encoded).decode("utf-8")
+            except Exception as exc:
+                raise GitHubClientError(
+                    f"Failed to decode contents of {full_repo}:{path}: {exc}"
+                ) from exc
+        return encoded
+
     def set_codeowners(self, repo: str, content: str) -> dict[str, Any]:
         """Write .github/CODEOWNERS into the repository delegating to put_file."""
         res = self.put_file(
@@ -286,3 +349,66 @@ class RealGitHubClient:
             "status": "created",
             "environment": env_data,
         }
+
+    def create_issue(self, repo: str, title: str, body: str) -> dict[str, Any]:
+        """Create a GitHub issue via `gh api`. Does not invite users.
+
+        Refuses before any `gh` process when no token is set.
+        """
+        _require_github_token()
+        if not repo or not str(repo).strip():
+            raise GitHubClientError("refusing to create an issue without a repository (fail closed)")
+        if not title or not str(title).strip():
+            raise GitHubClientError("refusing to create an issue without a title (fail closed)")
+        full_repo = self._full_repo(repo.strip())
+        payload = {"title": title, "body": body}
+        cmd = [
+            "gh",
+            "api",
+            f"repos/{full_repo}/issues",
+            "-X",
+            "POST",
+            "--input",
+            "-",
+        ]
+        res = self._run_gh(cmd, input_str=json.dumps(payload))
+        try:
+            data = json.loads(res.stdout)
+        except Exception as exc:
+            raise GitHubClientError(
+                f"issue creation response was not JSON: {exc}"
+            ) from exc
+        if not isinstance(data, dict) or not isinstance(data.get("number"), int):
+            raise GitHubClientError(
+                "issue creation response did not include an issue number "
+                f"(fail closed): {res.stdout!r}"
+            )
+        return {
+            "number": data["number"],
+            "url": data.get("html_url"),
+            "title": title,
+            "response": data,
+        }
+
+    def remove_org_member(self, login: str) -> dict[str, Any]:
+        """Remove an existing organisation member. Does not invite users.
+
+        DELETE /orgs/{org}/members/{login}. Refuses before any `gh` process
+        when no token is set, and refuses a login that is not a single
+        GitHub login token.
+        """
+        _require_github_token()
+        cleaned = (login or "").strip()
+        if not _LOGIN.fullmatch(cleaned):
+            raise GitHubClientError(
+                "refusing to remove a member without a login (fail closed)"
+            )
+        cmd = [
+            "gh",
+            "api",
+            f"orgs/{self.org}/members/{cleaned}",
+            "-X",
+            "DELETE",
+        ]
+        self._run_gh(cmd)
+        return {"login": cleaned, "status": "removed"}

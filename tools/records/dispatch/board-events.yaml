@@ -20,13 +20,13 @@ transitions:
   - transition: to_ready
     from: Backlog
     to: Ready
-    event_type: moved_to_ready
+    event_type: work_item_moved_to_ready
     record: null
     spec_ref: "Section 97.3 line 8951 'moved to Ready'; Section 29.3 line 2653"
   - transition: assigned
     from: Ready
     to: Planned
-    event_type: assigned
+    event_type: work_item_assigned
     record: null
     spec_ref: "Section 97.3 line 8951 'assigned'; Section 29.3 line 2657 Ready -> Planned -> In Progress"
   - transition: execute_started
@@ -44,7 +44,7 @@ transitions:
   - transition: re_plan
     from: any
     to: Planned
-    event_type: re_plan_triggered
+    event_type: replan_triggered
     record: null
     spec_ref: "Section 29.5 line 2700 (Blocked flag with reason re-plan); Section 97.3 line 8951 're-plan triggered'"
   - transition: item_closed

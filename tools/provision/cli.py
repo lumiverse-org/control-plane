@@ -16,10 +16,9 @@ Plan Building and Execution Status:
   directory as data source, and executes GitHub API mutations via `RealGitHubClient`.
   Incompatible with `--roster-source live` under `--apply`.
 - `add-person` (L3-P4-09), `change-role` (L3-P7-01), `remove-person` (L3-P7-02):
-  real plan builders that enumerate their respective operations' steps. Under
-  `--live --apply`, these operations are explicitly refused with an early error
-  (`OperationApplyNotImplemented`); apply-execution is not supported for them
-  pending their respective write-step executors.
+  real plan builders. Under `--live --apply` each plan is applied against the
+  GitHub client. add-person uses the login already written into the plan and
+  does not invite users. A plan with no login fails closed.
 """
 
 from __future__ import annotations
@@ -33,6 +32,9 @@ from tools.provision.github_client import GitHubClientError, RealGitHubClient
 from tools.provision.plan import Plan, StepKind
 
 _COMMANDS = ("create-product", "add-person", "change-role", "remove-person")
+_PERSON_APPLY_OPERATIONS = frozenset({"add-person", "change-role", "remove-person"})
+# Declared-state and checklist writes for person operations land in this repo.
+_PERSON_APPLY_REPO = "control-plane"
 
 # One line, appearing exactly once in top-level --help output, is the
 # only mention of --apply outside each subcommand's own argument (the
@@ -127,12 +129,64 @@ def _check_apply_requires_live(args: argparse.Namespace) -> None:
         )
 
 
-def _check_operation_apply_allowed(operation: str, args: argparse.Namespace) -> None:
-    if args.apply and args.live and operation != "create-product":
-        raise OperationApplyNotImplemented(
-            f"--live --apply is not supported for {operation}: "
-            f"apply-execution is currently implemented only for create-product."
+def _require_plan_subject(operation: str, plan: Plan) -> None:
+    """Fail closed when a person plan does not already carry its login.
+
+    The CLI login flag is not consulted here. Apply uses only the login
+    the planner wrote into the plan.
+    """
+    if operation == "add-person":
+        from tools.provision.add_person import login_from_plan
+
+        login_from_plan(plan)
+    elif operation == "change-role":
+        from tools.provision.change_role import subject_from_plan
+
+        subject_from_plan(plan)
+    elif operation == "remove-person":
+        from tools.provision.remove_person import login_from_plan
+
+        login_from_plan(plan)
+
+
+def _apply_planned_step(
+    operation: str,
+    plan: Plan,
+    step: Any,
+    client: GitHubClient | None,
+    *,
+    product: str,
+    declared_dir: Path,
+    executor_identity: str | None,
+    org: str | None,
+) -> dict[str, Any] | None:
+    """Run one applied step. None means the step is not a client write."""
+    if operation == "create-product":
+        return execute_step(
+            step_id=step.id,
+            product=product,
+            fixture_dir=declared_dir,
+            client=client,
+            executor=executor_identity,
+            org=org,
         )
+    if operation == "add-person":
+        from tools.provision.add_person import apply_add_person_step
+
+        return apply_add_person_step(plan, step, client, repo=_PERSON_APPLY_REPO)
+    if operation == "change-role":
+        from tools.provision.change_role import apply_change_role_step
+
+        return apply_change_role_step(plan, step, client, repo=_PERSON_APPLY_REPO)
+    if operation == "remove-person":
+        from tools.provision.remove_person import apply_remove_person_step
+
+        return apply_remove_person_step(plan, step, client, repo=_PERSON_APPLY_REPO)
+    raise OperationApplyNotImplemented(
+        f"--live --apply is not supported for {operation}: "
+        "apply-execution is implemented for create-product, add-person, "
+        "change-role, and remove-person."
+    )
 
 
 def _fixture_root(args: argparse.Namespace) -> Path | None:
@@ -160,16 +214,11 @@ def _run_operation(
     """
     _check_apply_requires_live(args)
     applied = bool(args.apply and args.live)
+    withheld_invitation = False
 
     if applied and getattr(args, "roster_source", None) == "live":
         raise LiveRosterApplyForbidden(
             "--apply cannot be used with --roster-source live: live roster planning is dry-run only."
-        )
-
-    if applied and operation != "create-product":
-        raise OperationApplyNotImplemented(
-            f"--live --apply is not supported for {operation}: "
-            f"apply-execution is currently implemented only for create-product."
         )
 
     if applied:
@@ -179,6 +228,11 @@ def _run_operation(
                 "--org must be explicitly specified when running with --live --apply: "
                 "refusing to default to a production organisation."
             )
+
+    if applied and operation in _PERSON_APPLY_OPERATIONS:
+        _require_plan_subject(operation, plan)
+        if operation == "add-person":
+            withheld_invitation = True
 
     succeeded_steps: list[tuple[Any, dict[str, Any]]] = []
     allowed_failed_steps: list[tuple[Any, Exception]] = []
@@ -201,13 +255,18 @@ def _run_operation(
 
         for step in plan.steps:
             try:
-                res = execute_step(
-                    step_id=step.id,
+                res = _apply_planned_step(
+                    operation,
+                    plan,
+                    step,
+                    client,
                     product=product,
-                    fixture_dir=declared_dir,
-                    client=client,
-                    executor=executor_identity,
+                    declared_dir=declared_dir,
+                    executor_identity=executor_identity,
+                    org=getattr(args, "org", None),
                 )
+                if res is None:
+                    continue
                 succeeded_steps.append((step, res))
             except Exception as exc:
                 if allow_step_failure and step.id == allow_step_failure:
@@ -239,6 +298,11 @@ def _run_operation(
             else f"PLAN {operation} steps={len(plan.steps)} writes={actual_writes} manual={plan.count(StepKind.MANUAL)}"
         )
         print(f"{summary} (EXECUTION FAILED)", file=sys.stderr)
+        if withheld_invitation:
+            print(
+                "NOTE: org invitation was not sent; add-person apply does not invite users",
+                file=sys.stderr,
+            )
         return 1
 
     summary = (
@@ -250,6 +314,8 @@ def _run_operation(
         allowed_desc = ", ".join(s.id for s, _ in allowed_failed_steps)
         summary = f"{summary} [FAILED-BUT-ALLOWED: {allowed_desc}]"
     print(summary)
+    if withheld_invitation:
+        print("NOTE: org invitation was not sent; add-person apply does not invite users")
 
     if allowed_failed_steps:
         print(f"Allowed step failures ({len(allowed_failed_steps)}):")
@@ -324,31 +390,58 @@ def _cmd_create_product(
     )
 
 
-def _cmd_add_person(args: argparse.Namespace) -> int:
+def _cmd_add_person(
+    args: argparse.Namespace,
+    client: GitHubClient | None = None,
+    declared_dir: Path | None = None,
+) -> int:
     _fixture_root(args)
-    _check_operation_apply_allowed("add-person", args)
     # L3-P4-09: the real seven-step plan (spec 12.6, 12.1).
     from tools.provision.add_person import build_add_person_plan
 
-    return _run_operation(args, "add-person", build_add_person_plan(args.login))
+    return _run_operation(
+        args,
+        "add-person",
+        build_add_person_plan(args.login),
+        client=client,
+        declared_dir=declared_dir,
+    )
 
 
-def _cmd_change_role(args: argparse.Namespace) -> int:
+def _cmd_change_role(
+    args: argparse.Namespace,
+    client: GitHubClient | None = None,
+    declared_dir: Path | None = None,
+) -> int:
     _fixture_root(args)
-    _check_operation_apply_allowed("change-role", args)
     # L3-P7-01: the real seven-step plan (spec 12.6).
     from tools.provision.change_role import build_change_role_plan
 
-    return _run_operation(args, "change-role", build_change_role_plan(args.login, args.to_role))
+    return _run_operation(
+        args,
+        "change-role",
+        build_change_role_plan(args.login, args.to_role),
+        client=client,
+        declared_dir=declared_dir,
+    )
 
 
-def _cmd_remove_person(args: argparse.Namespace) -> int:
+def _cmd_remove_person(
+    args: argparse.Namespace,
+    client: GitHubClient | None = None,
+    declared_dir: Path | None = None,
+) -> int:
     _fixture_root(args)
-    _check_operation_apply_allowed("remove-person", args)
     # L3-P7-02: the real eleven-step plan (spec 12.2, 12.6).
     from tools.provision.remove_person import build_remove_person_plan
 
-    return _run_operation(args, "remove-person", build_remove_person_plan(args.login))
+    return _run_operation(
+        args,
+        "remove-person",
+        build_remove_person_plan(args.login),
+        client=client,
+        declared_dir=declared_dir,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

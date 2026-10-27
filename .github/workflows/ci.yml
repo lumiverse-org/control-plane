@@ -90,7 +90,7 @@ on:
         description: "Control-plane ref that contains this workflow file and its tools."
         type: string
         required: false
-        default: "workflows/v6"
+        default: "workflows/v7"
     secrets:
       CONTROL_PLANE_TOKEN:
         description: "Read-only token for the control-plane repository"

@@ -1,21 +1,14 @@
 # Scheduled weekly promotion cut — D-L2-08, FD-084
-# D-L2-08 (promotion) moves HEAD of integration to staging; no UAT sign-off,
-# no tag, no SBOM — distinct from D-L2-09 (release), which is UAT-gated and
-# staging-to-production. Naming below intentionally says "promotion"/"cut",
-# never "release", so an eventual implementation does not pick up D-L2-09's
-# tag/sign-off semantics for what must stay a lighter-weight D-L2-08 step.
-# Runs every Monday at 09:00 UTC; bendrohit-eng can also trigger manually.
+# D-L2-08 moves HEAD of integration to staging. No UAT sign-off, no tag,
+# no SBOM, and no production deploy — those belong to D-L2-09.
+# Runs every Monday at 09:00 UTC. bendrohit-eng can also trigger it manually.
 #
-# TODO (D-L2-08 implementation): per-product promotion logic is not yet
-# wired. The natural target is `uses: ./.github/workflows/reusable-promote.yml`
-# (see product-template.yml's `promote` job for the calling pattern), looped
-# over the product set with `target_product` as an optional filter — but
-# reusable-promote.yml's actor-gate step checks `github.actor`, which for a
-# `schedule`-triggered run is NOT necessarily `bendrohit-eng` (there is no
-# human actor on a cron tick). This file's own actor gate below already
-# works around that by only gating `workflow_dispatch`; a straight `uses:`
-# call into reusable-promote.yml would reintroduce that failure mode for the
-# scheduled path and must not be wired in without addressing it first.
+# The weekly schedule has no human actor, so this job does not call
+# reusable-promote.yml (that workflow's actor gate requires bendrohit-eng).
+# Manual dispatch still runs scripts/actor-gate.sh. Both paths then fast-forward
+# staging to integration on each resolved product repository. A missing token,
+# a missing declared repository, or a non-fast-forward update fails the job
+# before any ref is moved.
 name: scheduled-cut
 
 on:
@@ -40,6 +33,8 @@ jobs:
     name: Weekly Promotion Cut
     runs-on: ubuntu-latest
     environment: staging
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Actor gate (manual dispatch only)
@@ -47,10 +42,142 @@ jobs:
         run: bash scripts/actor-gate.sh
         env:
           PR_ACTOR: ${{ github.actor }}
-      - name: Run promotion cut
-        run: |
-          echo "Weekly promotion cut triggered at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          echo "Target product: ${TARGET_PRODUCT:-<blank — all products>}"
-          echo "TODO: implement per D-L2-08 promotion steps (FD-084) — see header TODO"
+      - name: Move integration HEAD to staging
         env:
           TARGET_PRODUCT: ${{ inputs.target_product }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "ERROR: GH_TOKEN missing — refusing to move a branch"
+            exit 1
+          fi
+          command -v gh >/dev/null 2>&1 || { echo "ERROR: gh is not installed"; exit 1; }
+          python3 -c 'import yaml' 2>/dev/null || python3 -m pip install --quiet pyyaml
+          python3 - <<'PY'
+          import os, sys
+          from pathlib import Path
+          import yaml
+          estate_path = Path("contracts/estate.yaml")
+          if not estate_path.is_file():
+              print("ERROR: contracts/estate.yaml missing", file=sys.stderr)
+              sys.exit(1)
+          estate = yaml.safe_load(estate_path.read_text(encoding="utf-8")) or {}
+          org = str(estate.get("org") or "").strip()
+          products = estate.get("products") or []
+          if not org or not isinstance(products, list) or not products:
+              print("ERROR: estate org or products missing", file=sys.stderr)
+              sys.exit(1)
+          docs = []
+          declared = Path("declared/products")
+          if declared.is_dir():
+              for path in sorted(declared.glob("*.yaml")):
+                  doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+                  if isinstance(doc, dict):
+                      docs.append((path, doc))
+          def primary_repo(doc):
+              repos = ((doc.get("code") or {}).get("repositories") or [])
+              chosen = None
+              if isinstance(repos, list):
+                  for repo in repos:
+                      if not isinstance(repo, dict):
+                          continue
+                      if repo.get("role") == "primary" or repo.get("deploys"):
+                          chosen = str(repo.get("name") or "").strip()
+                          if chosen:
+                              break
+              if not chosen:
+                  identity = doc.get("identity") if isinstance(doc.get("identity"), dict) else {}
+                  chosen = str(identity.get("repository") or "").strip()
+              if not chosen:
+                  return None
+              short = chosen.rsplit("/", 1)[-1]
+              if not short or short == "product-template":
+                  return None
+              return f"{org}/{short}"
+          def keys_for(path, doc):
+              identity = doc.get("identity") if isinstance(doc.get("identity"), dict) else {}
+              found = {path.stem}
+              ident = str(identity.get("id") or "").strip()
+              if ident:
+                  found.add(ident)
+              return found
+          def resolve(wanted):
+              wanted = wanted.strip()
+              if not wanted:
+                  return None
+              for path, doc in docs:
+                  if wanted not in keys_for(path, doc):
+                      continue
+                  repo = primary_repo(doc)
+                  if repo:
+                      return repo
+              return None
+          target = os.environ.get("TARGET_PRODUCT", "").strip()
+          selected = []
+          if target:
+              repo = resolve(target)
+              if not repo:
+                  for product in products:
+                      if not isinstance(product, dict):
+                          continue
+                      pid = str(product.get("id") or "").strip()
+                      name = str(product.get("name") or "").strip()
+                      if target not in {pid, name}:
+                          continue
+                      repo = resolve(pid) or resolve(name)
+                      break
+              if not repo:
+                  print(f"ERROR: PRODUCT_REPO_UNRESOLVED {target}", file=sys.stderr)
+                  sys.exit(1)
+              selected.append(repo)
+          else:
+              unresolved = []
+              for product in products:
+                  if not isinstance(product, dict):
+                      unresolved.append("<not-a-mapping>")
+                      continue
+                  pid = str(product.get("id") or "").strip()
+                  name = str(product.get("name") or "").strip()
+                  repo = resolve(pid) or resolve(name)
+                  if not repo:
+                      unresolved.append(pid or name or "<blank>")
+                  else:
+                      selected.append(repo)
+              if unresolved:
+                  print("ERROR: PRODUCT_REPO_UNRESOLVED " + ",".join(unresolved), file=sys.stderr)
+                  sys.exit(1)
+          if not selected:
+              print("ERROR: no product repository resolved", file=sys.stderr)
+              sys.exit(1)
+          Path("/tmp/promote-repos.txt").write_text("\n".join(selected) + "\n", encoding="utf-8")
+          PY
+          while IFS= read -r repo; do
+            [ -n "$repo" ] || { echo "ERROR: empty repository"; exit 1; }
+            case "$repo" in
+              */production|*/production/*) echo "ERROR: refusing production repository ${repo}"; exit 1 ;;
+            esac
+            sha="$(gh api "repos/${repo}/git/ref/heads/integration" --jq .object.sha)" || {
+              echo "ERROR: cannot read ${repo} refs/heads/integration"
+              exit 1
+            }
+            [ -n "$sha" ] || { echo "ERROR: empty integration SHA for ${repo}"; exit 1; }
+            if current="$(gh api "repos/${repo}/git/ref/heads/staging" --jq .object.sha 2>/dev/null)"; then
+              if [ "$current" = "$sha" ]; then
+                echo "PROMOTION_OK ${repo} integration already at staging ${sha}"
+                continue
+              fi
+              status="$(gh api "repos/${repo}/compare/${current}...${sha}" --jq .status)" || {
+                echo "ERROR: cannot compare ${repo} staging to integration"
+                exit 1
+              }
+              if [ "$status" != "ahead" ]; then
+                echo "ERROR: staging is not a fast-forward of integration on ${repo} (status=${status}); refusing force update"
+                exit 1
+              fi
+              gh api -X PATCH "repos/${repo}/git/refs/heads/staging" -f sha="$sha" -F force=false >/dev/null
+            else
+              gh api -X POST "repos/${repo}/git/refs" -f ref="refs/heads/staging" -f sha="$sha" >/dev/null
+            fi
+            echo "PROMOTION_OK ${repo} integration -> staging ${sha}"
+          done < /tmp/promote-repos.txt

@@ -111,15 +111,11 @@ ready-queue:
 	bash scripts/l4/ready-queue.sh --check
 
 # --- merge train (L0-03) ---
-.PHONY: train-preflight train-log train-owners promote-gate
+.PHONY: train-preflight train-log train-owners promote-gate train-merge train-close
 
+# No-network default. ./train-preflight.sh --apply fetches; it does not push or merge.
 train-preflight:
-	@git fetch --prune origin >/dev/null 2>&1
-	@test -z "$$(git status --porcelain)" || { echo "PREFLIGHT FAIL: working tree dirty"; exit 1; }
-	@test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/integration)" \
-	  || { echo "PREFLIGHT FAIL: not on integration tip"; exit 1; }
-	@$(MAKE) --no-print-directory promote-check
-	@echo "PREFLIGHT OK"
+	@./train-preflight.sh
 
 train-owners:
 	@./train-owners.sh $(BASE) $(HEAD)
@@ -140,7 +136,17 @@ train-log:
 	@echo "TRAIN-LOG OK"
 
 promote-gate:
-	@./train-promote-gate.sh $(CYCLE)
+	@test -n "$(CYCLE)" || { echo "PROMOTE-GATE USAGE: CYCLE=<NNN> required"; exit 2; }
+	@./train-promote-gate.sh "$(CYCLE)"
+
+train-merge:
+	@test -n "$(CYCLE)" && test -n "$(PR)" && test "$(LANE)" != "0" \
+	  || { echo "TRAIN-MERGE FAIL: usage: make train-merge LANE=<1|4|2|3|5> PR=<n> CYCLE=<NNN>"; exit 2; }
+	@./train-merge.sh --lane "$(LANE)" --pr "$(PR)" --cycle "$(CYCLE)"
+
+train-close:
+	@test -n "$(CYCLE)" || { echo "TRAIN-CLOSE FAIL: CYCLE=<NNN> required"; exit 2; }
+	@./train-close.sh --cycle "$(CYCLE)"
 
 # --- L0-04: the decision register -------------------------------------------
 # `decisions`      the queue, for the standing decision window (charter 8.2)

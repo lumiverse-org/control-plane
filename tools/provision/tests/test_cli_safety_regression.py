@@ -2,7 +2,7 @@
 
 Adversarial and regression test suite for:
 - FIX 1: Guard ordering bug (--roster-source live with --apply) & dangerous --org default
-- FIX 2: Refusal of --live --apply on add-person, change-role, remove-person
+- FIX 2: add-person, change-role, and remove-person apply against a fake client and never call gh
 - FIX 3: GitHub team slug handling in RealGitHubClient.create_team
 
 SAFETY DISCIPLINE:
@@ -28,7 +28,6 @@ import pytest
 from tools.provision import cli
 from tools.provision.cli import (
     LiveRosterApplyForbidden,
-    OperationApplyNotImplemented,
     OrgRequiredForApply,
     build_parser,
 )
@@ -174,58 +173,104 @@ def test_programmatic_run_operation_raises_org_required_for_apply():
 
 
 # ==============================================================================
-# FIX 2 REGRESSION TESTS: Refusal of --live --apply for add/change/remove-person
+# FIX 2: person apply uses a fake client and never calls gh
 # ==============================================================================
+
+
+_PERSON_APPLY_CASES = [
+    ("add-person", ["--login", "dev-1"], "PLAN add-person steps=7 writes=5 manual=1"),
+    ("change-role", ["--login", "dev-1", "--to-role", "qa"], "PLAN change-role steps=7 writes=7 manual=0"),
+    ("remove-person", ["--login", "dev-1"], "PLAN remove-person steps=11 writes=11 manual=0"),
+]
+
+
+@pytest.mark.parametrize("subcommand,extra_args,summary", _PERSON_APPLY_CASES)
+@patch("tools.provision.cli.execute_step")
+def test_person_subcommands_apply_against_fake_not_live_api(
+    mock_execute_step: MagicMock,
+    subcommand: str,
+    extra_args: list[str],
+    summary: str,
+    capsys: pytest.CaptureFixture[str],
+):
+    """--live --apply walks the planner against a fake client. gh is not called."""
+    created: list[FakeGitHubClient] = []
+
+    class CapturingClient(FakeGitHubClient):
+        def __init__(self, org: str | None = None) -> None:
+            super().__init__(org)
+            created.append(self)
+
+    argv = [subcommand, "--live", "--apply", "--org", "lumiverse-org", *extra_args]
+    with patch("tools.provision.cli.RealGitHubClient", CapturingClient):
+        rc = cli.main(argv)
+    assert rc == 0
+    out, _err = capsys.readouterr()
+    assert summary in out
+    assert mock_execute_step.call_count == 0
+    assert len(created) == 1
+    calls = created[0].calls
+    assert calls
+    assert all("invit" not in name for name, _payload in calls)
+    assert "invitations" not in repr(calls)
+    assert all("dev-1" in repr(payload) for _name, payload in calls)
+    if subcommand == "add-person":
+        assert "does not invite users" in out
+        assert [name for name, _payload in calls] == [
+            "put_file",
+            "put_file",
+            "put_file",
+            "put_file",
+            "create_issue",
+        ]
+    elif subcommand == "remove-person":
+        assert calls[0] == ("remove_org_member", {"login": "dev-1"})
+
+
+@pytest.mark.parametrize("subcommand,extra_args,summary", _PERSON_APPLY_CASES)
+@patch("tools.provision.cli.RealGitHubClient")
+def test_programmatic_person_apply_uses_injected_fake(
+    mock_real: MagicMock,
+    subcommand: str,
+    extra_args: list[str],
+    summary: str,
+    capsys: pytest.CaptureFixture[str],
+):
+    """An injected fake is used. The live client is not constructed."""
+    fake = FakeGitHubClient()
+    args = build_parser().parse_args(
+        [subcommand, "--live", "--apply", "--org", "lumiverse-org", *extra_args]
+    )
+    rc = args.func(args, client=fake)
+    assert rc == 0
+    out, _err = capsys.readouterr()
+    assert summary in out
+    assert mock_real.call_count == 0
+    assert fake.calls
+    assert all("invit" not in name for name, _payload in fake.calls)
 
 
 @pytest.mark.parametrize(
     "subcommand,extra_args",
     [
-        ("add-person", ["--login", "dev-1"]),
-        ("change-role", ["--login", "dev-1", "--to-role", "qa"]),
-        ("remove-person", ["--login", "dev-1"]),
+        ("add-person", ["--login", "   "]),
+        ("change-role", ["--login", "   ", "--to-role", "qa"]),
+        ("remove-person", ["--login", "   "]),
     ],
 )
-@patch("tools.provision.cli.execute_step")
-@patch("tools.provision.cli.RealGitHubClient.__init__", return_value=None)
-def test_regression_person_subcommands_refuse_live_apply(
-    mock_client_init: MagicMock,
-    mock_execute_step: MagicMock,
+@patch("tools.provision.cli.RealGitHubClient")
+def test_blank_login_fails_closed_without_a_live_client(
+    mock_real: MagicMock,
     subcommand: str,
     extra_args: list[str],
     capsys: pytest.CaptureFixture[str],
 ):
-    """Verify add-person, change-role, and remove-person refuse --live --apply upfront.
-
-    RealGitHubClient must NEVER be instantiated and execute_step must NEVER be called.
-    """
-    argv = [subcommand, "--live", "--apply", "--org", "lumiverse-org", *extra_args]
-    rc = cli.main(argv)
+    """A planner with no login refuses before any GitHub client is constructed."""
+    rc = cli.main([subcommand, "--live", "--apply", "--org", "test-org", *extra_args])
     assert rc == 1
-    out, err = capsys.readouterr()
-    expected_msg = f"error: --live --apply is not supported for {subcommand}: apply-execution is currently implemented only for create-product."
-    assert expected_msg in err
-    assert mock_client_init.call_count == 0, f"RealGitHubClient must NEVER be instantiated for {subcommand}!"
-    assert mock_execute_step.call_count == 0, f"execute_step must NEVER be called for {subcommand}!"
-
-
-@pytest.mark.parametrize(
-    "subcommand,extra_args",
-    [
-        ("add-person", ["--login", "dev-1"]),
-        ("change-role", ["--login", "dev-1", "--to-role", "qa"]),
-        ("remove-person", ["--login", "dev-1"]),
-    ],
-)
-def test_programmatic_person_subcommands_raise_operation_apply_not_implemented(
-    subcommand: str,
-    extra_args: list[str],
-):
-    """Verify calling subcommand functions directly raises OperationApplyNotImplemented under --live --apply."""
-    parser = build_parser()
-    args = parser.parse_args([subcommand, "--live", "--apply", "--org", "lumiverse-org", *extra_args])
-    with pytest.raises(OperationApplyNotImplemented, match=f"--live --apply is not supported for {subcommand}"):
-        args.func(args)
+    _out, err = capsys.readouterr()
+    assert "refusing to invent" in err
+    assert mock_real.call_count == 0
 
 
 # ==============================================================================

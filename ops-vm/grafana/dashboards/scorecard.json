@@ -20,7 +20,7 @@
       },
       "targets": [
         {
-          "expr": "avg(scorecard_score) or vector(8.5)",
+          "expr": "avg(scorecard_score)",
           "refId": "A"
         }
       ],

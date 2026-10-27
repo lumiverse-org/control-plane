@@ -470,3 +470,84 @@ def test_create_environment_failure(mock_run: MagicMock):
     client = RealGitHubClient(org="test-org")
     with pytest.raises(GitHubClientError, match="Environment feature not available"):
         client.create_environment("repo-a", "production")
+
+
+@patch("subprocess.run")
+def test_remove_org_member_calls_gh_api_delete(mock_run: MagicMock, monkeypatch: pytest.MonkeyPatch):
+    """remove_org_member deletes membership. It does not call the invitations API."""
+    monkeypatch.setenv("GH_TOKEN", "fixture-token-not-a-secret")
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    mock_run.return_value = subprocess.CompletedProcess(
+        args=["gh", "api"], returncode=0, stdout="", stderr=""
+    )
+    client = RealGitHubClient(org="test-org")
+    result = client.remove_org_member("dev-1")
+    assert result == {"login": "dev-1", "status": "removed"}
+    mock_run.assert_called_once_with(
+        ["gh", "api", "orgs/test-org/members/dev-1", "-X", "DELETE"],
+        input=None,
+        capture_output=True,
+        text=True,
+    )
+    assert "invitations" not in mock_run.call_args.args[0][2]
+    assert "fixture-token-not-a-secret" not in mock_run.call_args.args[0]
+
+
+def test_remove_org_member_missing_token_fails_closed(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("GH_TOKEN", raising=False)
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("gh was called")
+
+    monkeypatch.setattr(subprocess, "run", _boom)
+    client = RealGitHubClient(org="test-org")
+    with pytest.raises(GitHubClientError, match="fail closed"):
+        client.remove_org_member("dev-1")
+
+
+@patch("subprocess.run")
+def test_get_file_decodes_existing_content(mock_run: MagicMock):
+    """get_file reads a copied product.yaml without calling the live API."""
+    raw = "identity:\n  product_id: product-template\n  repository: product-template\n"
+    mock_run.return_value = subprocess.CompletedProcess(
+        args=["gh", "api"],
+        returncode=0,
+        stdout=json.dumps(
+            {
+                "content": base64.b64encode(raw.encode("utf-8")).decode("ascii"),
+                "encoding": "base64",
+                "sha": "abc",
+            }
+        ),
+        stderr="",
+    )
+    client = RealGitHubClient(org="test-org")
+    assert client.get_file("pilot-one-api", "product.yaml") == raw
+    command = mock_run.call_args.args[0]
+    assert command == ["gh", "api", "repos/test-org/pilot-one-api/contents/product.yaml"]
+
+
+@patch("subprocess.run")
+def test_get_file_returns_none_on_404(mock_run: MagicMock):
+    mock_run.return_value = subprocess.CompletedProcess(
+        args=["gh", "api"],
+        returncode=1,
+        stdout="",
+        stderr="gh: Not Found (HTTP 404)",
+    )
+    client = RealGitHubClient(org="test-org")
+    assert client.get_file("repo-a", "product.yaml") is None
+
+
+@patch("subprocess.run")
+def test_get_file_raises_on_non_404(mock_run: MagicMock):
+    mock_run.return_value = subprocess.CompletedProcess(
+        args=["gh", "api"],
+        returncode=1,
+        stdout="",
+        stderr="gh: Bad credentials (HTTP 401)",
+    )
+    client = RealGitHubClient(org="test-org")
+    with pytest.raises(GitHubClientError, match="Bad credentials"):
+        client.get_file("repo-a", "product.yaml")

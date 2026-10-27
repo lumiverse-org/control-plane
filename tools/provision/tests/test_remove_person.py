@@ -7,16 +7,23 @@ from datetime import date
 import pytest
 
 from reconciler.orphans import OrphanContext, OrphanFinding
+import subprocess
+
 from tools.provision.remove_person import (
     REMOVE_PERSON_STEPS,
     BlockingOrphanUnresolved,
+    PlanLoginMissing,
+    apply_remove_person_step,
     build_remove_person_plan,
     dismiss,
     identifier_available,
+    login_from_plan,
     retire_identifier,
     run_orphan_detection,
     succession_alerts,
 )
+from tools.provision.cli import _run_operation, build_parser
+from tools.provision.executors import FakeGitHubClient
 
 
 def test_plan_has_exactly_eleven_steps_in_spec_order():
@@ -103,3 +110,32 @@ def test_no_succession_alert_for_a_non_designate():
 def test_no_succession_alert_when_topology_is_absent():
     assert succession_alerts("dev-1", None) == ()
     assert succession_alerts("dev-1", {}) == ()
+
+
+def test_apply_removes_plan_login_and_does_not_invite(monkeypatch: pytest.MonkeyPatch):
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("live GitHub API was called")
+
+    monkeypatch.setattr(subprocess, "run", _boom)
+    plan = build_remove_person_plan("dev-1")
+    assert login_from_plan(plan) == "dev-1"
+    fake = FakeGitHubClient()
+    args = build_parser().parse_args(
+        ["remove-person", "--live", "--apply", "--org", "test-org", "--login", "invented-login"]
+    )
+    rc = _run_operation(args, "remove-person", plan, client=fake)
+    assert rc == 0
+    assert fake.calls[0] == ("remove_org_member", {"login": "dev-1"})
+    assert [name for name, _payload in fake.calls].count("put_file") == 10
+    blob = repr(fake.calls)
+    assert "invented-login" not in blob
+    assert "invitations" not in blob
+    assert all("person_record: retained" in payload["content"] for name, payload in fake.calls if name == "put_file")
+
+
+def test_apply_fails_closed_when_planner_has_no_login():
+    plan = build_remove_person_plan("   ")
+    fake = FakeGitHubClient()
+    with pytest.raises(PlanLoginMissing, match="refusing to invent"):
+        apply_remove_person_step(plan, plan.steps[0], fake, repo="control-plane")
+    assert fake.calls == []
