@@ -7,12 +7,19 @@ from pathlib import Path
 
 import pytest
 
+import subprocess
+
 from tools.provision.change_role import (
     CHANGE_ROLE_STEPS,
     ForbiddenPersonnelAction,
+    PlanLoginMissing,
+    apply_change_role_step,
     build_change_role_plan,
     ownership_reassessment_prompt,
+    subject_from_plan,
 )
+from tools.provision.cli import _run_operation, build_parser
+from tools.provision.executors import FakeGitHubClient
 from tools.provision.plan import StepKind
 
 
@@ -92,3 +99,44 @@ def test_forbidden_words_appear_only_inside_the_refusal_guard():
         if pattern.search(line) and not (tokens_start <= n <= tokens_end or guard_start <= n < guard_end)
     ]
     assert stray == [], f"forbidden words found outside the refusal guard: {stray}"
+
+
+def test_apply_uses_plan_login_and_does_not_invite(monkeypatch: pytest.MonkeyPatch):
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("live GitHub API was called")
+
+    monkeypatch.setattr(subprocess, "run", _boom)
+    plan = build_change_role_plan("dev-1", "qa")
+    assert subject_from_plan(plan) == ("dev-1", "qa")
+    fake = FakeGitHubClient()
+    args = build_parser().parse_args(
+        ["change-role", "--live", "--apply", "--org", "test-org", "--login", "invented-login", "--to-role", "qa"]
+    )
+    rc = _run_operation(args, "change-role", plan, client=fake)
+    assert rc == 0
+    names = [name for name, _payload in fake.calls]
+    assert names == [
+        "put_file",
+        "put_file",
+        "put_file",
+        "put_file",
+        "create_issue",
+        "put_file",
+        "put_file",
+    ]
+    blob = repr(fake.calls)
+    assert "dev-1" in blob
+    assert "invented-login" not in blob
+    assert "invitations" not in blob
+    issue = next(payload for name, payload in fake.calls if name == "create_issue")
+    assert issue["title"] == "Ownership reassessment -- dev-1"
+    assert "never reassigns" in issue["body"]
+    assert "primary_owner" not in issue["body"]
+
+
+def test_apply_fails_closed_when_planner_has_no_login():
+    plan = build_change_role_plan("   ", "qa")
+    fake = FakeGitHubClient()
+    with pytest.raises(PlanLoginMissing, match="refusing to invent"):
+        apply_change_role_step(plan, plan.steps[0], fake, repo="control-plane")
+    assert fake.calls == []

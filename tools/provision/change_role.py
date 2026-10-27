@@ -26,9 +26,15 @@ Two hard rules, both from §74 and §101 invariants 36-38:
 
 from __future__ import annotations
 
+import ast
+import re
 from dataclasses import dataclass
+from typing import Any
 
 from tools.provision.plan import Plan, Step, StepKind
+
+_LOGIN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$")
+_ROLE_MARKER = "'s declared role to "
 
 # AT-071 / §74: change-role must refuse to plan any of these. This is
 # the one place in this module those five words may appear - the guard
@@ -126,3 +132,62 @@ def build_change_role_plan(login: str, to_role: str) -> Plan:
     }
     steps = [Step(step_id, descriptions[step_id], StepKind.WRITE) for step_id in CHANGE_ROLE_STEPS]
     return Plan(steps=steps)
+
+
+class PlanLoginMissing(ValueError):
+    """The change-role plan does not carry a login. Refusing to invent one."""
+
+
+def subject_from_plan(plan: Plan) -> tuple[str, str]:
+    """Return `(login, to_role)` already written into the role_update step.
+
+    Does not substitute a login or a role when the planner omitted one.
+    """
+    step = next((item for item in plan.steps if item.id == "role_update"), None)
+    text = step.description if step is not None else ""
+    if step is None or not text.startswith("update ") or _ROLE_MARKER not in text:
+        raise PlanLoginMissing("change-role plan has no login; refusing to invent one")
+    login = text[len("update "):text.index(_ROLE_MARKER)].strip()
+    raw_role = text[text.index(_ROLE_MARKER) + len(_ROLE_MARKER):].strip()
+    if not _LOGIN.fullmatch(login):
+        raise PlanLoginMissing("change-role plan has no login; refusing to invent one")
+    try:
+        to_role = ast.literal_eval(raw_role)
+    except (SyntaxError, ValueError) as exc:
+        raise PlanLoginMissing("change-role plan has no role; refusing to invent one") from exc
+    if not isinstance(to_role, str) or not to_role.strip():
+        raise PlanLoginMissing("change-role plan has no role; refusing to invent one")
+    return login, to_role.strip()
+
+
+def apply_change_role_step(plan: Plan, step: Step, client: Any, *, repo: str) -> dict[str, Any]:
+    """Apply one change-role step against `client`.
+
+    The ownership step posts the existing reassessment prompt as an issue.
+    It does not reassign ownership. No step invites a user. The login and
+    role come from the plan.
+    """
+    login, to_role = subject_from_plan(plan)
+    if client is None:
+        raise RuntimeError("change-role apply requires a GitHub client")
+    if not repo or not str(repo).strip():
+        raise ValueError("change-role apply requires a repository; refusing to guess one")
+    target = str(repo).strip()
+    if step.id == "ownership_reassessment_prompt":
+        return client.create_issue(
+            repo=target,
+            title=f"Ownership reassessment -- {login}",
+            body=step.description,
+        )
+    content = (
+        f"github_login: {login}\n"
+        f"to_role: {to_role}\n"
+        f"step_id: {step.id}\n"
+        f"description: {step.description}\n"
+    )
+    return client.put_file(
+        repo=target,
+        path=f"provision/change-role/{login}/{step.id}.yaml",
+        content=content,
+        message=f"change-role {login}: {step.id}",
+    )

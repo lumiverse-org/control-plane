@@ -140,12 +140,21 @@ def test_step3_fails_without_allow_flag_halts_at_step3(
     assert "- [write] product_yaml: OK" in err
     assert "PLAN create-product steps=5 writes=2 manual=0 (EXECUTION FAILED)" in err
 
-    # Steps 4 and 5 NEVER ran
+    # Steps 4 and 5 NEVER ran. product_yaml may already have written product.yaml.
     calls = [c[0] for c in failing_client.calls]
     assert "create_repo_from_template" in calls
     assert "apply_branch_protection" in calls
     assert "create_environment" not in calls
-    assert "put_file" not in calls
+    workflow_puts = [
+        c for c in failing_client.calls
+        if c[0] == "put_file" and str(c[1].get("path", "")).startswith(".github/workflows/")
+    ]
+    assert workflow_puts == []
+    product_puts = [
+        c for c in failing_client.calls
+        if c[0] == "put_file" and c[1].get("path") == "product.yaml"
+    ]
+    assert len(product_puts) == 1
 
 
 def test_step3_fails_with_allow_flag_continues_and_marks_summary(

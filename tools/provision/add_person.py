@@ -43,9 +43,15 @@ direct repository grant.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from typing import Any
 
 from tools.provision.plan import Plan, Step, StepKind
+
+# One GitHub login. Apply refuses a blank, spaced, or otherwise invented token.
+_LOGIN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$")
+_PEOPLE_ENTRY_PREFIX = "add a people.yaml entry for "
 
 # Section 12.6's seven "produces" outputs, with the two final ones folded
 # into a single step (see the module docstring's "known contradiction"
@@ -203,3 +209,59 @@ def onboarding_checklist(login: str, *, conduct_adviser: str | None = None) -> O
     lines.append("")
     body = "\n".join(lines) + "\n"
     return OnboardingChecklist(login=login, conduct_adviser=adviser, body=body)
+
+
+class PlanLoginMissing(ValueError):
+    """The add-person plan does not carry a login. Refusing to invent one."""
+
+
+def login_from_plan(plan: Plan) -> str:
+    """Return the login the planner already wrote into the plan.
+
+    Reads `people_yaml_entry`'s description and nothing else. A missing,
+    blank, or non-login token fails closed. This function never substitutes
+    a default login.
+    """
+    step = next((item for item in plan.steps if item.id == "people_yaml_entry"), None)
+    if step is None or not step.description.startswith(_PEOPLE_ENTRY_PREFIX):
+        raise PlanLoginMissing("add-person plan has no login; refusing to invent one")
+    login = step.description[len(_PEOPLE_ENTRY_PREFIX):].strip()
+    if not _LOGIN.fullmatch(login):
+        raise PlanLoginMissing("add-person plan has no login; refusing to invent one")
+    return login
+
+
+def apply_add_person_step(plan: Plan, step: Step, client: Any, *, repo: str) -> dict[str, Any] | None:
+    """Apply one add-person step against `client`, using the plan's login.
+
+    `org_invitation` is never sent. The manual key exchange is not a write.
+    Other write steps record the plan text or open the onboarding issue.
+    The login is taken from the plan; a plan with no login raises
+    `PlanLoginMissing` before any client call.
+    """
+    login = login_from_plan(plan)
+    if step.kind == StepKind.MANUAL or step.id == "org_invitation":
+        return None
+    if client is None:
+        raise RuntimeError("add-person apply requires a GitHub client")
+    if not repo or not str(repo).strip():
+        raise ValueError("add-person apply requires a repository; refusing to guess one")
+    target = str(repo).strip()
+    if step.id == "onboarding_and_review_registration":
+        checklist = onboarding_checklist(login)
+        return client.create_issue(
+            repo=target,
+            title=f"Onboarding -- {login}",
+            body=checklist.body,
+        )
+    content = (
+        f"github_login: {login}\n"
+        f"step_id: {step.id}\n"
+        f"description: {step.description}\n"
+    )
+    return client.put_file(
+        repo=target,
+        path=f"provision/add-person/{login}/{step.id}.yaml",
+        content=content,
+        message=f"add-person {login}: {step.id}",
+    )

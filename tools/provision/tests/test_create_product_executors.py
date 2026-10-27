@@ -19,6 +19,7 @@ from reconciler.cli import DeclaredState
 from tools.provision.create_product import (
     CREATE_PRODUCT_STEPS,
     _current_product_contract_version,
+    apply_resolved_product_identity,
 )
 from tools.provision.executors import (
     FakeGitHubClient,
@@ -38,6 +39,7 @@ from tools.provision.executors import (
     execute_team,
     execute_verification_skeleton,
 )
+from tools.provision.github_client import GitHubClientError
 from tools.provision.repo import REQUIRED_COMMANDS, TEMPLATE_REPO
 
 
@@ -261,3 +263,112 @@ def test_execute_all_13_steps_in_order(temp_fixture: Path):
     assert "apply_branch_protection" in call_names
     assert "create_environment" in call_names
     assert "put_file" in call_names
+
+
+class _PutFails(FakeGitHubClient):
+    """Fake client whose writes are rejected. No network."""
+
+    def put_file(self, repo: str, path: str, content: str, message: str) -> dict:
+        raise GitHubClientError(f"write rejected for {path}")
+
+
+def test_apply_resolved_product_identity_replaces_template_identity() -> None:
+    document = {
+        "identity": {
+            "product_id": "product-template",
+            "repository": "product-template",
+            "team": "platform",
+        }
+    }
+    apply_resolved_product_identity(document, "pilot-one-api")
+    assert document["identity"]["product_id"] == "pilot-one-api"
+    assert document["identity"]["repository"] == "pilot-one-api"
+    assert document["identity"]["team"] == "platform"
+
+
+def test_copied_contract_uses_resolved_repo_not_template_identity(temp_fixture: Path) -> None:
+    """The on-disk pilot-one contract is copied; identity comes from its primary repo."""
+    result = execute_product_yaml("pilot-one", temp_fixture)
+    identity = result["content"]["identity"]
+    assert identity["product_id"] == "pilot-one-api"
+    assert identity["repository"] == "pilot-one-api"
+    assert identity["display_name"] == "Pilot One"
+    assert identity["product_id"] != TEMPLATE_REPO
+    assert identity["repository"] != TEMPLATE_REPO
+
+
+def test_template_copy_in_repo_is_rewritten_and_verification_uses_resolved_name(
+    temp_fixture: Path,
+) -> None:
+    """gh repo create --template leaves product-template identity; the write step replaces it."""
+    declared = temp_fixture / "declared" / "products" / "omega.yaml"
+    declared.write_text(
+        yaml.safe_dump(
+            {
+                "code": {
+                    "repositories": [
+                        {"name": "acme/custom-service", "role": "primary", "deploys": True},
+                    ]
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    client = FakeGitHubClient(org="fixture-org")
+    client.files[("custom-service", "product.yaml")] = (
+        "identity:\n"
+        "  product_id: product-template\n"
+        "  repository: product-template\n"
+        "  team: platform\n"
+        "classification:\n"
+        "  reliability_criticality: medium\n"
+    )
+
+    execute_product_yaml("omega", temp_fixture, client)
+
+    remote = yaml.safe_load(client.files[("custom-service", "product.yaml")])
+    assert remote["identity"]["product_id"] == "custom-service"
+    assert remote["identity"]["repository"] == "custom-service"
+    assert remote["identity"]["team"] == "platform"
+    assert remote["classification"]["reliability_criticality"] == "medium"
+    assert ("omega-api", "product.yaml") not in client.files
+    assert "lumiverse-org" not in client.files[("custom-service", "product.yaml")]
+
+    local = yaml.safe_load(declared.read_text(encoding="utf-8"))
+    assert local["identity"]["product_id"] == "custom-service"
+    assert local["identity"]["repository"] == "custom-service"
+
+    execute_verification_skeleton("omega", temp_fixture, client)
+    assert ("custom-service", "verification/contract.yaml") in client.files
+    assert ("custom-service", "verification/smoke/test_smoke.py") in client.files
+    assert ("omega-api", "verification/contract.yaml") not in client.files
+    assert ("omega-api", "verification/smoke/test_smoke.py") not in client.files
+
+
+def test_verification_put_failure_fails_the_step(temp_fixture: Path) -> None:
+    with pytest.raises(GitHubClientError, match="write rejected for verification/contract.yaml"):
+        execute_verification_skeleton("omega", temp_fixture, _PutFails())
+
+
+def test_product_yaml_put_failure_fails_the_step(temp_fixture: Path) -> None:
+    with pytest.raises(GitHubClientError, match="write rejected for product.yaml"):
+        execute_product_yaml("omega", temp_fixture, _PutFails())
+
+
+def test_ci_workflows_use_org_parameter_without_a_second_hardcoded_org(temp_fixture: Path) -> None:
+    client = FakeGitHubClient(org="client-org")
+    execute_ci_workflows_pinned_tag("omega", temp_fixture, client, org="param-org")
+    ci = client.files[("omega", ".github/workflows/ci.yml")]
+    build = client.files[("omega", ".github/workflows/build.yml")]
+    assert "param-org/control-plane" in ci
+    assert "client-org" not in ci
+    assert "lumiverse-org" not in ci
+    assert "param-org/omega" in build
+    assert "lumiverse-org" not in build
+
+
+def test_ci_workflows_keep_existing_org_fallback_when_unset(temp_fixture: Path) -> None:
+    client = FakeGitHubClient()
+    execute_ci_workflows_pinned_tag("omega", temp_fixture, client)
+    ci = client.files[("omega", ".github/workflows/ci.yml")]
+    assert "lumiverse-org/control-plane" in ci

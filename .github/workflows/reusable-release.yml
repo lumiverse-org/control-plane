@@ -1,5 +1,10 @@
-# Reusable release workflow — L2-01, D-L2-09 (staging→production release)
-# Tagged commit + SBOM + deployment record (bendrohit-eng only)
+# Reusable release workflow — L2-01, D-L2-09 (release cut from staging)
+# Produces a tag on the product repository's staging HEAD, the SBOM from
+# scripts/security/generate-sbom.sh, and a deployment record in
+# records/deployments/ via tools/records/record-write. Does not deploy.
+# bendrohit-eng sign-off is the actor gate. A missing token, digest, smoke
+# result, UAT pass record, or declared repository fails closed before the
+# records repository is written.
 name: reusable-release
 
 on:
@@ -11,6 +16,17 @@ on:
       tag:
         required: true
         type: string
+      artifact_digest:
+        description: "Artifact digest sha256:<64 hex>. Required to write the deployment record."
+        required: false
+        type: string
+      smoke_result:
+        description: "pass or fail. Required to write the deployment record."
+        required: false
+        type: string
+    secrets:
+      RECORDS_WRITER_TOKEN:
+        required: false
 
 permissions:
   contents: read
@@ -19,28 +35,249 @@ jobs:
   release:
     name: Release ${{ inputs.product_id }} @ ${{ inputs.tag }}
     runs-on: ubuntu-latest
-    environment: production
+    environment: staging
     permissions:
       contents: write
-      id-token: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: ${{ inputs.tag }}
       - name: Actor gate (release requires bendrohit-eng)
         run: bash scripts/actor-gate.sh
         env:
           PR_ACTOR: ${{ github.actor }}
-      - name: Generate SBOM stub
+      - name: Require release inputs and records-writer token
+        env:
+          PRODUCT_ID: ${{ inputs.product_id }}
+          TAG: ${{ inputs.tag }}
+          ARTIFACT_DIGEST: ${{ inputs.artifact_digest }}
+          SMOKE_RESULT: ${{ inputs.smoke_result }}
+          RECORDS_WRITER_TOKEN: ${{ secrets.RECORDS_WRITER_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${RECORDS_WRITER_TOKEN:-}" ]; then
+            echo "ERROR: RECORDS_WRITER_TOKEN missing — refusing to write a deployment record"
+            exit 1
+          fi
+          if [ -z "${PRODUCT_ID:-}" ] || [ -z "${TAG:-}" ]; then
+            echo "ERROR: product_id and tag are required"
+            exit 1
+          fi
+          if [ -z "${ARTIFACT_DIGEST:-}" ]; then
+            echo "ERROR: artifact_digest is required"
+            exit 1
+          fi
+          if [ -z "${SMOKE_RESULT:-}" ]; then
+            echo "ERROR: smoke_result is required"
+            exit 1
+          fi
+          python3 - <<'PY'
+          import os, re, sys
+          product = os.environ["PRODUCT_ID"]
+          tag = os.environ["TAG"]
+          digest = os.environ["ARTIFACT_DIGEST"]
+          smoke = os.environ["SMOKE_RESULT"]
+          if not re.fullmatch(r"[a-z0-9][a-z0-9-]{1,38}", product):
+              print(f"ERROR: product_id is not a deployment-record product ref: {product}", file=sys.stderr)
+              sys.exit(1)
+          if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,127}", tag) or ".." in tag:
+              print(f"ERROR: tag is not a single ref name: {tag}", file=sys.stderr)
+              sys.exit(1)
+          if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+              print("ERROR: artifact_digest must match sha256:<64 hex>", file=sys.stderr)
+              sys.exit(1)
+          if smoke not in {"pass", "fail"}:
+              print("ERROR: smoke_result must be pass or fail", file=sys.stderr)
+              sys.exit(1)
+          print("RELEASE_INPUTS_OK")
+          PY
+      - name: Install record writer dependencies
+        run: python3 -m pip install --quiet pyyaml jsonschema referencing
+      - name: Resolve product repository and staging commit
+        id: source
+        env:
+          PRODUCT_ID: ${{ inputs.product_id }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "ERROR: GH_TOKEN missing — refusing to read or tag a repository"
+            exit 1
+          fi
+          command -v gh >/dev/null 2>&1 || { echo "ERROR: gh is not installed"; exit 1; }
+          python3 - <<'PY'
+          import os, sys
+          from pathlib import Path
+          import yaml
+          estate = yaml.safe_load(Path("contracts/estate.yaml").read_text(encoding="utf-8")) or {}
+          org = str(estate.get("org") or "").strip()
+          records_name = str((estate.get("estate") or {}).get("records_repository") or "").strip()
+          if not org or not records_name:
+              print("ERROR: estate org or records_repository missing", file=sys.stderr)
+              sys.exit(1)
+          wanted = os.environ["PRODUCT_ID"].strip()
+          repo_name = None
+          for path in sorted(Path("declared/products").glob("*.yaml")):
+              doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+              if not isinstance(doc, dict):
+                  continue
+              identity = doc.get("identity") if isinstance(doc.get("identity"), dict) else {}
+              ident = str(identity.get("id") or "").strip()
+              if wanted not in {path.stem, ident}:
+                  continue
+              repos = ((doc.get("code") or {}).get("repositories") or [])
+              chosen = ""
+              if isinstance(repos, list):
+                  for repo in repos:
+                      if isinstance(repo, dict) and (repo.get("role") == "primary" or repo.get("deploys")):
+                          chosen = str(repo.get("name") or "").strip()
+                          if chosen:
+                              break
+              if not chosen:
+                  chosen = str(identity.get("repository") or "").strip()
+              short = chosen.rsplit("/", 1)[-1] if chosen else ""
+              if short and short != "product-template":
+                  repo_name = f"{org}/{short}"
+                  break
+          if not repo_name:
+              print(f"ERROR: PRODUCT_REPO_UNRESOLVED {wanted}", file=sys.stderr)
+              sys.exit(1)
+          Path("/tmp/release-repo.txt").write_text(repo_name + "\n", encoding="utf-8")
+          Path("/tmp/records-slug.txt").write_text(f"{org}/{records_name}\n", encoding="utf-8")
+          PY
+          repo="$(tr -d '\r\n' < /tmp/release-repo.txt)"
+          sha="$(gh api "repos/${repo}/git/ref/heads/staging" --jq .object.sha)" || {
+            echo "ERROR: cannot read ${repo} refs/heads/staging"
+            exit 1
+          }
+          [ -n "$sha" ] || { echo "ERROR: empty staging SHA for ${repo}"; exit 1; }
+          printf '%s\n' "$sha" > /tmp/staging-sha.txt
+          records_slug="$(tr -d '\r\n' < /tmp/records-slug.txt)"
+          [ -n "$records_slug" ] || { echo "ERROR: records repository slug missing"; exit 1; }
+          echo "records_slug=${records_slug}" >> "$GITHUB_OUTPUT"
+          echo "STAGING_HEAD ${repo} ${sha}"
+      - name: Checkout records repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ steps.source.outputs.records_slug }}
+          token: ${{ secrets.RECORDS_WRITER_TOKEN }}
+          path: control-plane-records
+      - name: Require a passing UAT record
+        env:
+          PRODUCT_ID: ${{ inputs.product_id }}
+        run: |
+          set -euo pipefail
+          if [ ! -d control-plane-records/records/uat ]; then
+            echo "ERROR: records/uat is not in the records checkout"
+            exit 1
+          fi
+          line="$(bash tools/records/find-record --store control-plane-records/records/uat --product "${PRODUCT_ID}" --require result=pass)" || {
+            echo "ERROR: no passing UAT record for ${PRODUCT_ID}"
+            exit 1
+          }
+          uat_path="$(printf '%s\n' "$line" | sed -n 's/.*(first: .*\(records\/uat\/[^ )]*\.yaml\)).*/\1/p')"
+          if [ -z "$uat_path" ]; then
+            echo "ERROR: UAT lookup did not return a records/uat path: ${line}"
+            exit 1
+          fi
+          printf '%s\n' "$uat_path" > /tmp/uat-record.txt
+          echo "UAT_OK ${uat_path}"
+      - name: Tag staging HEAD
+        env:
+          TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          repo="$(tr -d '\r\n' < /tmp/release-repo.txt)"
+          sha="$(tr -d '\r\n' < /tmp/staging-sha.txt)"
+          [ -n "$repo" ] && [ -n "$sha" ] && [ -n "$TAG" ] || {
+            echo "ERROR: repository, staging SHA, or tag missing"
+            exit 1
+          }
+          if existing="$(gh api "repos/${repo}/git/ref/tags/${TAG}" --jq .object.sha 2>/dev/null)"; then
+            if [ "$existing" != "$sha" ]; then
+              echo "ERROR: tag ${TAG} on ${repo} points at ${existing}, not staging ${sha}; refusing to move it"
+              exit 1
+            fi
+            echo "TAG_OK ${repo} ${TAG} ${sha}"
+          else
+            gh api -X POST "repos/${repo}/git/refs" -f ref="refs/tags/${TAG}" -f sha="$sha" >/dev/null
+            echo "TAG_CREATED ${repo} ${TAG} ${sha}"
+          fi
+      - name: Generate SBOM
         run: |
           bash scripts/security/generate-sbom.sh \
             --product "${{ inputs.product_id }}" \
             --tag "${{ inputs.tag }}"
         # SBOM tooling decided in FD-107 (PFD-027): Syft, spdx-json output
-        # format, sha256-pinned. generate-sbom.sh is the one real
-        # implementation (still an honest stub pending PFD-027's
-        # image-digest-pinning decision) — this step delegates to it rather
-        # than duplicating ad hoc SBOM logic here.
-      - name: Write deployment record stub
+        # format, sha256-pinned. generate-sbom.sh is the implementation.
+      - name: Write deployment record
+        env:
+          PRODUCT_ID: ${{ inputs.product_id }}
+          TAG: ${{ inputs.tag }}
+          ARTIFACT_DIGEST: ${{ inputs.artifact_digest }}
+          SMOKE_RESULT: ${{ inputs.smoke_result }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RECORDS_WRITER_TOKEN: ${{ secrets.RECORDS_WRITER_TOKEN }}
         run: |
-          echo "TODO: write deployment record to records/ per D-L2-09 (FD-084)"
+          set -euo pipefail
+          if [ -z "${RECORDS_WRITER_TOKEN:-}" ]; then
+            echo "ERROR: RECORDS_WRITER_TOKEN missing — refusing to write a deployment record"
+            exit 1
+          fi
+          if [ ! -d control-plane-records/records/deployments ]; then
+            echo "ERROR: records/deployments is not in the records checkout"
+            exit 1
+          fi
+          uat_path="$(tr -d '\r\n' < /tmp/uat-record.txt)"
+          sha="$(tr -d '\r\n' < /tmp/staging-sha.txt)"
+          [ -n "$uat_path" ] && [ -n "$sha" ] || { echo "ERROR: UAT path or staging SHA missing"; exit 1; }
+          export CPR_ROOT="$GITHUB_WORKSPACE/control-plane-records"
+          export PYTHONPATH="$GITHUB_WORKSPACE${PYTHONPATH:+:$PYTHONPATH}"
+          python3 - <<'PY'
+          import os, sys
+          from pathlib import Path
+          import yaml
+          from tools.records.lib.writer import mint_id, utc_now
+          product = os.environ["PRODUCT_ID"]
+          actor = os.environ["ACTOR"]
+          if actor != "bendrohit-eng":
+              print(f"ERROR: deployment record sign-off must be bendrohit-eng, got {actor}", file=sys.stderr)
+              sys.exit(1)
+          record_id = mint_id("deployments", cpr_root=os.environ["CPR_ROOT"])
+          body = {
+              "record_schema_version": 1,
+              "id": record_id,
+              "product": product,
+              "timestamp": utc_now(),
+              "digest": {
+                  "name": product,
+                  "digest": os.environ["ARTIFACT_DIGEST"],
+                  "tag": os.environ["TAG"],
+              },
+              "approved_by": actor,
+              "approval_event": os.environ["RUN_URL"],
+              "staging_verified": True,
+              "uat_record": Path("/tmp/uat-record.txt").read_text(encoding="utf-8").strip(),
+              "smoke_result": os.environ["SMOKE_RESULT"],
+              "rollback_of": None,
+              "commit": Path("/tmp/staging-sha.txt").read_text(encoding="utf-8").strip(),
+              "pull_request": None,
+              "ci_run": os.environ["RUN_URL"],
+              "environment": "staging",
+          }
+          if body["environment"] == "production":
+              print("ERROR: refusing to record a production deployment", file=sys.stderr)
+              sys.exit(1)
+          out = Path("/tmp/deployment-record.yaml")
+          out.write_text(yaml.safe_dump(body, sort_keys=False), encoding="utf-8")
+          Path("/tmp/deployment-record-id.txt").write_text(record_id + "\n", encoding="utf-8")
+          PY
+          record_id="$(tr -d '\r\n' < /tmp/deployment-record-id.txt)"
+          tools/records/record-write deployments "$record_id" /tmp/deployment-record.yaml \
+            schemas/records/deployment.schema.json --cpr-root "$CPR_ROOT"
+          git -C control-plane-records config user.email "records-writer@control-plane.local"
+          git -C control-plane-records config user.name "records-writer[bot]"
+          git -C control-plane-records add "records/deployments/${record_id}.yaml"
+          git -C control-plane-records commit -m "D-L2-09 deployment record ${record_id}"
+          git -C control-plane-records push origin main
+          echo "DEPLOYMENT_RECORD_OK ${record_id}"

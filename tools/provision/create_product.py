@@ -75,6 +75,26 @@ CREATE_PRODUCT_STEPS: tuple[str, ...] = (
 # issues instead so neither is silently missing.
 CREATE_PRODUCT_MANUAL_STEPS: tuple[str, ...] = ("alert_channel", "support_intake_mailbox")
 
+
+def apply_resolved_product_identity(document: dict[str, Any], repo_name: str) -> dict[str, Any]:
+    """Set identity.product_id and identity.repository from the resolved repo name.
+
+    `gh repo create --template` copies product-template's product.yaml unchanged,
+    so both fields still say `product-template` until this runs. Other identity
+    keys (team, display name) stay as they were.
+    """
+    name = str(repo_name).strip()
+    if not name:
+        raise ValueError("resolved repository name is required to stamp product identity")
+    identity = document.get("identity")
+    if not isinstance(identity, dict):
+        identity = {}
+        document["identity"] = identity
+    identity["product_id"] = name
+    identity["repository"] = name
+    return document
+
+
 _CONTRACTS_REGISTRY_ROOT = Path(__file__).resolve().parent.parent.parent / "contracts" / "registry"
 _PRODUCT_CONTRACT_FILENAME = re.compile(r"^product\.contract\.v(\d+)\.json$")
 

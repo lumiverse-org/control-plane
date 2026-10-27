@@ -28,11 +28,17 @@ drops a finding from the set `run_orphan_detection()` returns.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from typing import Any
 
 from reconciler.orphans import OrphanContext, OrphanFinding, run_group
 from reconciler.orphans.types import GROUPS
 from tools.provision.plan import Plan, Step, StepKind
+
+_LOGIN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$")
+_REMOVE_PREFIX = "remove "
+_REMOVE_SUFFIX = " from the organisation"
 
 # §12.2, RECONCILIATION EXECUTES block, verbatim order.
 REMOVE_PERSON_STEPS: tuple[str, ...] = (
@@ -163,4 +169,57 @@ def succession_alerts(login: str, topology: dict | None) -> tuple[SuccessionAler
         )
         for slot, designate in succession.items()
         if designate == login
+    )
+
+
+class PlanLoginMissing(ValueError):
+    """The remove-person plan does not carry a login. Refusing to invent one."""
+
+
+def login_from_plan(plan: Plan) -> str:
+    """Return the login the planner already wrote into the removal step.
+
+    A missing or blank login fails closed. This function never substitutes
+    a default login, and it does not delete the person record.
+    """
+    step = next((item for item in plan.steps if item.id == "remove_from_organisation"), None)
+    text = step.description if step is not None else ""
+    if (
+        step is None
+        or not text.startswith(_REMOVE_PREFIX)
+        or not text.endswith(_REMOVE_SUFFIX)
+    ):
+        raise PlanLoginMissing("remove-person plan has no login; refusing to invent one")
+    login = text[len(_REMOVE_PREFIX):-len(_REMOVE_SUFFIX)].strip()
+    if not _LOGIN.fullmatch(login):
+        raise PlanLoginMissing("remove-person plan has no login; refusing to invent one")
+    return login
+
+
+def apply_remove_person_step(plan: Plan, step: Step, client: Any, *, repo: str) -> dict[str, Any]:
+    """Apply one remove-person step against `client`.
+
+    Organisation membership is removed for the login already in the plan.
+    That call does not invite anyone. The person record is retained: the
+    other steps write the plan text and do not delete the identifier.
+    """
+    login = login_from_plan(plan)
+    if client is None:
+        raise RuntimeError("remove-person apply requires a GitHub client")
+    if not repo or not str(repo).strip():
+        raise ValueError("remove-person apply requires a repository; refusing to guess one")
+    target = str(repo).strip()
+    if step.id == "remove_from_organisation":
+        return client.remove_org_member(login)
+    content = (
+        f"github_login: {login}\n"
+        f"step_id: {step.id}\n"
+        f"description: {step.description}\n"
+        "person_record: retained\n"
+    )
+    return client.put_file(
+        repo=target,
+        path=f"provision/remove-person/{login}/{step.id}.yaml",
+        content=content,
+        message=f"remove-person {login}: {step.id}",
     )

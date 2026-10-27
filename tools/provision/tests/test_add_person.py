@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import subprocess
+
 import pytest
 
 from tools.provision.add_person import (
@@ -9,10 +11,15 @@ from tools.provision.add_person import (
     CONDUCT_ADVISER_PLACEHOLDER,
     MILESTONE_BANDS,
     AiRuntimeRestricted,
+    PlanLoginMissing,
+    apply_add_person_step,
     build_add_person_plan,
+    login_from_plan,
     onboarding_checklist,
     resolve_ai_runtime,
 )
+from tools.provision.cli import _run_operation, build_parser
+from tools.provision.executors import FakeGitHubClient
 from tools.provision.plan import StepKind
 
 
@@ -114,3 +121,54 @@ def test_onboarding_checklist_renders_all_seven_milestone_bands():
     for milestone, band in MILESTONE_BANDS:
         assert milestone in checklist.body
         assert band in checklist.body
+
+
+def _forbid_gh(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("live GitHub API was called")
+
+    monkeypatch.setattr(subprocess, "run", _boom)
+
+
+def test_apply_uses_login_from_plan_and_does_not_invite(monkeypatch: pytest.MonkeyPatch):
+    _forbid_gh(monkeypatch)
+    plan = build_add_person_plan("dev-3")
+    assert login_from_plan(plan) == "dev-3"
+    fake = FakeGitHubClient()
+    args = build_parser().parse_args(
+        ["add-person", "--live", "--apply", "--org", "test-org", "--login", "invented-login"]
+    )
+    rc = _run_operation(args, "add-person", plan, client=fake)
+    assert rc == 0
+    assert [name for name, _payload in fake.calls] == [
+        "put_file",
+        "put_file",
+        "put_file",
+        "put_file",
+        "create_issue",
+    ]
+    blob = repr(fake.calls)
+    assert "dev-3" in blob
+    assert "invented-login" not in blob
+    assert "invitations" not in blob
+    assert all("invit" not in name for name, _payload in fake.calls)
+    issue = next(payload for name, payload in fake.calls if name == "create_issue")
+    assert issue["title"] == "Onboarding -- dev-3"
+    assert "dev-3" in issue["body"]
+    assert CONDUCT_ADVISER_PLACEHOLDER in issue["body"]
+    assert all(payload.get("content", "").startswith("github_login: dev-3\n") for name, payload in fake.calls if name == "put_file")
+
+
+def test_apply_fails_closed_when_planner_has_no_login(monkeypatch: pytest.MonkeyPatch):
+    _forbid_gh(monkeypatch)
+    plan = build_add_person_plan("   ")
+    fake = FakeGitHubClient()
+    with pytest.raises(PlanLoginMissing, match="refusing to invent"):
+        apply_add_person_step(plan, plan.steps[0], fake, repo="control-plane")
+    assert fake.calls == []
+    args = build_parser().parse_args(
+        ["add-person", "--live", "--apply", "--org", "test-org", "--login", "invented-login"]
+    )
+    with pytest.raises(PlanLoginMissing, match="refusing to invent"):
+        _run_operation(args, "add-person", plan, client=fake)
+    assert fake.calls == []
