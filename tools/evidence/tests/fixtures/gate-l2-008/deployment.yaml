@@ -1,0 +1,12 @@
+conformance_profile: service
+q1_git_commit: abcdef1
+q2_pull_request: "1"
+q3_gate2_approver: dev-two
+q4_ci_run: "100"
+q5_artifact_digest: sha256:abababababababababababababababababababababababababababababababab
+q6_staging_deploy: "2026-08-20T08:00:00Z"
+q7_staging_passed: "true"
+q8_prod_approver: dev-two
+q9_prod_deploy: "2026-08-20T09:00:00Z"
+q10_smoke_passed: "true"
+q11_live_digest: sha256:abababababababababababababababababababababababababababababababab

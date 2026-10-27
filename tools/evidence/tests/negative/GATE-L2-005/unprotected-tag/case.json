@@ -1,0 +1,1 @@
+{"ref":"refs/tags/scratch-1","environment":"production","policy":{"default_branch":true,"protected_tags":true,"custom":[]},"expect_token":"ENV_POLICY_REF_NOT_ADMITTED"}

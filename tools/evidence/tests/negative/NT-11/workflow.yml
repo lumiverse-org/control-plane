@@ -1,0 +1,11 @@
+name: nt-11
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+jobs:
+  unit-tests:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo unit

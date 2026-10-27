@@ -49,13 +49,14 @@ def _load_approval(path: str) -> dict:
 
 def evaluate(approval: dict, deployer: str) -> tuple[int, int]:
     """Return (checked=1, failed=0|1). Fails closed on any inability to tell."""
-    approver = approval.get("approver")
+    approver = approval.get("approver") or approval.get("approved_by")
     if not approver:
         raise ValueError("approval record has no resolvable approver field — fail-closed")
 
     if approver == deployer:
         print(f"APPROVER_EQUALS_DEPLOYER: approver={approver!r} deployer={deployer!r}",
               file=sys.stderr)
+        print("SELF_APPROVAL_DETECTED", file=sys.stderr)
         return 1, 1
 
     return 1, 0
