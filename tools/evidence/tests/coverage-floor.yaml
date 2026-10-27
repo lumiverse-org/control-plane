@@ -1,0 +1,7 @@
+# Frozen floor. A full --all run below either number exits 2 (VACUOUS) even when
+# every assertion it did run passed. Section 53.1: a silently narrowed comparison
+# is itself visible drift. Raising these numbers is normal; lowering one is a
+# reviewable one-line diff and needs a reason in the PR body.
+min_assertions: 11
+min_negatives_run: 11
+frozen_on: "2026-10-27"

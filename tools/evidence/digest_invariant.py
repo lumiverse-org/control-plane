@@ -78,6 +78,7 @@ def evaluate(requested: str, record: dict) -> tuple[int, int]:
 
     # Byte-identical comparison. No tolerance.
     if requested != staging_digest:
+        print("DIGEST_INVARIANT_VIOLATION", file=sys.stderr)
         print(
             f"FAIL: requested={requested!r} != staging_verified={staging_digest!r}",
             file=sys.stderr,

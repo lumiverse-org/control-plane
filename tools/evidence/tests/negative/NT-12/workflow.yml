@@ -1,0 +1,12 @@
+name: nt-12
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: echo unit
