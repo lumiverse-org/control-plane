@@ -24,19 +24,20 @@ supported_contract_versions:
   people_registry: [1]
   service: [1]
 reusable_workflow_versions:
-  # current is the tag new callers should pin. v6 is integration 57399983
-  # (registry CLI entrypoint). v1 stays supported: control-plane gate
-  # workflows still call actor-gate, runner-tier-assert, env-policy-assert,
-  # and workflow-identity-gate at that tag. v2-v5 were intermediate CI tags.
-  current: "workflows/v6"
+  # current is the tag new callers should pin. v7 is integration 9a244092
+  # (GHCR repository names are lowercased). v1 stays supported: control-plane
+  # gate workflows still call actor-gate, runner-tier-assert, env-policy-assert,
+  # and workflow-identity-gate at that tag. v2-v6 were intermediate CI tags.
+  current: "workflows/v7"
   supported:
     - "workflows/v1"
-    - "workflows/v6"
+    - "workflows/v7"
   deprecated:
     - "workflows/v2"
     - "workflows/v3"
     - "workflows/v4"
     - "workflows/v5"
+    - "workflows/v6"
   deprecation_deadline: {}
 canary_set: []
 event_type:
