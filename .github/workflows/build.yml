@@ -137,6 +137,9 @@ jobs:
           OUT_DIR: artifact-out
         run: |
           set -euo pipefail
+          # GHCR rejects a repository name that contains uppercase letters.
+          IMAGE_REPO="$(printf '%s' "${IMAGE_REPO}" | tr '[:upper:]' '[:lower:]')"
+          export IMAGE_REPO
           bash control-plane/tools/evidence/build-artifact.sh
           IDENTITY="$(cat artifact-out/identity.txt)"
           echo "identity=${IDENTITY}" >> "$GITHUB_OUTPUT"
